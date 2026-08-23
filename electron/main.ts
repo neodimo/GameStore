@@ -13,9 +13,11 @@ import { configureUpdater } from "./updater";
 import { discoverFpgaDevices } from "./networkDiscovery";
 import {
   downloadResolvedLink,
+  downloadCollectionFiles,
   testDebrid,
   type DebridProvider,
 } from "./downloadManager";
+import { fetchTorrent, matchCollectionFiles, torrentFiles } from "./collectionIndex";
 import { getArtIndex } from "./artIndex";
 import {
   cacheScreenshots,
@@ -75,6 +77,7 @@ type ProviderSettings = {
     torbox?: string;
     encrypted?: boolean;
   };
+  collections?: { name: string; url: string; platform: string }[];
   fpga?: {
     host: string;
     port: number;
@@ -149,11 +152,12 @@ ipcMain.handle("debrid-settings-get", async () => {
   return {
     hasRealDebrid: !!debrid?.realdebrid,
     hasTorBox: !!debrid?.torbox,
+    collections: (await readSettings()).collections ?? [],
   };
 });
 ipcMain.handle(
   "debrid-settings-set",
-  async (_e, incoming: { realdebrid?: string; torbox?: string }) => {
+  async (_e, incoming: { realdebrid?: string; torbox?: string; collections?: { name: string; url: string; platform: string }[] }) => {
     const current = await readSettings();
     const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
     const realdebrid = String(incoming.realdebrid || current.debrid?.realdebrid || "").trim();
@@ -174,10 +178,30 @@ ipcMain.handle(
             : torbox
           : undefined,
       },
+      collections: Array.isArray((incoming as any).collections)
+        ? (incoming as any).collections.map((item: any) => ({ name: String(item.name || "Collection").trim(), url: String(item.url || "").trim(), platform: String(item.platform || "PS1") })).filter((item: any) => /^https:\/\//.test(item.url))
+        : current.collections,
     });
-    return { hasRealDebrid: !!realdebrid, hasTorBox: !!torbox };
+    return { hasRealDebrid: !!realdebrid, hasTorBox: !!torbox, collections: (await readSettings()).collections ?? [] };
   },
 );
+ipcMain.handle("collection-search", async (_e, title: string, region: string) => {
+  const collections = (await readSettings()).collections ?? [];
+  const results: any[] = [];
+  for (const collection of collections.filter((item) => item.platform === "PS1")) {
+    const torrent = await fetchTorrent(collection.url);
+    results.push(...matchCollectionFiles(torrentFiles(torrent), title, region).map((file) => ({ ...file, collection: collection.name, sourceUrl: collection.url })));
+  }
+  return results.sort((a, b) => b.score - a.score).slice(0, 16);
+});
+ipcMain.handle("collection-download", async (_e, sourceUrl: string, paths: string[], gameTitle: string) => {
+  const settings = await readSettings();
+  const allowed = (settings.collections ?? []).some((item) => item.url === sourceUrl);
+  if (!allowed) throw new Error("This collection source is not configured in Settings.");
+  const token = settings.debrid?.realdebrid;
+  if (!token) throw new Error("Add a Real-Debrid API token in Settings first.");
+  return downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, window: win });
+});
 ipcMain.handle("debrid-test", async (_e, provider: DebridProvider) => {
   const token = (await readSettings()).debrid?.[provider];
   if (!token) throw new Error(`Add your ${provider === "torbox" ? "TorBox" : "Real-Debrid"} API token in Settings first.`);

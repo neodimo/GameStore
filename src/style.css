@@ -752,6 +752,11 @@ main {
 .acquisition-form button { color: var(--amber); cursor: pointer; }
 .acquisition .source-fallback { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
 .acquisition .source-fallback svg { width: 14px; }
+.acquisition .primary-source { color: var(--amber); border-color: #8b651f; }
+.collection-candidates { display: grid; gap: 5px; margin-top: 7px; }
+.collection-candidates button { display: grid; gap: 2px; text-align: left; cursor: pointer; }
+.collection-candidates b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collection-candidates span { color: #858b8e; font-size: 9px; }
 .acquisition > small { display: block; color: #72787b; font-size: 9px; margin-top: 7px; }
 .content-links { margin-top: 14px; border-top: 1px solid #2d3133; padding-top: 8px; }
 .device-candidates { display: grid; gap: 6px; margin: 8px 0 14px; max-height: 190px; overflow: auto; }

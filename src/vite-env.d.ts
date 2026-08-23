@@ -38,11 +38,13 @@ interface Window {
     ): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
     transferLibraryToFpga(title: string): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
     onFpgaProgress(listener: (progress: FpgaProgress) => void): () => void;
-    getDebridSettings(): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean }>;
-    setDebridSettings(settings: { realdebrid?: string; torbox?: string }): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean }>;
+    getDebridSettings(): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
+    setDebridSettings(settings: { realdebrid?: string; torbox?: string; collections?: CollectionSource[] }): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
     testDebrid(provider: "realdebrid" | "torbox"): Promise<{ ok: boolean; account: string }>;
     downloadGame(provider: "realdebrid" | "torbox", link: string, title: string): Promise<{ path: string; filename: string; bytes: number; directory: string }>;
     onGameDownloadProgress(listener: (progress: GameDownloadProgress) => void): () => void;
+    searchCollections(title: string, region: string): Promise<CollectionCandidate[]>;
+    downloadCollectionSelection(sourceUrl: string, paths: string[], title: string): Promise<{ directory: string; files: string[] }>;
     getUpdateStatus(): Promise<UpdateStatus>;
     checkForUpdates(): Promise<void>;
     downloadUpdate(): Promise<void>;
@@ -71,6 +73,8 @@ type GameDownloadProgress = {
   total: number;
   percent: number;
 };
+type CollectionSource = { name: string; url: string; platform: string };
+type CollectionCandidate = { path: string; bytes: number; index: number; score: number; collection: string; sourceUrl: string };
 type FpgaProgress = {
   gameTitle: string;
   file: string;

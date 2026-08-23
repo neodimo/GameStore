@@ -53,6 +53,8 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.on("game-download-progress", wrapped);
     return () => ipcRenderer.removeListener("game-download-progress", wrapped);
   },
+  searchCollections: (title: string, region: string) => ipcRenderer.invoke("collection-search", title, region),
+  downloadCollectionSelection: (sourceUrl: string, paths: string[], title: string) => ipcRenderer.invoke("collection-download", sourceUrl, paths, title),
   getUpdateStatus: () => ipcRenderer.invoke("update-status-get"),
   checkForUpdates: () => ipcRenderer.invoke("update-check"),
   downloadUpdate: () => ipcRenderer.invoke("update-download"),

@@ -742,6 +742,8 @@ function Acquisition({ game }: { game: Game }) {
   const [link, setLink] = useState("");
   const [state, setState] = useState<{ status: "idle" | "downloading" | "done" | "error"; percent?: number; message?: string }>({ status: "idle" });
   const [sending, setSending] = useState(false);
+  const [candidates, setCandidates] = useState<CollectionCandidate[]>([]);
+  const [searching, setSearching] = useState(false);
   useEffect(
     () =>
       window.gameStore?.onGameDownloadProgress((progress) => {
@@ -760,12 +762,31 @@ function Acquisition({ game }: { game: Game }) {
       setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
     }
   };
+  const findConfiguredRelease = async () => {
+    setSearching(true); setState({ status: "idle" });
+    try {
+      const found = await window.gameStore!.searchCollections(game.title, game.region);
+      setCandidates(found);
+      if (!found.length) setState({ status: "error", message: "No confident release match was found in configured collections." });
+    } catch (e) { setState({ status: "error", message: e instanceof Error ? e.message : String(e) }); }
+    finally { setSearching(false); }
+  };
   return (
     <section className="acquisition">
       <div className="acquisition-title">
         <span><Download /> Download</span>
         <button onClick={() => setOpenPanel(!openPanel)}>{openPanel ? "Close" : "Use provider"}</button>
       </div>
+      <button className="source-fallback primary-source" disabled={searching} onClick={findConfiguredRelease}>
+        <Search /> {searching ? "Indexing collection…" : "Find release in configured collections"}
+      </button>
+      {!!candidates.length && <div className="collection-candidates">
+        {candidates.slice(0, 6).map((candidate) => <button key={`${candidate.sourceUrl}:${candidate.path}`} onClick={async () => {
+          setState({ status: "downloading", percent: 0, message: `Selecting only ${candidate.path}…` });
+          try { const result = await window.gameStore!.downloadCollectionSelection(candidate.sourceUrl, [candidate.path], game.title); setState({ status: "done", percent: 100, message: `Ready in ${result.directory}` }); }
+          catch (e) { setState({ status: "error", message: e instanceof Error ? e.message : String(e) }); }
+        }}><b>{candidate.path.split("/").pop()}</b><span>{candidate.collection} · {formatBytes(candidate.bytes)} · {Math.round(candidate.score * 100)}% match</span></button>)}
+      </div>}
       {openPanel && <div className="acquisition-form">
         <select value={provider} onChange={(e) => setProvider(e.target.value as "realdebrid" | "torbox")}>
           <option value="realdebrid">Real-Debrid</option>
@@ -802,7 +823,8 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
   const [saved, setSaved] = useState(false);
   const [test, setTest] = useState("");
   const [debrid, setDebrid] = useState({ realdebrid: "", torbox: "" });
-  const [debridState, setDebridState] = useState({ hasRealDebrid: false, hasTorBox: false });
+  const [debridState, setDebridState] = useState<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>({ hasRealDebrid: false, hasTorBox: false, collections: [] });
+  const [collection, setCollection] = useState({ name: "PS1 collection", url: "", platform: "PS1" });
   const [devices, setDevices] = useState<NetworkCandidate[]>([]);
   const [scan, setScan] = useState("");
   const [cache, setCache] = useState<MediaCacheStats | null>(null);
@@ -827,7 +849,7 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
     await window.gameStore?.setFpgaSettings(device);
-    setDebridState((await window.gameStore?.setDebridSettings(debrid)) ?? debridState);
+    setDebridState((await window.gameStore?.setDebridSettings({ ...debrid, collections: collection.url ? [collection] : debridState.collections })) ?? debridState);
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
   };
@@ -903,6 +925,11 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           TorBox API token {debridState.hasTorBox && <small>· saved</small>}
           <input type="password" value={debrid.torbox} onChange={(e) => setDebrid({ ...debrid, torbox: e.target.value })} placeholder="Blank keeps saved token" />
         </label>
+        <label>
+          PS1 collection torrent URL {debridState.collections.length > 0 && <small>· {debridState.collections.length} saved</small>}
+          <input value={collection.url} onChange={(e) => setCollection({ ...collection, url: e.target.value })} placeholder="Paste one HTTPS .torrent URL once" />
+        </label>
+        <small>GameStore indexes only sources you configure. After saving, each game can locate its exact file automatically.</small>
         <div className="settings-actions split-actions">
           <button onClick={() => testDebridProvider("realdebrid")}>Test Real-Debrid</button>
           <button onClick={() => testDebridProvider("torbox")}>Test TorBox</button>

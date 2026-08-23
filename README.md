@@ -93,7 +93,9 @@ Media candidates are downloaded after installation from their original providers
 ## Private download providers
 
 - Real-Debrid and TorBox API tokens live under **Settings → Download providers** and are stored through Electron `safeStorage` when the OS keychain is available. Tokens never enter exports, catalog data, logs, or GitHub.
+- Debrid APIs do not discover game torrents. Add a trusted HTTPS collection `.torrent` URL once in Settings. GameStore indexes only its metadata locally, matches each game/release by filename and region, and shows the exact contained candidates in the Download rail.
+- Selecting a collection candidate uploads the torrent to Real-Debrid and calls selective file-ID selection for that candidate; unrelated files in the system-wide torrent are not selected for the account download.
 - Real-Debrid resolves supported host links and magnets, selects the torrent's files, waits for provider completion, and downloads allowed game-image/archive files into `Documents/GameStore/Games/<title>/` with progress.
-- TorBox resolves supported host links. TorBox magnet file selection remains explicitly unavailable until its multi-file path is verified; the UI does not pretend otherwise.
+- TorBox resolves supported host links. Its official API supports cached file lists and per-file links, but the configured-collection path remains disabled until those account responses are tested; the UI does not pretend otherwise.
 - Executables and unrelated provider payloads are refused. GameStore accepts known disc-image, playlist, and archive extensions only.
 - Completed compatible CHD/BIN/CUE downloads can be sent directly from the organized local game folder to the configured SuperStation/MiSTer.
