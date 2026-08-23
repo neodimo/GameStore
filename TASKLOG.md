@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-22 — 2×2 small-scale app icon
+
+- **What was done:** Replaced the dense 3×3 GameStore application icon with a bold 2×2 grid of four large retro-package silhouettes while preserving the rounded dark library frame and synthwave palette. Generated a 1024×1024 master, applied transparent rounded corners, and quantized it below the standing UI-asset budget. Evidence: the icon remains legible at a real 32×32 launcher preview; all 54 tests, TypeScript validation, production web/Electron builds, and media-light source/bundle checks passed.
+- **Artifacts:** `build/icon.png`, `package.json`, and `package-lock.json`. The final app icon is 358,711 bytes and committed; `/tmp/gamestore-icon-32.png` is deliberate visual-QA scratch. The source image was created with the built-in image-generation tool using the previous icon as the edit target.
+- **State:** Done locally and prepared as patch release v0.7.1. Windows/Linux package rendering remains the release-CI gate.
+- **Next owner + concrete artifact:** Omid updates to v0.7.1 and verifies the icon in the Windows taskbar, Start menu, and desktop shortcut. Use `build/icon.png` as the canonical master if platform-specific rendering needs adjustment.
+
 ## 2026-08-22 — Non-blocking startup media audit
 
 - **What was done:** Added a startup media library that begins 600 ms after first paint, loads shared Libretro/Internet Archive indexes once, and processes the 30-game catalog through three throttled workers. It fills missing screenshots, resolves longplay match/size/cache state, deduplicates in-flight title requests, and supplies ready records to detail views. The header exposes queued/indexing/progress/ready/error states. Clearing media starts a fresh audit; full longplay binaries remain approval-gated. Evidence: 54 tests, TypeScript, production build, and media-light checks passed. Fresh-profile Electron QA remained interactive enough to open Incredible Crisis during the audit, cached 118 distinct screenshot files, resolved its 448 MB video offer, and reached **Media ready**.
