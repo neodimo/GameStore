@@ -9,9 +9,58 @@
   --panel: #17191b;
   --line: #35383b;
   --muted: #92969a;
+  --scroll-track: #111315;
+  --scroll-thumb: #41484c;
+  --scroll-thumb-hover: #646e73;
 }
 * {
   box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  scrollbar-width: thin;
+}
+/* Keep scroll surfaces quiet until they are useful: a slim, rounded dark rail
+   replaces the browser-default white/light chrome across Chromium and Firefox. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border: 3px solid var(--scroll-track);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  min-height: 34px;
+  background: var(--scroll-thumb);
+  border: 3px solid var(--scroll-track);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+::-webkit-scrollbar-corner {
+  background: var(--scroll-track);
+}
+/* Stable gutters stop the screenshot/gallery columns from jumping when a
+   scrollbar appears after media finishes loading. */
+.cart-items,
+.shot-grid,
+.device-candidates,
+.settings-modal,
+.candidate-grid,
+.platforms,
+.filters {
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  scrollbar-width: thin;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 body {
   margin: 0;
