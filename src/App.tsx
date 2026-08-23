@@ -26,6 +26,11 @@ import { facetOrder, games, Game } from "./catalog";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
+import {
+  restartMediaAudit,
+  startMediaAudit,
+  useMediaAuditStatus,
+} from "./mediaLibrary";
 
 type Sort = "curated" | "title" | "year-new" | "year-old";
 const open = (url: string) =>
@@ -44,6 +49,10 @@ const loadFavs = () => {
   }
 };
 export function App() {
+  useEffect(() => {
+    const timer = setTimeout(() => startMediaAudit(games), 600);
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <ArtworkProvider games={games}>
       <Catalog />
@@ -205,6 +214,7 @@ function Catalog() {
               </button>
             )}
           </div>
+          <MediaAuditIndicator />
           <UpdaterButton />
           <button className="export" onClick={exportShelf}>
             {saved ? "Saved" : "Export shelf"}
@@ -794,8 +804,9 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           <Database /> Local media cache
         </h2>
         <p>
-          Covers and screenshots cache automatically after you open a game.
-          Longplay video downloads only after you approve its displayed size.
+          GameStore checks every title in a throttled startup batch and fills
+          missing screenshots in the background. Longplay availability and size
+          are preloaded; the large video file still requires approval.
         </p>
         <div className="cache-row">
           <div>
@@ -804,8 +815,11 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           </div>
           <button
             onClick={async () => {
-              if (window.gameStore)
-                setCache(await window.gameStore.clearMediaCache());
+              if (window.gameStore) {
+                const cleared = await window.gameStore.clearMediaCache();
+                setCache(cleared);
+                restartMediaAudit(games);
+              }
             }}
           >
             <Trash2 /> Clear media
@@ -877,6 +891,31 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
         </div>
         {test && <p className="test-result">{test}</p>}
       </section>
+    </div>
+  );
+}
+
+function MediaAuditIndicator() {
+  const status = useMediaAuditStatus();
+  const active = status.state === "indexing" || status.state === "scanning";
+  const percent = status.total
+    ? Math.round((status.completed / status.total) * 100)
+    : 0;
+  const label =
+    status.state === "complete"
+      ? "Media ready"
+      : status.state === "error"
+        ? "Media check failed"
+        : status.state === "idle"
+          ? "Media queued"
+          : status.state === "indexing"
+            ? "Indexing media…"
+            : `Media ${status.completed}/${status.total}`;
+  return (
+    <div className={`media-audit ${status.state}`} title={status.message}>
+      <Database className={active ? "spin" : ""} />
+      <span>{label}</span>
+      {active && <i style={{ width: `${percent}%` }} />}
     </div>
   );
 }
