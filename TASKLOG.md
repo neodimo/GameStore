@@ -177,3 +177,9 @@
 - **Artifacts:** `src/App.tsx`, `src/mediaLibrary.ts`, `src/style.css`, `package.json`, `package-lock.json`, and `CONTEXT.md`. Visual-QA captures at `/tmp/gamestore-ux-v0103-wide.png`, `/tmp/gamestore-ux-v0103-detail.png`, and `/tmp/gamestore-ux-v0103-detail-fixed.png` are deliberate local scratch and uncommitted.
 - **State:** Done locally; production web/Electron build, TypeScript lint, 86 tests, source/bundle media-light checks, `git diff --check`, and production dependency audit (0 vulnerabilities) pass. Exact production installer/CI verification follows the pushed v0.10.3 release.
 - **Next owner + concrete artifact:** Gonzo owns publishing and verifying v0.10.3. Omid's acceptance artifact is the released installer and a real Windows browse/open interaction, especially on a cold media cache.
+## 2026-08-23 — v0.10.4 dark scroll surfaces
+
+- **What was done:** Added application-wide dark scrollbars with slim rounded thumb/track treatment for Chromium and Firefox, smooth scrolling, stable scroll gutters on dynamic panes, and a reduced-motion fallback. This covers the document, settings, cart, galleries, filters, and artwork picker rather than leaving any of them with light browser chrome.
+- **Artifacts:** `src/style.css`, `src/App.tsx`, `package.json`, and `package-lock.json`; visual capture is deliberate scratch at `/tmp/gamestore-v0104-scrollbars.png` and will be posted to Discord. Intended source state: committed, pushed, and released as v0.10.4.
+- **State:** Local validation passed: 86 tests, TypeScript lint, production build, source/bundle media-light checks, and `git diff --check`. Visual QA confirms the rounded dark scrollbar inside the scrollable Settings modal at 1600×1000. Release CI remains the publish gate.
+- **Next owner + concrete artifact:** Gonzo publishes and verifies the v0.10.4 GitHub Release. Omid can inspect the attached settings capture and released desktop build.

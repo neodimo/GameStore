@@ -343,7 +343,7 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.10.3</b>
+          <b>GameStore 0.10.4</b>
           <ArtworkStatus />
         </footer>
       </div>
