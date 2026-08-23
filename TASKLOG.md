@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-23 — GameStore release-default workflow correction
+
+- **What was done:** Recorded Omid's standing instruction that completed approved GameStore changes should proceed through merge, version tag, Windows/Linux release CI, and published-asset verification by default. Evidence: the v0.9.0 work was initially left at a green draft PR despite Omid's “proceed”; Omid explicitly corrected that interpretation.
+- **Artifacts:** `CONTEXT.md` release-workflow section and this TASKLOG entry; intended status is committed/pushed with PR #15 before its merge.
+- **State:** Workflow correction recorded. v0.9.0 merge/tag/release verification is in progress.
+- **Next owner + concrete artifact:** Gonzo merges PR #15, tags `v0.9.0`, and verifies the GitHub release assets and updater metadata before reporting completion.
+- **Failure mode:** Treating the generic draft-PR safety default as the end of an explicitly authorized GameStore wrap-up. For this project, “proceed” after validated changes includes release unless Omid requests a review stop.
+
 ## 2026-08-23 — v0.9.0 managed download finalization and persistent MiSTer cart
 
 - **What was done:** Implemented an ordered managed-library pipeline: provider bytes first land in a unique `.incoming` directory; ZIPs extract into a unique staging directory with path traversal and symlinks refused; the payload is inspected before placement; original filenames are preserved; disc/multi-file releases install under `Documents/GameStore/Games/<console>/<title>/`; single-file cartridge images install directly under `Documents/GameStore/Games/<console>/`; and the source ZIP is deleted only after complete successful placement. Every completed release is upserted into a disk-backed `library.json` MiSTer cart. The header now exposes the cart, managed item/file counts, removal without deleting local files, and one-click batch checkout. Checkout uses stored paths, removes each successfully transferred item from the queue, keeps library files, and leaves failed/unprocessed items queued. Evidence: real Electron QA at 1500×960 confirms the empty-cart header/popover hierarchy and fit. Four new library tests cover ZIP extraction/deletion with preserved `.cue`/`.bin` names, direct multi-file PSX placement, persistent queueing, direct single-file GBA placement, and partial-checkout retry semantics. All 62 tests, TypeScript lint, full web/Electron build, media-light source/bundle guards, diff check, and production dependency audit pass; the production audit reports zero vulnerabilities.

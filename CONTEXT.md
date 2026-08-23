@@ -46,3 +46,7 @@ Media discovery begins 600 ms after startup as a non-blocking three-worker audit
 ## Acceptance direction
 
 The original 30 adversarial fixtures remain the hand-verified data-quality core inside the 100-game catalog. Expanded titles have explicit lightweight Libretro cover fallbacks and participate in runtime fuzzy media matching; broader exact-release coverage remains an ongoing data-quality gate.
+
+## Release workflow
+
+For GameStore, wrapping up an approved change means carrying it through the complete release path by default: merge the green PR, tag the version, wait for Windows and Linux release jobs, and verify the published installers plus updater metadata. Stop at a draft/release candidate only when Omid explicitly asks for review before release or a real acceptance gate prevents safe publication.
