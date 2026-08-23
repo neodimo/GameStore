@@ -5,7 +5,7 @@
 - **What was done:** Enforced the standing lightweight-core rule in package configuration and release CI. The source guard rejects bundled video, catalog/media archives, artwork outside explicit app-owned UI paths, and oversized UI assets. Separate checks enforce tracked-core, compiled web/Electron bundle, Windows installer, Linux AppImage, and Debian package budgets. Evidence: tests, TypeScript validation, production build, bundle checks, and current Linux artifact checks passed; a deliberate `data/covers/should-fail.png` fixture was correctly rejected and then removed.
 - **Artifacts:** `scripts/check-media-light.mjs`, `config/media-light.json`, `package.json`, `.github/workflows/release.yml`, `README.md`, and `CONTEXT.md`. Intended status: committed and pushed through the repository workflow; generated `dist/`, `dist-electron/`, and `release/` outputs remain ignored/local build artifacts.
 - **State:** Done. Current measurements: tracked core 0.35 MiB of 5 MiB; web bundle 0.22 MiB of 3 MiB; Linux AppImage 115.76 MiB of 130 MiB; Debian package 158.58 MiB of 180 MiB. Windows size enforcement will run on the Windows CI runner.
-- **Next owner + concrete artifact:** Gonzo maintains thresholds and allowlists in `config/media-light.json` when dependencies or app-owned UI assets change; release CI in `.github/workflows/release.yml` is the acceptance gate.
+- **Next owner + concrete artifact:** Gonzo maintains thresholds and allowlists in `config/media-light.json` when dependencies or app-owned UI assets change; pull-request CI in `.github/workflows/ci.yml` and package checks in `.github/workflows/release.yml` are the acceptance gates.
 
 ## 2026-08-22 — Media-light distribution rule adopted
 
