@@ -3,9 +3,9 @@
 ## 2026-08-22 — Linux parity and v0.2 packaging
 
 - **What was done:** Added Linux as a first-class release target without removing or conditionalizing catalog features. Electron now uses native window chrome outside macOS, and the release workflow independently tests and packages Windows and Linux. Evidence: catalog tests, TypeScript validation, production bundling, AppImage packaging, Debian packaging, runtime-only dependency audit, and a real Linux Electron visual smoke test passed locally.
-- **Artifacts:** Source changes in `package.json`, `package-lock.json`, `electron/main.ts`, `.github/workflows/release.yml`, `README.md`, and `CONTEXT.md`. Local release candidates `release/GameStore-0.2.0-x86_64.AppImage` and `release/GameStore-0.2.0-amd64.deb` are deliberate ignored build output pending replacement by GitHub CI artifacts. Visual-QA captures are deliberate temporary files in `/tmp/gamestore-linux-qa.LZwZTL/`.
-- **State:** Implementation and local Linux validation done. GitHub CI, Windows regression packaging, tagged release publication, and attached screenshot delivery remain required before closure.
-- **Next owner + concrete artifact:** Gonzo publishes `v0.2.0`, verifies both workflow jobs and all three installer assets, then posts the Linux screenshots and release links in `#gamestore`.
+- **Artifacts:** Source is committed and pushed in GitHub release `v0.2.0` at `https://github.com/neodimo/GameStore/releases/tag/v0.2.0`. Release assets are `GameStore-0.2.0-x86_64.AppImage`, `GameStore-0.2.0-amd64.deb`, and `GameStore-Setup-0.2.0-x64.exe`. Visual-QA captures are deliberate temporary files in `/tmp/gamestore-linux-qa.LZwZTL/` for Discord delivery.
+- **State:** Done. GitHub's Linux and Windows jobs independently passed install, catalog tests, TypeScript validation, native packaging, and release upload. The packaged Linux app was also launched and visually inspected locally. Installers remain unsigned; installation on Omid's exact Linux machine is the remaining user-side confirmation.
+- **Next owner + concrete artifact:** Omid runs either `GameStore-0.2.0-x86_64.AppImage` or `GameStore-0.2.0-amd64.deb` from the v0.2.0 release and reports distro/desktop-specific issues in `#gamestore` with a screenshot.
 
 ## 2026-08-22 — GameStore v0.1.1 released
 
