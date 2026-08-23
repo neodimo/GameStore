@@ -13,8 +13,12 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.invoke("media-longplays-get", force),
   cacheScreenshots: (gameId: string, urls: string[]) =>
     ipcRenderer.invoke("media-screens-cache", gameId, urls),
-  getVideoInfo: (identifier: string) =>
-    ipcRenderer.invoke("media-video-info", identifier),
+  getVideoPreview: (identifier: string) =>
+    ipcRenderer.invoke("media-video-preview", identifier),
+  cacheFrames: (gameId: string, frames: { at: number; data: string }[]) =>
+    ipcRenderer.invoke("media-frames-cache", gameId, frames),
+  getCachedFrames: (gameId: string) =>
+    ipcRenderer.invoke("media-frames-get", gameId),
   downloadVideo: (identifier: string) =>
     ipcRenderer.invoke("media-video-download", identifier),
   getMediaCacheStats: () => ipcRenderer.invoke("media-cache-stats"),
@@ -62,7 +66,17 @@ contextBridge.exposeInMainWorld("gameStore", {
     return () => ipcRenderer.removeListener("game-download-progress", wrapped);
   },
   searchCollections: (title: string, region: string) => ipcRenderer.invoke("collection-search", title, region),
+  indexCollection: (source: { name: string; url: string; platform: string }) =>
+    ipcRenderer.invoke("collection-index", source),
+  getCollectionStatus: () => ipcRenderer.invoke("collection-status"),
   downloadCollectionSelection: (sourceUrl: string, paths: string[], title: string) => ipcRenderer.invoke("collection-download", sourceUrl, paths, title),
+  getEmuMoviesSettings: () => ipcRenderer.invoke("emumovies-settings-get"),
+  loginEmuMovies: (credentials: { username?: string; password?: string }) =>
+    ipcRenderer.invoke("emumovies-login", credentials),
+  indexEmuMovies: () => ipcRenderer.invoke("emumovies-index"),
+  forgetEmuMovies: () => ipcRenderer.invoke("emumovies-forget"),
+  getEmuMoviesSnap: (title: string, region: string) =>
+    ipcRenderer.invoke("emumovies-snap", title, region),
   getUpdateStatus: () => ipcRenderer.invoke("update-status-get"),
   checkForUpdates: () => ipcRenderer.invoke("update-check"),
   downloadUpdate: () => ipcRenderer.invoke("update-download"),

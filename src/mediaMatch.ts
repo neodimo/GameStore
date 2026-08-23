@@ -37,6 +37,19 @@ export type Screenshot = {
   score: number;
 };
 
+/**
+ * The regions named by a release's tag list, in No-Intro's own vocabulary.
+ * A multi-region release such as `(USA, Europe)` genuinely carries both.
+ */
+const regionsOf = (tags: string[]) => {
+  const text = tags.join(" ").toLowerCase();
+  return new Set(
+    (["usa", "europe", "japan", "world"] as const).filter((key) =>
+      text.includes(key),
+    ),
+  );
+};
+
 export type LongplayMatch = {
   identifier: string;
   title: string;
@@ -94,16 +107,24 @@ const sameGame = (a: string, b: string) => {
 };
 
 /**
- * Every screenshot for a title, in-game frames first so the strip opens on
- * gameplay rather than on a logo.
+ * Every screenshot belonging to a title's *primary* release.
  *
  * Gathering a *set* cannot use the absolute floor that picking a *single* best
  * cover uses. `Racing Lagoon` scores 1.89 against its own release, while Ford
  * Racing, 007 Racing and Nicktoons Racing all clear 0.6 — an absolute floor
  * quietly builds a 28-frame strip that is 27 other games. So the best release
  * is resolved first and used as an anchor, and only files naming that same
- * game join the strip. Multi-disc and multi-region releases still stack up,
- * because those genuinely are the same game.
+ * game join the strip.
+ *
+ * The anchor also fixes the *variant*. Pooling every printing of a game made
+ * the gallery a region grab-bag: the USA release, the PAL release and the
+ * Japanese release each contributed a frame of a different menu in a different
+ * language, presented as if they were one game's screenshots. Only releases
+ * sharing the anchor's region survive, so a USA game shows USA frames. Discs of
+ * that same release still stack up, because a four-disc game is one release.
+ *
+ * Untagged files are kept: an index entry with no region tag is unclassified
+ * rather than foreign, and dropping it can empty an otherwise valid gallery.
  */
 export const resolveScreenshots = (
   title: string,
@@ -123,6 +144,7 @@ export const resolveScreenshots = (
   const anchor = anchorFrom("Named_Snaps") ?? anchorFrom("Named_Titles");
   if (!anchor) return [];
   const anchorCore = parseArtFilename(anchor.file).core;
+  const anchorRegions = regionsOf(anchor.tags);
 
   const shots: Screenshot[] = [];
   for (const folder of SCREENSHOT_FOLDERS) {
@@ -131,6 +153,13 @@ export const resolveScreenshots = (
     for (const file of files) {
       const { core, tags } = parseArtFilename(file);
       if (!sameGame(anchorCore, core)) continue;
+      const regions = regionsOf(tags);
+      if (
+        anchorRegions.size &&
+        regions.size &&
+        ![...regions].some((value) => anchorRegions.has(value))
+      )
+        continue;
       shots.push({
         url: libretroArtUrl(folder, file),
         kind: KIND[folder],
@@ -198,7 +227,51 @@ export const sequenceNumbers = (value: string) => {
 /** Penalty applied when two titles disagree about which entry in a series they are. */
 const SEQUENCE_PENALTY = 0.35;
 
-const squash = (value: string) => normalizeTitle(value).replace(/ /g, "");
+/**
+ * Penalty per distinctive word the catalog title carries that the recording's
+ * name does not.
+ *
+ * Blended similarity is far too forgiving about a dropped word: `Crash
+ * Bandicoot: Warped` scored 0.81 against a plain `Crash Bandicoot`, clearing
+ * the floor and handing the third game the first game's video, because two of
+ * its three words did match and no sequence number disagreed. The check is
+ * one-directional — extra words on the recording's side are just uploader
+ * annotation (`- Arcade Mode`, `2nd Ignition`) — and ignores short words so
+ * that `Tobal No. 2` still reaches `Tobal 2` and `R4: Ridge Racer Type 4`
+ * still reaches `Ridge Racer Type 4`.
+ */
+const MISSING_WORD_PENALTY = 0.12;
+const DISTINCTIVE_WORD = 4;
+const missingWords = (title: string, candidate: string) => {
+  const present = new Set(canonical(candidate).split(" "));
+  return canonical(title)
+    .split(" ")
+    .filter((word) => word.length >= DISTINCTIVE_WORD && !present.has(word))
+    .length;
+};
+
+/**
+ * A dotted initialism written as one word. `Future Cop: L.A.P.D.` normalizes to
+ * the four separate words `l a p d`, which shares no whole word with the
+ * uploader's `Future Cop LAPD` and drags the blended score below the floor.
+ */
+const collapseAcronyms = (value: string) =>
+  value.replace(/\b(?:[A-Za-z]\.){2,}/g, (match) => match.replace(/\./g, ""));
+
+/**
+ * The form both sides of a comparison are reduced to before scoring: dotted
+ * initialisms joined and series numerals expressed one way. Box scans say
+ * `Suikoden II` and uploaders say `Suikoden 2`; the sequence check already
+ * understood they were the same entry, but the *string* comparison did not,
+ * leaving a correct match stranded at 0.65 under a 0.72 floor.
+ */
+const canonical = (value: string) =>
+  normalizeTitle(collapseAcronyms(value))
+    .split(" ")
+    .map((word) => (ROMAN[word] !== undefined ? String(ROMAN[word]) : word))
+    .join(" ");
+
+const squash = (value: string) => canonical(value).replace(/ /g, "");
 
 /**
  * Word-level similarity collapses to zero when romanization disagrees about
@@ -209,19 +282,93 @@ const squash = (value: string) => normalizeTitle(value).replace(/ /g, "");
 const similarity = (title: string, candidate: string) => {
   const squashed = squash(title);
   if (squashed && squashed === squash(candidate)) return 1;
-  return titleSimilarity(title, candidate);
+  return titleSimilarity(canonical(title), canonical(candidate));
 };
 
-export const scoreLongplay = (title: string, item: LongplayItem) => {
+/**
+ * The part of a name before its subtitle, for names that punctuate one.
+ *
+ * Longplay uploaders routinely record `Kurushi Final` and leave off
+ * `: Mental Blocks`, which strands a correct match under the floor. Comparing
+ * lead segments recovers those, but only where the bare lead actually names one
+ * game. It is deliberately discounted, because a lead-segment agreement is
+ * evidence rather than proof.
+ */
+const LEAD_SEGMENT_DISCOUNT = 0.92;
+const leadSegment = (value: string) => {
+  const [lead] = value.split(/\s+[-–—:]\s+|:/);
+  return lead && lead.trim() !== value.trim() ? lead.trim() : "";
+};
+
+/**
+ * How many distinct recordings in a corpus a bare name could be referring to.
+ *
+ * Dropping a subtitle is only safe when the remainder identifies one game, and
+ * a corpus answers that directly: a name that is also the opening of a longer,
+ * different name is a series, not a game. `Kurushi Final` extends nothing, so
+ * the uploader who wrote it meant `Kurushi Final: Mental Blocks`. `Crash
+ * Bandicoot` opens `Crash Bandicoot 2 …` and `Crash Bandicoot 3 …`, so it does
+ * *not* mean `Crash Bandicoot: Warped` — and without this check it matched
+ * exactly that at 0.92, handing the third game the first game's video. (The
+ * genuine Warped recording is filed under the typo `Crasj Bandicoot: Warped`,
+ * which is why nothing better outranked it.)
+ *
+ * Names are deduplicated first so that re-uploads of one recording do not read
+ * as a series, and every word-boundary prefix is counted so the lookup stays a
+ * single map read per candidate.
+ */
+const namePrefixCounts = (items: LongplayItem[]) => {
+  const names = new Set<string>();
+  for (const item of items) {
+    const name = canonical(cleanLongplayTitle(item.title || item.identifier));
+    if (name) names.add(name);
+  }
+  const counts = new Map<string, number>();
+  for (const name of names) {
+    const words = name.split(" ");
+    for (let i = 1; i <= words.length; i += 1) {
+      const prefix = words.slice(0, i).join(" ");
+      counts.set(prefix, (counts.get(prefix) ?? 0) + 1);
+    }
+  }
+  return counts;
+};
+
+/**
+ * A series entry a recording names but the catalog does not, or vice versa.
+ *
+ * Uploaders disambiguate the first game in a series by appending a `1` the box
+ * never carried — `Suikoden 1`, `Alundra 1` — which the sequence check read as
+ * "different entry" and penalised into rejection. Only the first entry gets
+ * this latitude: `Resident Evil` and `Resident Evil 2` must stay apart.
+ */
+const sameSeriesEntry = (wanted: number[], found: number[]) => {
+  if (wanted.length === found.length)
+    return wanted.every((value, i) => value === found[i]);
+  const [fewer, more] = wanted.length < found.length ? [wanted, found] : [found, wanted];
+  return fewer.length === 0 && more.length === 1 && more[0] === 1;
+};
+
+export const scoreLongplay = (
+  title: string,
+  item: LongplayItem,
+  leads?: Map<string, number>,
+) => {
   const cleaned = cleanLongplayTitle(item.title || item.identifier);
   if (!normalizeTitle(cleaned)) return 0;
-  const score = similarity(title, cleaned);
+  const lead = leadSegment(title);
+  const candidateLead = leadSegment(cleaned) || cleaned;
+  const ambiguous = (leads?.get(canonical(candidateLead)) ?? 1) > 1;
+  const score = Math.max(
+    similarity(title, cleaned) -
+      MISSING_WORD_PENALTY * missingWords(title, cleaned),
+    lead && !ambiguous
+      ? LEAD_SEGMENT_DISCOUNT * similarity(lead, candidateLead)
+      : 0,
+  );
   const wanted = sequenceNumbers(title);
   const found = sequenceNumbers(cleaned);
-  const sameSeries =
-    wanted.length === found.length &&
-    wanted.every((value, i) => value === found[i]);
-  return sameSeries ? score : score - SEQUENCE_PENALTY;
+  return sameSeriesEntry(wanted, found) ? score : score - SEQUENCE_PENALTY;
 };
 
 /**
@@ -234,11 +381,12 @@ export const rankLongplays = (
   items: LongplayItem[],
   limit = 12,
 ): LongplayMatch[] => {
+  const leads = namePrefixCounts(items);
   const scored = items
     .map((item) => ({
       identifier: item.identifier,
       title: item.title || item.identifier,
-      score: scoreLongplay(title, item),
+      score: scoreLongplay(title, item, leads),
     }))
     .filter((entry) => entry.score > 0.4);
   scored.sort(

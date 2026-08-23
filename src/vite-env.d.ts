@@ -21,8 +21,10 @@ interface Window {
       gameId: string,
       urls: string[],
     ): Promise<{ sourceUrl: string; localUrl: string }[]>;
-    getVideoInfo(identifier: string): Promise<LocalVideoInfo>;
-    downloadVideo(identifier: string): Promise<LocalVideoInfo>;
+    getVideoPreview(identifier: string): Promise<VideoPreview>;
+    downloadVideo(identifier: string): Promise<VideoPreview>;
+    cacheFrames(gameId: string, frames: { at: number; data: string }[]): Promise<CachedFrame[]>;
+    getCachedFrames(gameId: string): Promise<CachedFrame[]>;
     getMediaCacheStats(): Promise<MediaCacheStats>;
     clearMediaCache(): Promise<MediaCacheStats>;
     onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
@@ -48,7 +50,14 @@ interface Window {
     downloadGame(provider: "realdebrid" | "torbox", link: string, title: string): Promise<{ path: string; filename: string; bytes: number; directory: string }>;
     onGameDownloadProgress(listener: (progress: GameDownloadProgress) => void): () => void;
     searchCollections(title: string, region: string): Promise<CollectionCandidate[]>;
+    indexCollection(source: CollectionSource): Promise<{ url: string; files: number; indexedAt: number }>;
+    getCollectionStatus(): Promise<IndexedCollection[]>;
     downloadCollectionSelection(sourceUrl: string, paths: string[], title: string): Promise<{ directory: string; files: string[] }>;
+    getEmuMoviesSettings(): Promise<EmuMoviesSettings>;
+    loginEmuMovies(credentials: { username?: string; password?: string }): Promise<EmuMoviesProbe>;
+    indexEmuMovies(): Promise<{ folder: string; quality: string; snaps: number; indexedAt: number }>;
+    forgetEmuMovies(): Promise<boolean>;
+    getEmuMoviesSnap(title: string, region: string): Promise<EmuMoviesSnap | null>;
     getUpdateStatus(): Promise<UpdateStatus>;
     checkForUpdates(): Promise<void>;
     downloadUpdate(): Promise<void>;
@@ -79,7 +88,32 @@ type GameDownloadProgress = {
 };
 type CollectionSource = { name: string; url: string; platform: string };
 type LibraryItem = { id: string; title: string; platform: string; directory: string; files: string[]; queuedAt: string };
-type CollectionCandidate = { path: string; bytes: number; index: number; score: number; collection: string; sourceUrl: string };
+type ReleaseVariant = {
+  region: "USA" | "Europe" | "Japan" | "World" | "Unknown";
+  translated: boolean;
+  english: boolean;
+  label: string;
+};
+type CollectionCandidate = { path: string; bytes: number; index: number; score: number; collection: string; sourceUrl: string; variant: ReleaseVariant };
+type IndexedCollection = CollectionSource & { indexed: boolean; files: number; indexedAt: number };
+type EmuMoviesSettings = {
+  username: string;
+  hasPassword: boolean;
+  indexed: boolean;
+  snaps: number;
+  quality: string;
+  indexedAt: number;
+};
+type EmuMoviesProbe = {
+  ok: boolean;
+  secure: boolean;
+  message: string;
+  systems: string[];
+  snapFolder?: string;
+  qualities: string[];
+};
+type EmuMoviesSnap = { name: string; quality: string; localUrl: string; bytes: number };
+type CachedFrame = { at: number; localUrl: string };
 type FpgaProgress = {
   gameTitle: string;
   file: string;
@@ -101,13 +135,24 @@ type UpdateStatus = {
   percent?: number;
   message?: string;
 };
-type LocalVideoInfo = {
+type VideoPreview = {
   identifier: string;
   name: string;
   size: number;
   format: string;
+  duration: number;
+  streamUrl: string;
+  gifUrl?: string;
   cached: boolean;
   localUrl?: string;
+  /**
+   * Which provider supplied the preview. An Internet Archive longplay is a
+   * multi-gigabyte recording that is streamed and windowed; an EmuMovies snap
+   * is a small curated clip already on disk. They differ in what the pane may
+   * offer — a snap has nothing to "save offline" and no archive.org page — so
+   * the origin travels with the preview rather than being inferred from it.
+   */
+  source?: "archive" | "emumovies";
 };
 type MediaCacheStats = { bytes: number; path: string };
 type VideoProgress = {

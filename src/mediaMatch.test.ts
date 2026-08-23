@@ -75,6 +75,27 @@ describe("screenshots", () => {
     expect(files.some((f) => /Elder Gate/i.test(f))).toBe(false);
   });
 
+  /**
+   * Pooling every printing turned the gallery into a region grab-bag: the USA
+   * menu, the PAL menu and the Japanese menu presented as one game's frames.
+   */
+  it("shows only the primary variant, not every regional printing", () => {
+    const files = resolveScreenshots("Incredible Crisis", "USA", indexes).map(
+      (s) => decodeURIComponent(s.url),
+    );
+    expect(files.length).toBeGreaterThan(0);
+    expect(files.every((f) => /\(USA\)/.test(f))).toBe(true);
+    expect(files.some((f) => /\(Europe\)/.test(f))).toBe(false);
+  });
+
+  it("follows the catalog region rather than always preferring USA", () => {
+    const files = resolveScreenshots("Vib-Ribbon", "Europe", indexes).map((s) =>
+      decodeURIComponent(s.url),
+    );
+    expect(files.length).toBeGreaterThan(0);
+    expect(files.every((f) => /\(Europe\)/.test(f))).toBe(true);
+  });
+
   /** Multi-disc releases are the same game and must still stack up. */
   it("keeps every disc of a multi-disc release", () => {
     const files = resolveScreenshots("Kowloon's Gate", "Japan", indexes).map(
@@ -168,6 +189,64 @@ describe("longplay resolution", () => {
     it(`leaves ${title} without a video rather than guessing`, () => {
       expect(resolveLongplay(title, longplayIndexSample)).toBeNull();
     });
+
+  /**
+   * Each of these was a correct recording that the live index already held and
+   * the matcher rejected: measured against the real 998-item index they scored
+   * 0.65, 0.67, 0.44 and 0.43 under a 0.72 floor. Coverage over the 100-game
+   * catalog went from 53 to 67 once they resolved.
+   */
+  describe("recovered matches", () => {
+    const item = (title: string) => ({ identifier: title.replace(/\W+/g, "_"), title });
+    const index = [
+      item("PSX Longplay [251] Suikoden 2"),
+      item("PSX Longplay 201 Suikoden 1"),
+      item("PSX Longplay [079] Future Cop LAPD"),
+      item("PSX Longplay 145 Alundra 1"),
+      item("PSX Longplay - Kurushi Final (EU)"),
+      item("PSX Longplay [004] Resident Evil"),
+      item("PS1 Longplay Crash Bandicoot"),
+      item("PS1 Longplay Crash Bandicoot 2 Cortex Strikes Back"),
+      item("PSX Longplay [614] Crash Bandicoot 3 - Buttobi! Sekai Isshuu"),
+    ];
+    const resolved = (title: string) => resolveLongplay(title, index)?.title;
+
+    it("reads a roman numeral and an arabic numeral as the same entry", () => {
+      expect(resolved("Suikoden II")).toBe("PSX Longplay [251] Suikoden 2");
+    });
+
+    it("reads a dotted initialism as one word", () => {
+      expect(resolved("Future Cop: L.A.P.D.")).toBe(
+        "PSX Longplay [079] Future Cop LAPD",
+      );
+    });
+
+    it("accepts the 1 an uploader adds to the first game in a series", () => {
+      expect(resolved("Suikoden")).toBe("PSX Longplay 201 Suikoden 1");
+      expect(resolved("Alundra")).toBe("PSX Longplay 145 Alundra 1");
+    });
+
+    it("still refuses the previous entry in a series", () => {
+      expect(resolveLongplay("Resident Evil 2", index)).toBeNull();
+    });
+
+    it("accepts a dropped subtitle when the remainder names one game", () => {
+      expect(resolved("Kurushi Final: Mental Blocks")).toBe(
+        "PSX Longplay - Kurushi Final (EU)",
+      );
+    });
+
+    /**
+     * The reverse case, and the reason the subtitle rule is gated. `Crash
+     * Bandicoot` leads three entries here, so it identifies none of them —
+     * without the guard `Crash Bandicoot: Warped` took the first game's video
+     * at 0.92, and plain similarity alone still cleared the floor at 0.81.
+     */
+    it("refuses a dropped subtitle when the remainder is a whole series", () => {
+      expect(resolveLongplay("Crash Bandicoot: Warped", index)).toBeNull();
+      expect(resolved("Crash Bandicoot")).toBe("PS1 Longplay Crash Bandicoot");
+    });
+  });
 
   it("keeps the near-misses below the floor", () => {
     // The scorer may still rank these first; the floor is what rejects them.

@@ -1,5 +1,7 @@
 import path from "node:path";
 import net from "node:net";
+import crypto from "node:crypto";
+import fsp from "node:fs/promises";
 
 type Node = Buffer | number | Node[] | { [key: string]: Node };
 export type CollectionFile = { path: string; bytes: number; index: number };
@@ -60,11 +62,139 @@ const score = (query: string, candidate: string, region: string) => {
   const regionBonus = new RegExp(`\\(${region === "USA" ? "USA" : region}[^)]*\\)`, "i").test(candidate) ? 0.2 : 0;
   return title + exact + regionBonus;
 };
-export function matchCollectionFiles(files: CollectionFile[], title: string, region: string) {
-  return files.map((file) => ({ ...file, score: score(title, file.path, region) }))
+
+/**
+ * The release a filename announces, in the terms a person picking a download
+ * cares about: which region, and whether it is a fan translation.
+ *
+ * Add to Cart is meant to be one decision, so the list behind it has to be the
+ * few releases actually worth choosing between \u2014 the catalog region, an English
+ * translation of an import, or a World release. Every other printing of the
+ * same game is noise at that moment.
+ */
+export type ReleaseVariant = {
+  region: "USA" | "Europe" | "Japan" | "World" | "Unknown";
+  translated: boolean;
+  english: boolean;
+  label: string;
+};
+const REGION_WORDS: [RegExp, ReleaseVariant["region"]][] = [
+  [/\b(usa|us|ntsc-u)\b/i, "USA"],
+  [/\b(europe|eur|pal|uk)\b/i, "Europe"],
+  [/\b(japan|jpn|jp|ntsc-j)\b/i, "Japan"],
+  [/\bworld\b/i, "World"],
+];
+const TRANSLATION = /\b(t-en|t\+en|english (?:translation|patch(?:ed)?)|eng(?:lish)? translated|translation)\b/i;
+
+export function releaseVariant(filePath: string): ReleaseVariant {
+  const name = path.basename(filePath);
+  const tags = [...name.matchAll(/[([]([^)\]]*)[)\]]/g)].map((m) => m[1]).join(" ");
+  const region = REGION_WORDS.find(([pattern]) => pattern.test(tags))?.[1] ?? "Unknown";
+  const translated = TRANSLATION.test(name);
+  const english = translated || region === "USA" || region === "Europe" || region === "World";
+  const label = translated
+    ? `${region === "Unknown" ? "Import" : region} (English translation)`
+    : region === "Unknown"
+      ? "Unlabelled release"
+      : region;
+  return { region, translated, english, label };
+}
+
+export type CollectionMatch = CollectionFile & {
+  score: number;
+  variant: ReleaseVariant;
+};
+
+/**
+ * Candidate downloads for one catalog game, narrowed to its primary releases.
+ *
+ * Ranking alone was not enough: a well-stocked collection carries a dozen
+ * printings of a popular game, so the picker showed twelve near-identical rows
+ * and made the user adjudicate No-Intro tags. Only releases matching the
+ * catalog's own region survive, plus World releases and English translations of
+ * imports, which are the other two ways a listed game is actually playable.
+ * When a game exists in no such form the region filter is dropped rather than
+ * returning nothing, and the rows stay labelled so the compromise is visible.
+ */
+export function matchCollectionFiles(
+  files: CollectionFile[],
+  title: string,
+  region: string,
+): CollectionMatch[] {
+  const scored = files
+    .map((file) => ({
+      ...file,
+      score: score(title, file.path, region),
+      variant: releaseVariant(file.path),
+    }))
     .filter((file) => file.score >= 0.62)
-    .sort((a, b) => b.score - a.score || a.bytes - b.bytes)
-    .slice(0, 12);
+    .sort((a, b) => b.score - a.score || a.bytes - b.bytes);
+  const primary = scored.filter(
+    (file) =>
+      file.variant.region === region ||
+      file.variant.region === "World" ||
+      file.variant.translated,
+  );
+  return (primary.length ? primary : scored).slice(0, 8);
+}
+
+/**
+ * A collection's file manifest, parsed once and kept.
+ *
+ * Every "Find release" click used to re-download the whole `.torrent` — up to
+ * 64 MB — and re-decode its bencode before it could rank a single filename,
+ * which is what made searching feel like indexing. The manifest is textual and
+ * small next to the torrent it came from, so it is written beside the settings
+ * that configured it and read back directly.
+ */
+export type CollectionManifest = {
+  url: string;
+  name: string;
+  platform: string;
+  indexedAt: number;
+  files: CollectionFile[];
+};
+export type CollectionSource = { name: string; url: string; platform: string };
+
+const manifestName = (url: string) =>
+  `${crypto.createHash("sha1").update(url).digest("hex")}.json`;
+
+export async function readCollectionManifest(dir: string, url: string) {
+  try {
+    const raw = await fsp.readFile(path.join(dir, manifestName(url)), "utf8");
+    const manifest = JSON.parse(raw) as CollectionManifest;
+    return manifest.files?.length ? manifest : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Downloads, parses and stores one collection's manifest. */
+export async function indexCollection(dir: string, source: CollectionSource) {
+  const files = torrentFiles(await fetchTorrent(source.url));
+  const manifest: CollectionManifest = {
+    url: source.url,
+    name: source.name,
+    platform: source.platform,
+    indexedAt: Date.now(),
+    files,
+  };
+  await fsp.mkdir(dir, { recursive: true });
+  await fsp.writeFile(path.join(dir, manifestName(source.url)), JSON.stringify(manifest), "utf8");
+  return manifest;
+}
+
+/**
+ * The manifest for a configured source, indexing it only if it was never
+ * indexed. A source saved in Settings is indexed there; this is the recovery
+ * path for a manifest that was cleared, not the normal one.
+ */
+export async function ensureCollectionManifest(dir: string, source: CollectionSource) {
+  return (await readCollectionManifest(dir, source.url)) ?? indexCollection(dir, source);
+}
+
+export async function removeCollectionManifest(dir: string, url: string) {
+  await fsp.rm(path.join(dir, manifestName(url)), { force: true });
 }
 
 export async function fetchTorrent(url: string) {

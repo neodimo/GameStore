@@ -3,9 +3,12 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  protocol,
   safeStorage,
   shell,
 } from "electron";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
 import path from "node:path";
 import fs from "node:fs/promises";
 import SftpClient from "ssh2-sftp-client";
@@ -19,15 +22,35 @@ import {
   libraryRoot,
 } from "./downloadManager";
 import { checkoutCart, getCart, removeFromCart } from "./libraryManager";
-import { fetchTorrent, matchCollectionFiles, torrentFiles } from "./collectionIndex";
+import {
+  ensureCollectionManifest,
+  fetchTorrent,
+  indexCollection,
+  matchCollectionFiles,
+  readCollectionManifest,
+  removeCollectionManifest,
+} from "./collectionIndex";
 import { getArtIndex } from "./artIndex";
 import {
+  fetchSnap,
+  indexSnaps,
+  matchSnap,
+  probeAccount,
+  readSnapManifest,
+  removeSnapManifest,
+  type EmuMoviesCredentials,
+} from "./emuMovies";
+import {
+  cacheFrames,
   cacheScreenshots,
   cacheStats,
   clearMediaCache,
   downloadVideo,
+  getCachedFrames,
   getLongplayIndex,
-  getVideoInfo,
+  getVideoPreview,
+  MEDIA_SCHEME,
+  streamArchiveVideo,
 } from "./mediaCache";
 
 let win: BrowserWindow | null = null;
@@ -51,7 +74,112 @@ const createWindow = () => {
   if (dev) win.loadURL(dev);
   else win.loadFile(path.join(__dirname, "../dist/index.html"));
 };
+/**
+ * Previews play from `gsmedia://video/<identifier>` rather than straight from
+ * archive.org. `stream` keeps range requests intact so a media element can seek
+ * inside a two-gigabyte recording, and `corsEnabled` plus `standard` leave the
+ * response same-origin, which is what lets a canvas read frames back out of the
+ * playing video without tainting.
+ */
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: MEDIA_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      corsEnabled: true,
+    },
+  },
+]);
+
+const MEDIA_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Accept-Ranges": "bytes",
+  "Content-Type": "video/mp4",
+};
+const contentType = (file: string) =>
+  /\.png$/i.test(file)
+    ? "image/png"
+    : /\.(jpe?g)$/i.test(file)
+      ? "image/jpeg"
+      : /\.webp$/i.test(file)
+        ? "image/webp"
+        : "video/mp4";
+
+/** Serves a completed local download, honouring the player's range request. */
+const localVideoResponse = (file: string, size: number, range?: string | null) => {
+  const match = /bytes=(\d*)-(\d*)/.exec(range ?? "");
+  if (!match) {
+    const stream = createReadStream(file);
+    return new Response(Readable.toWeb(stream) as ReadableStream, {
+      status: 200,
+      headers: {
+        ...MEDIA_HEADERS,
+        "Content-Type": contentType(file),
+        "Content-Length": String(size),
+      },
+    });
+  }
+  const start = match[1] ? Number(match[1]) : 0;
+  const end = match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+  const stream = createReadStream(file, { start, end });
+  return new Response(Readable.toWeb(stream) as ReadableStream, {
+    status: 206,
+    headers: {
+      ...MEDIA_HEADERS,
+      "Content-Type": contentType(file),
+      "Content-Length": String(end - start + 1),
+      "Content-Range": `bytes ${start}-${end}/${size}`,
+    },
+  });
+};
+
+const registerMediaProtocol = () =>
+  protocol.handle(MEDIA_SCHEME, async (request) => {
+    const url = new URL(request.url);
+    if (url.hostname === "asset") {
+      try {
+        const candidate = Buffer.from(
+          url.pathname.replace(/^\//, ""),
+          "base64url",
+        ).toString("utf8");
+        const mediaRoot = path.resolve(app.getPath("userData"), "media-cache");
+        const local = path.resolve(candidate);
+        if (!local.startsWith(`${mediaRoot}${path.sep}`))
+          return new Response("Not found", { status: 404 });
+        const stat = await fs.stat(local);
+        if (!stat.isFile()) return new Response("Not found", { status: 404 });
+        return localVideoResponse(local, stat.size, request.headers.get("Range"));
+      } catch {
+        return new Response("Not found", { status: 404 });
+      }
+    }
+    if (url.hostname !== "video") return new Response("Not found", { status: 404 });
+    const identifier = decodeURIComponent(url.pathname.replace(/^\//, ""));
+    const range = request.headers.get("Range");
+    try {
+      const result = await streamArchiveVideo(identifier, range ?? undefined);
+      if (result.cachedFile)
+        return localVideoResponse(result.cachedFile, result.size!, range);
+      const upstream = result.response!;
+      const headers = new Headers(MEDIA_HEADERS);
+      for (const key of ["content-length", "content-range", "content-type"]) {
+        const value = upstream.headers.get(key);
+        if (value) headers.set(key, value);
+      }
+      return new Response(upstream.body, { status: upstream.status, headers });
+    } catch (error) {
+      return new Response(error instanceof Error ? error.message : "Stream failed", {
+        status: 502,
+        headers: { "Access-Control-Allow-Origin": "*" },
+      });
+    }
+  });
+
 app.whenReady().then(() => {
+  registerMediaProtocol();
   configureUpdater();
   createWindow();
 });
@@ -80,6 +208,11 @@ type ProviderSettings = {
     encrypted?: boolean;
   };
   collections?: { name: string; url: string; platform: string }[];
+  emumovies?: {
+    username?: string;
+    password?: string;
+    encrypted?: boolean;
+  };
   fpga?: {
     host: string;
     port: number;
@@ -105,6 +238,16 @@ const readSettings = async (): Promise<ProviderSettings> => {
         password: safeStorage.isEncryptionAvailable()
           ? safeStorage.decryptString(
               Buffer.from(stored.fpga.password, "base64"),
+            )
+          : undefined,
+      };
+    if (stored.emumovies?.encrypted && safeStorage.isEncryptionAvailable())
+      result.emumovies = {
+        encrypted: true,
+        username: stored.emumovies.username,
+        password: stored.emumovies.password
+          ? safeStorage.decryptString(
+              Buffer.from(stored.emumovies.password, "base64"),
             )
           : undefined,
       };
@@ -149,6 +292,7 @@ ipcMain.handle("provider-key-set", async (_e, key: string) => {
   });
   return true;
 });
+const collectionDir = () => path.join(app.getPath("userData"), "collection-index");
 ipcMain.handle("debrid-settings-get", async () => {
   const debrid = (await readSettings()).debrid;
   return {
@@ -184,17 +328,168 @@ ipcMain.handle(
         ? (incoming as any).collections.map((item: any) => ({ name: String(item.name || "Collection").trim(), url: String(item.url || "").trim(), platform: String(item.platform || "PS1") })).filter((item: any) => /^https:\/\//.test(item.url))
         : current.collections,
     });
-    return { hasRealDebrid: !!realdebrid, hasTorBox: !!torbox, collections: (await readSettings()).collections ?? [] };
+    const saved = (await readSettings()).collections ?? [];
+    // A source that is no longer configured must not leave a searchable manifest.
+    for (const stale of (current.collections ?? []).filter(
+      (item) => !saved.some((keep) => keep.url === item.url),
+    ))
+      await removeCollectionManifest(collectionDir(), stale.url);
+    return { hasRealDebrid: !!realdebrid, hasTorBox: !!torbox, collections: saved };
+  },
+);
+/**
+ * Indexing belongs to configuring a source, not to searching one. Settings
+ * calls this when a collection URL is saved; from then on every game's Add to
+ * Cart reads the stored manifest.
+ */
+ipcMain.handle(
+  "collection-index",
+  async (_e, source: { name: string; url: string; platform: string }) => {
+    const manifest = await indexCollection(collectionDir(), source);
+    return { url: manifest.url, files: manifest.files.length, indexedAt: manifest.indexedAt };
+  },
+);
+ipcMain.handle("collection-status", async () => {
+  const collections = (await readSettings()).collections ?? [];
+  return Promise.all(
+    collections.map(async (collection) => {
+      const manifest = await readCollectionManifest(collectionDir(), collection.url);
+      return {
+        ...collection,
+        indexed: !!manifest,
+        files: manifest?.files.length ?? 0,
+        indexedAt: manifest?.indexedAt ?? 0,
+      };
+    }),
+  );
+});
+const snapDir = () => path.join(app.getPath("userData"), "emumovies-index");
+const snapCacheDir = () => path.join(app.getPath("userData"), "media-cache", "snaps");
+/**
+ * The stored login, or nothing. Every EmuMovies path funnels through this so a
+ * missing credential is an ordinary "no provider configured" rather than an
+ * error thrown from inside a media lookup.
+ */
+const emuCredentials = async (): Promise<EmuMoviesCredentials | null> => {
+  const stored = (await readSettings()).emumovies;
+  return stored?.username && stored.password
+    ? { username: stored.username, password: stored.password }
+    : null;
+};
+ipcMain.handle("emumovies-settings-get", async () => {
+  const stored = (await readSettings()).emumovies;
+  const manifest = await readSnapManifest(snapDir());
+  return {
+    username: stored?.username ?? "",
+    hasPassword: !!stored?.password,
+    indexed: !!manifest,
+    snaps: manifest?.files.length ?? 0,
+    quality: manifest?.quality ?? "",
+    indexedAt: manifest?.indexedAt ?? 0,
+  };
+});
+/**
+ * Saving credentials and signing in are one action, because a saved credential
+ * that has never been tried tells the member nothing. The probe reports what
+ * the account can actually see, which is also how the membership tier is
+ * established without asking anyone to recall it.
+ */
+ipcMain.handle(
+  "emumovies-login",
+  async (_e, incoming: { username?: string; password?: string }) => {
+    const current = (await readSettings()).emumovies;
+    const username = String(incoming.username ?? current?.username ?? "").trim();
+    const password = String(incoming.password || current?.password || "");
+    if (!username || !password)
+      return {
+        ok: false,
+        message: "Enter your EmuMovies username and password.",
+        qualities: [],
+        systems: [],
+        secure: false,
+      };
+    const probe = await probeAccount({ username, password });
+    if (!probe.ok) return probe;
+    const raw = JSON.parse(
+      await fs.readFile(settingsFile(), "utf8").catch(() => "{}"),
+    );
+    const encrypted = safeStorage.isEncryptionAvailable();
+    await writeSettings({
+      ...raw,
+      emumovies: {
+        encrypted,
+        username,
+        password: encrypted
+          ? safeStorage.encryptString(password).toString("base64")
+          : password,
+      },
+    });
+    return probe;
+  },
+);
+/** Index the snap listing once, the way a collection source is indexed once. */
+ipcMain.handle("emumovies-index", async () => {
+  const credentials = await emuCredentials();
+  if (!credentials) throw new Error("Sign in to EmuMovies first.");
+  const manifest = await indexSnaps(snapDir(), credentials);
+  return {
+    folder: manifest.folder,
+    quality: manifest.quality,
+    snaps: manifest.files.length,
+    indexedAt: manifest.indexedAt,
+  };
+});
+ipcMain.handle("emumovies-forget", async () => {
+  const raw = JSON.parse(
+    await fs.readFile(settingsFile(), "utf8").catch(() => "{}"),
+  );
+  delete raw.emumovies;
+  await writeSettings(raw);
+  await removeSnapManifest(snapDir());
+  return true;
+});
+/**
+ * The preview for one game, when EmuMovies can supply it. A snap is small
+ * enough to hold outright, so this returns a local file rather than a stream:
+ * the pane gets a preview that loops immediately and does not depend on a
+ * remote node staying healthy.
+ */
+ipcMain.handle(
+  "emumovies-snap",
+  async (_e, title: string, region: string) => {
+    const credentials = await emuCredentials();
+    if (!credentials) return null;
+    const manifest = await readSnapManifest(snapDir());
+    if (!manifest) return null;
+    const match = matchSnap(manifest.files, title, region);
+    if (!match) return null;
+    const { localUrl, bytes } = await fetchSnap(
+      snapCacheDir(),
+      credentials,
+      match.path,
+    );
+    return {
+      name: match.name,
+      quality: manifest.quality,
+      localUrl,
+      bytes,
+    };
   },
 );
 ipcMain.handle("collection-search", async (_e, title: string, region: string) => {
   const collections = (await readSettings()).collections ?? [];
   const results: any[] = [];
   for (const collection of collections.filter((item) => item.platform === "PS1")) {
-    const torrent = await fetchTorrent(collection.url);
-    results.push(...matchCollectionFiles(torrentFiles(torrent), title, region).map((file) => ({ ...file, collection: collection.name, sourceUrl: collection.url })));
+    const manifest = await ensureCollectionManifest(collectionDir(), collection);
+    results.push(
+      ...matchCollectionFiles(manifest.files, title, region).map((file) => ({
+        ...file,
+        collection: collection.name,
+        sourceUrl: collection.url,
+      })),
+    );
   }
-  return results.sort((a, b) => b.score - a.score).slice(0, 16);
+  return results.sort((a, b) => b.score - a.score).slice(0, 8);
 });
 ipcMain.handle("collection-download", async (_e, sourceUrl: string, paths: string[], gameTitle: string) => {
   const settings = await readSettings();
@@ -230,12 +525,18 @@ ipcMain.handle("media-longplays-get", (_e, force?: boolean) =>
 ipcMain.handle("media-screens-cache", (_e, gameId: string, urls: string[]) =>
   cacheScreenshots(gameId, urls),
 );
-ipcMain.handle("media-video-info", (_e, identifier: string) =>
-  getVideoInfo(identifier),
+ipcMain.handle("media-video-preview", (_e, identifier: string) =>
+  getVideoPreview(identifier),
 );
 ipcMain.handle("media-video-download", (_e, identifier: string) =>
   downloadVideo(identifier, win),
 );
+ipcMain.handle(
+  "media-frames-cache",
+  (_e, gameId: string, frames: { at: number; data: string }[]) =>
+    cacheFrames(gameId, frames),
+);
+ipcMain.handle("media-frames-get", (_e, gameId: string) => getCachedFrames(gameId));
 ipcMain.handle("media-cache-stats", cacheStats);
 ipcMain.handle("media-cache-clear", clearMediaCache);
 const queryTheGamesDb = async (key: string, name: string) => {
