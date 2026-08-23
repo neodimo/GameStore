@@ -511,6 +511,7 @@ main {
 }
 .detail {
   position: relative;
+  scroll-margin-top: 92px;
   margin: -3px 0 30px;
   padding: 25px 22px;
   background: linear-gradient(145deg, #191c1e, #101213);
@@ -1716,42 +1717,6 @@ footer {
   position: relative;
   margin-left: auto;
 }
-.media-audit {
-  height: 39px;
-  min-width: 126px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #34383b;
-  border-radius: 7px;
-  padding: 0 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  background: #131719;
-  color: #92989b;
-}
-.media-audit svg {
-  width: 14px;
-}
-.media-audit span {
-  font-size: 10px;
-  white-space: nowrap;
-}
-.media-audit.complete {
-  color: #8dd36e;
-}
-.media-audit.error {
-  color: #ff8069;
-}
-.media-audit i {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  background: var(--cyan);
-  transition: width 0.2s;
-}
 .update-button {
   height: 39px;
   min-width: 145px;
@@ -1830,14 +1795,6 @@ footer {
     padding: 0;
   }
   .update-button span {
-    display: none;
-  }
-  .media-audit {
-    min-width: 40px;
-    width: 40px;
-    padding: 0;
-  }
-  .media-audit span {
     display: none;
   }
   .updater > small {

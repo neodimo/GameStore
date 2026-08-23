@@ -171,3 +171,9 @@
 - **Artifacts:** `projects/GameStore/README.md`, `projects/GameStore/CONTEXT.md`, and this task log. Local workspace files; no Git repository or remote has been created.
 - **State:** Done for naming and workspace identity. Planning remains in progress; implementation is explicitly unstarted.
 - **Next owner + concrete artifact:** Bert/Gonzo should produce plan v002 and revised edge-state mockups using `projects/GameStore/README.md` and `projects/GameStore/CONTEXT.md`; Omid approves before the 30-case spike.
+## 2026-08-23 — v0.10.3 UX/performance pass
+
+- **What was done:** Audited the production desktop UI and exercised catalog-to-detail interaction under Xvfb at 1600×1000. Removed the header media-audit status and the launch-time 100-title media crawl: browsing no longer triggers a catalog-wide run of provider probes and screenshot-cache writes. Media resolves only for a title the user opens, with its screenshot cache and video-provider resolution started in parallel. Corrected the detail anchor so its title lands below the sticky header rather than hidden behind it. The footer now reports the release version accurately.
+- **Artifacts:** `src/App.tsx`, `src/mediaLibrary.ts`, `src/style.css`, `package.json`, `package-lock.json`, and `CONTEXT.md`. Visual-QA captures at `/tmp/gamestore-ux-v0103-wide.png`, `/tmp/gamestore-ux-v0103-detail.png`, and `/tmp/gamestore-ux-v0103-detail-fixed.png` are deliberate local scratch and uncommitted.
+- **State:** Done locally; production web/Electron build, TypeScript lint, 86 tests, source/bundle media-light checks, `git diff --check`, and production dependency audit (0 vulnerabilities) pass. Exact production installer/CI verification follows the pushed v0.10.3 release.
+- **Next owner + concrete artifact:** Gonzo owns publishing and verifying v0.10.3. Omid's acceptance artifact is the released installer and a real Windows browse/open interaction, especially on a cold media cache.

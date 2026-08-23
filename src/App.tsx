@@ -28,11 +28,7 @@ import { curatedShelves, facetOrder, games, Game } from "./catalog";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
-import {
-  restartMediaAudit,
-  startMediaAudit,
-  useMediaAuditStatus,
-} from "./mediaLibrary";
+import { restartMediaAudit } from "./mediaLibrary";
 
 type Sort = "curated" | "title" | "year-new" | "year-old";
 const open = (url: string) =>
@@ -51,10 +47,6 @@ const loadFavs = () => {
   }
 };
 export function App() {
-  useEffect(() => {
-    const timer = setTimeout(() => startMediaAudit(games), 600);
-    return () => clearTimeout(timer);
-  }, []);
   return (
     <ArtworkProvider games={games}>
       <Catalog />
@@ -126,7 +118,7 @@ function Catalog() {
       requestAnimationFrame(() =>
         detailsRef.current?.scrollIntoView({
           behavior: "smooth",
-          block: "nearest",
+          block: "start",
         }),
       );
   }, [selected]);
@@ -212,7 +204,6 @@ function Catalog() {
               </button>
             )}
           </div>
-          <MediaAuditIndicator />
           <LibraryCart />
           <UpdaterButton />
         </header>
@@ -352,7 +343,7 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.10.1</b>
+          <b>GameStore 0.10.3</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -1225,10 +1216,11 @@ function ProviderSettings({
           <Database /> Local media cache
         </h2>
         <p>
-          GameStore checks every title in a throttled startup batch and fills
-          missing screenshots in the background. EmuMovies snaps cache locally
-          after sign-in; otherwise, matched Internet Archive longplays stream a
-          short loop without silently downloading the full recording.
+          GameStore resolves media only when you open a game, so browsing never
+          competes with a catalog-wide background download. EmuMovies snaps
+          cache locally after sign-in; otherwise, matched Internet Archive
+          longplays stream a short loop without silently downloading the full
+          recording.
         </p>
         <div className="cache-row">
           <div>
@@ -1324,31 +1316,6 @@ function ProviderSettings({
         </div>
         {test && <p className="test-result">{test}</p>}
       </section>
-    </div>
-  );
-}
-
-function MediaAuditIndicator() {
-  const status = useMediaAuditStatus();
-  const active = status.state === "indexing" || status.state === "scanning";
-  const percent = status.total
-    ? Math.round((status.completed / status.total) * 100)
-    : 0;
-  const label =
-    status.state === "complete"
-      ? "Media ready"
-      : status.state === "error"
-        ? "Media check failed"
-        : status.state === "idle"
-          ? "Media queued"
-          : status.state === "indexing"
-            ? "Indexing media…"
-            : `Media ${status.completed}/${status.total}`;
-  return (
-    <div className={`media-audit ${status.state}`} title={status.message}>
-      <Database className={active ? "spin" : ""} />
-      <span>{label}</span>
-      {active && <i style={{ width: `${percent}%` }} />}
     </div>
   );
 }
