@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { addTorrent } from "./realDebrid";
 
 export type DebridProvider = "realdebrid" | "torbox";
 
@@ -84,11 +85,9 @@ async function resolveLink(provider: DebridProvider, token: string, link: string
 }
 
 export async function resolveRealDebridTorrentSelection(token: string, torrent: Buffer, wantedPaths: string[]) {
-  const body = new FormData();
-  body.set("file", new Blob([torrent]), "collection.torrent");
-  const added = await fetch("https://api.real-debrid.com/rest/1.0/torrents/addTorrent", { method: "PUT", headers: auth(token), body });
-  if (!added.ok) await apiError(added);
-  const id = String(((await added.json()) as any).id);
+  // Real-Debrid requires raw .torrent bytes here; multipart/form-data causes
+  // `torrent_file_invalid` (error 30).
+  const id = await addTorrent(token, new Uint8Array(torrent));
   let info: any;
   for (let attempt = 0; attempt < 30; attempt++) {
     const response = await fetch(`https://api.real-debrid.com/rest/1.0/torrents/info/${id}`, { headers: auth(token) });
