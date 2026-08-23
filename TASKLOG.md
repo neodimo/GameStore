@@ -3,9 +3,9 @@
 ## 2026-08-23 — EmuMovies FTP credential clarification
 
 - **What was done:** Corrected the EmuMovies account flow to call for the provider's separately generated FTP/file-server username and password, rather than falsely presenting the emumovies.com website login as interchangeable. Authentication rejections now explain that a generated FTP username commonly ends in `@emumovies-fileserver.com` and explicitly do not diagnose membership tier from a 530/430 response. Settings copy and placeholders now make the required credentials clear.
-- **Artifacts:** Local changes in `electron/emuMovies.ts`, `electron/main.ts`, `src/App.tsx`, and `CONTEXT.md`; pending commit/release at this entry. No user credentials were read, logged, or stored by this work.
-- **State:** Done locally; `npm test -- --run` passed 86 tests, `npm run lint`, production web/Electron build, and `git diff --check` passed. Live FTP authentication awaits Omid entering the generated file-server credentials.
-- **Next owner + concrete artifact:** Gonzo publishes the patch release; Omid then uses **Settings → EmuMovies account** with the FTP/file-server credentials supplied by EmuMovies, rather than the website email/password.
+- **Artifacts:** Released in commit `c5b17bf1fe30cdc0c365404a5d6a4196ae158844`, tag `v0.10.2`: `https://github.com/neodimo/GameStore/releases/tag/v0.10.2`. Verified public assets: `GameStore-Setup-0.10.2-x64.exe` (92,431,598 bytes), `.exe.blockmap` (96,250 bytes), `GameStore-0.10.2-x86_64.AppImage` (122,936,377 bytes), `GameStore-0.10.2-amd64.deb` (84,052,396 bytes), `latest.yml`, and `latest-linux.yml`. No user credentials were read, logged, or stored by this work.
+- **State:** Released. Local `npm test -- --run` passed 86 tests, TypeScript lint, production web/Electron build, and `git diff --check` passed; release CI run `32672682820` passed on Linux and Windows. Live FTP authentication awaits Omid entering the generated file-server credentials.
+- **Next owner + concrete artifact:** Omid installs `GameStore-Setup-0.10.2-x64.exe` and uses **Settings → EmuMovies account** with the FTP/file-server credentials supplied by EmuMovies, rather than the website email/password.
 - **Failure mode:** Version 0.10.0 labeled the fields as EmuMovies website credentials and converted any FTP authentication failure into a claim that the account lacked Supporting/Lifetime entitlement. EmuMovies website and FTP credentials can be distinct, so this was both misleading and wrong.
 
 ## 2026-08-23 — v0.10.1 library-export hierarchy polish
