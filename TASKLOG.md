@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-23 — v0.10.1 library-export hierarchy polish
+
+- **What was done:** Removed the prominent header-level **Export shelf** control. The same Favorites-only JSON export now lives in **Settings → Library export**, where its copy states exactly what it includes and excludes.
+- **Artifacts:** `src/App.tsx`, `package.json`, and `package-lock.json`; release evidence will be recorded here after CI publishes v0.10.1. Local source is on `fix/move-library-export`.
+- **State:** Implementation and local validation are done: 86 tests, TypeScript lint, production web/Electron build, media-light guard, and diff check passed. Release pending.
+- **Next owner + concrete artifact:** Gonzo merges/tags/verifies v0.10.1; Omid can find the action under **Settings → Library export** in the released build.
+
 ## 2026-08-23 — v0.10.0 primary media, EmuMovies sign-in, collection index, and cart UX
 
 - **What was done:** Rebuilt expanded game details around a larger left-hand cover with description and facts directly beneath it, while the right column now holds acquisition, preview, and a large gameplay gallery. Screenshots are pinned to the selected primary release instead of pooled across regions; captured preview frames expand gameplay coverage. Added a Settings-based EmuMovies sign-in, OS-backed encrypted credential storage, FTP entitlement probing/index caching, exact No-Intro/Redump-style video-snap matching, and local snap caching. Internet Archive remains a strict fallback that streams only the preview range through a local range proxy; it does not silently download a longplay. Added an application-media protocol so cached frames/images render reliably in Electron. Configured collection torrents now create a persistent manifest at save time and normal searches reuse it; Add to cart promotes primary-region candidates.
