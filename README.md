@@ -29,7 +29,7 @@ The PS1 discovery release is in active development. Version 0.9 adds a managed, 
 - Game box art, screenshots, video thumbnails, and other per-game media are not bundled in the repository or installers. The installed app fetches them on demand through its built-in auto-scrapers/providers.
 - Media downloads are user-initiated or governed by an explicit in-app download/cache setting. The UI must show source, storage use, progress, failures, and retry/clear controls.
 - Cached media lives in the user's application-data directory and remains disposable/rebuildable. User-selected artwork overrides and provenance records are preserved separately when the media cache is cleared.
-- Video is never bundled. Short release-matched previews under the automatic cache ceiling may download during the startup audit; oversized longplays are rejected as ambient previews. Playback always uses the local cache.
+- Video is never bundled. Signed-in EmuMovies accounts provide exact-release video snaps which cache locally. Without that account, strictly matched Internet Archive longplays stream a short looping range without downloading the complete recording.
 - Small product assets required to identify and operate the app—icons, logos, loading states, and missing-media placeholders—may remain bundled.
 - `npm run check:media-light` rejects catalog media and oversized UI assets in the source tree. Release CI also enforces explicit web, Electron, and installer size ceilings from `config/media-light.json`.
 
@@ -69,9 +69,9 @@ Media candidates are downloaded after installation from their original providers
 ## Screenshots and local video
 
 - Shortly after first paint, a three-worker startup audit checks every catalog title. A compact header indicator reports index, progress, completion, or failure while normal browsing remains available.
-- Opening a game resolves its Libretro `Named_Snaps` and `Named_Titles`, downloads the release-matched images to the local media cache, and displays them in a scrollable rail beside the video pane.
-- GameStore strictly matches preview candidates to a release. Near-misses remain visibly empty, and longplays larger than the preview ceiling are rejected.
-- Eligible previews under 120 MB cache during the background audit and loop a short 8–45 second segment locally. Larger candidates require a future short-form provider instead of silently consuming gigabytes.
+- Opening a game resolves primary-release Libretro `Named_Snaps` and `Named_Titles`, caches the release-matched images, and displays large gameplay stills beside the video pane. Gameplay frames captured from a preview augment the gallery.
+- Signed-in EmuMovies accounts are matched by exact No-Intro/Redump-style filename and cache their short video snap locally. Credentials are stored only in the install's OS-backed secure storage.
+- Without EmuMovies, GameStore strictly matches an Internet Archive longplay and streams a short looping byte range instead of downloading a multi-gigabyte recording. A failed match falls back to the screenshot loop.
 - **Settings → Local media cache** reports storage use and location and can clear fetched screenshots/video without touching favorites, catalog corrections, or artwork overrides.
 - Clearing media automatically starts a fresh background audit. Existing files are validated and reused on ordinary starts, so the check does not redownload healthy cache entries.
 

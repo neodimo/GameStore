@@ -589,31 +589,68 @@ main {
 .links button svg {
   width: 15px;
 }
+/*
+ * Two columns: the game on the left, everything that moves on the right. The
+ * previous three-column split gave the cover 170px and pushed the description,
+ * the facts, the acquisition controls and every outbound link into one narrow
+ * right-hand gutter beside the media.
+ */
 .detail-body {
   display: grid;
-  grid-template-columns: minmax(150px, 220px) minmax(260px, 0.75fr) minmax(
-      390px,
-      1.25fr
-    );
-  gap: 23px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 28px;
   margin-top: 24px;
-}
-.detail-body.media-first {
-  grid-template-columns: minmax(120px, 170px) minmax(520px, 1fr) minmax(250px, 320px);
   align-items: start;
 }
-.detail-rail { min-width: 0; }
-.detail-art .art-frame {
-  max-height: 330px;
+.detail-side {
+  min-width: 0;
 }
-.detail-art button {
+.detail-media {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+.detail-art {
+  margin-bottom: 18px;
+}
+.detail-art .art-frame {
+  max-height: 460px;
+  border-radius: 10px;
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 55%),
+    0 0 0 1px #2c3032;
+}
+.side-more {
+  margin-top: 16px;
+  border-top: 1px solid #2b2f31;
+  padding-top: 10px;
+}
+.side-more summary {
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #7d8386;
+  list-style: none;
+}
+.side-more summary::-webkit-details-marker {
+  display: none;
+}
+.side-more summary::before {
+  content: "▸ ";
+}
+.side-more[open] summary::before {
+  content: "▾ ";
+}
+.side-more > button {
   width: 100%;
   justify-content: center;
   margin-top: 9px;
   border-color: #3e8690;
   color: var(--cyan);
 }
-.detail-art small {
+.side-more > small {
   display: block;
   color: #707679;
   font-size: 9px;
@@ -626,7 +663,7 @@ main {
   color: #d8dadb;
   margin-top: 0;
 }
-.copy blockquote {
+.detail-side blockquote {
   font: 500 16px/1.4 "Space Grotesk";
   margin: 15px 0;
   padding: 12px 14px;
@@ -634,22 +671,22 @@ main {
   background: #101214;
   color: #f1eddf;
 }
-.copy dl {
+.detail-side dl {
   display: grid;
   grid-template-columns: 1fr 1fr;
   margin: 0;
 }
-.copy dl div {
+.detail-side dl div {
   padding: 9px 0;
   border-bottom: 1px solid #2b2f31;
 }
-.copy dt {
+.detail-side dt {
   font-size: 8px;
   color: #747a7d;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-.copy dd {
+.detail-side dd {
   margin: 3px 0 0;
   font-size: 12px;
 }
@@ -780,48 +817,260 @@ main {
   color: #696f72;
   text-align: right;
 }
+/* The preview leads, the screenshots fill the rest. Both own the full column. */
 .media-gallery {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(360px, 1.55fr) minmax(260px, 0.85fr);
-  gap: 12px;
-  align-items: start;
+  gap: 14px;
+  align-content: start;
 }
-.screenshot-browser .shot-scroll {
-  max-height: 430px;
-  overflow-y: auto;
-  overflow-x: hidden;
+.preview-pane {
+  position: relative;
+  border: 1px solid #33383b;
+  border-radius: 10px;
+  background: #060708;
+  overflow: hidden;
+}
+.preview-pane video,
+.preview-pane .still-loop {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #050606;
+}
+.preview-pane.empty {
+  aspect-ratio: 4 / 3;
+  max-height: 46vh;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 9px;
+  place-items: center;
 }
-.screenshot-browser .shot-scroll figure { min-width: 0; margin: 0; }
-.screenshot-browser .shot-scroll img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
-.local-video video { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #050606; }
-.acquisition { margin-top: 14px; border: 1px solid #41464a; border-radius: 7px; background: #101214; padding: 10px; }
-.acquisition-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.acquisition-title span { display: flex; gap: 7px; align-items: center; font: 600 12px "Space Grotesk"; color: var(--amber); }
-.acquisition-title svg { width: 16px; }
-.acquisition button, .acquisition input, .acquisition select { border: 1px solid #41464a; background: #1b1f21; color: #e8e8e6; border-radius: 5px; padding: 8px; }
-.acquisition-form { display: grid; gap: 7px; margin-top: 10px; }
+.still-loop {
+  position: relative;
+}
+.still-loop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.still-loop img.active {
+  opacity: 1;
+}
+.preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid #26292b;
+  background: #0d0f10;
+}
+.preview-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 12px "Space Grotesk";
+  color: var(--amber);
+  white-space: nowrap;
+}
+.preview-meta > span svg {
+  width: 15px;
+}
+.preview-meta > small {
+  color: #7d8386;
+  font-size: 10px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 7px;
+}
+.preview-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #3b4043;
+  border-radius: 6px;
+  background: #191c1e;
+  color: #c9cccd;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.preview-actions button:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.preview-actions svg {
+  width: 13px;
+}
+/* Screenshots hold the largest area, at a size you can read a HUD in. */
+.shot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  max-height: 78vh;
+  overflow-y: auto;
+}
+.shot-grid figure {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  border-radius: 7px;
+  overflow: hidden;
+  cursor: zoom-in;
+  background: #050606;
+}
+.shot-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+.shot-grid figure:hover img {
+  transform: scale(1.04);
+}
+.shot-grid figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 16px 9px 7px;
+  background: linear-gradient(transparent, #000000cc);
+  font-size: 9px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.shot-grid figure:hover figcaption {
+  opacity: 1;
+}
+.shot-grid figcaption b {
+  color: var(--amber);
+}
+.shot-grid figcaption span {
+  color: #b7bbbd;
+}
+.shot-grid figcaption svg {
+  width: 13px;
+  margin-left: auto;
+  color: #d5d8d9;
+}
+.shot-pending {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  aspect-ratio: 4 / 3;
+  border: 1px dashed #3a3f42;
+  border-radius: 7px;
+  color: #7d8386;
+  font-size: 10px;
+}
+.shot-pending svg {
+  width: 20px;
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 40px;
+  background: #050607f2;
+  backdrop-filter: blur(6px);
+}
+.lightbox img {
+  max-width: 100%;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 30px 80px #000c;
+}
+.lightbox p {
+  margin: 0;
+  color: #9aa0a3;
+  font-size: 11px;
+}
+.lightbox-close {
+  position: absolute;
+  top: 22px;
+  right: 26px;
+  border: 1px solid #3d4144;
+  background: #191c1e;
+  border-radius: 7px;
+  padding: 9px;
+  color: #d5d8d9;
+  cursor: pointer;
+}
+.lightbox-close svg {
+  width: 18px;
+  display: block;
+}
+/*
+ * Acquisition leads the media column as one decision, instead of sitting at
+ * the bottom of a narrow rail behind a button labelled with the machinery.
+ */
+.acquisition { border: 1px solid #41464a; border-radius: 9px; background: #101214; padding: 12px; }
+.acquisition-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+.acquisition button, .acquisition input, .acquisition select { border: 1px solid #41464a; background: #1b1f21; color: #e8e8e6; border-radius: 6px; padding: 8px; }
+.add-to-cart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid #ffc65f;
+  background: var(--amber);
+  color: #111;
+  font-weight: 700;
+  cursor: pointer;
+}
+.add-to-cart:disabled { opacity: .7; cursor: wait; }
+.add-to-cart svg { width: 17px; }
+.acquisition .ghost {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 13px;
+  color: #c1c4c6;
+  cursor: pointer;
+}
+.acquisition .ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+.acquisition .ghost svg { width: 14px; }
+.acquisition-form { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 7px; margin-top: 10px; }
 .acquisition-form input { min-width: 0; }
 .acquisition-form button { color: var(--amber); cursor: pointer; }
 .acquisition .source-fallback { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
 .acquisition .source-fallback svg { width: 14px; }
-.acquisition .primary-source { color: var(--amber); border-color: #8b651f; }
-.collection-candidates { display: grid; gap: 5px; margin-top: 7px; }
-.collection-candidates button { display: grid; gap: 2px; text-align: left; cursor: pointer; }
-.collection-candidates b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collection-candidates { display: grid; gap: 6px; margin-top: 10px; }
+.collection-candidates p { margin: 0; font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; color: #7d8386; }
+.collection-candidates button { display: grid; gap: 3px; text-align: left; cursor: pointer; }
+.collection-candidates button:hover { border-color: var(--amber); }
+.collection-candidates b { font: 600 13px "Space Grotesk"; color: var(--amber); }
+.collection-candidates em { font-style: normal; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .collection-candidates span { color: #858b8e; font-size: 9px; }
-.acquisition > small { display: block; color: #72787b; font-size: 9px; margin-top: 7px; }
+.index-status { margin: 6px 0 0; font-size: 10px; color: var(--cyan); }
 .content-links { margin-top: 14px; border-top: 1px solid #2d3133; padding-top: 8px; }
 .device-candidates { display: grid; gap: 6px; margin: 8px 0 14px; max-height: 190px; overflow: auto; }
 .device-candidates button { display: grid; text-align: left; gap: 2px; padding: 9px; border: 1px solid #3b4043; background: #16191b; border-radius: 6px; cursor: pointer; }
 .device-candidates button:hover { border-color: var(--cyan); }
 .device-candidates span, .device-candidates small, .scan-actions span { color: #808689; font-size: 10px; }
 .split-actions, .scan-actions { justify-content: flex-start; }
-.local-video,
 .screenshot-browser {
   min-width: 0;
   border: 1px solid #33383b;
@@ -866,17 +1115,9 @@ main {
   color: #777d80;
   font-size: 9px;
 }
-.local-video video,
 .media-wait {
   width: 100%;
-  aspect-ratio: 16/9;
   background: #070809;
-}
-.local-video video {
-  display: block;
-  object-fit: contain;
-}
-.media-wait {
   min-height: 190px;
   padding: 22px;
   display: flex;
@@ -923,51 +1164,6 @@ main {
   background: #172326;
   color: var(--cyan);
   cursor: pointer;
-}
-.shot-scroll {
-  max-height: 330px;
-  overflow-y: auto;
-  padding: 8px;
-  display: grid;
-  gap: 8px;
-  scrollbar-color: #555 #17191b;
-}
-.shot-scroll figure {
-  margin: 0;
-  position: relative;
-  border: 1px solid #303538;
-  border-radius: 5px;
-  overflow: hidden;
-  background: #08090a;
-}
-.shot-scroll img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4/3;
-  object-fit: contain;
-}
-.shot-scroll figcaption {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  bottom: 4px;
-  padding: 5px 6px;
-  border-radius: 3px;
-  background: #080a0cdd;
-  color: var(--amber);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-}
-.shot-scroll figcaption span {
-  display: block;
-  margin-top: 2px;
-  color: #a6abad;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-transform: none;
-  letter-spacing: 0;
 }
 .spin {
   animation: spin 1s linear infinite;
@@ -1491,7 +1687,7 @@ footer {
     margin-top: 20px;
     grid-template-columns: 1fr;
   }
-  .shot-scroll {
+  .shot-grid {
     max-height: none;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1500,6 +1696,7 @@ footer {
   }
   .detail-actions {
     margin-top: 15px;
+    flex-wrap: wrap;
   }
   .candidate-grid {
     grid-template-columns: repeat(2, 1fr);

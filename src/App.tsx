@@ -5,6 +5,7 @@ import {
   Download,
   Database,
   ExternalLink,
+  Film,
   Gamepad2,
   Grid2X2,
   HardDriveUpload,
@@ -371,7 +372,7 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.9.0</b>
+          <b>GameStore 0.10.0</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -670,34 +671,43 @@ const Detail = forwardRef<
             <Heart fill={favorite ? "currentColor" : "none"} />
             {favorite ? "Saved" : "Favorite"}
           </button>
+          <button
+            disabled={transfer.state === "copying"}
+            onClick={sendToFpga}
+            title="Pick local files and copy them to the device now"
+          >
+            <HardDriveUpload />
+            {transfer.state === "copying"
+              ? `Sending ${transfer.percent ?? 0}%`
+              : "Send files"}
+          </button>
           <button onClick={onClose}>
             <X />
             Close
           </button>
         </div>
       </div>
-      <div className="detail-body media-first">
-        <div className="detail-art">
-          <CoverImage game={game} />
-          <button onClick={onFindArt}>
-            <Image /> Search alternate box art
-          </button>
-          {artwork.hasOverride(game) && (
-            <button
-              className="ghost"
-              onClick={() => artwork.clearOverride(game)}
-            >
-              <RotateCcw /> Reset to automatic
-            </button>
-          )}
-          <small>
-            {art.source}
-            {art.confidence ? ` · ${art.confidence} confidence` : ""}
-            {art.variant ? ` · ${art.variant}` : ""}
-          </small>
+      {transfer.state !== "idle" && (
+        <div className={`transfer-status ${transfer.state}`}>
+          <i>
+            <b style={{ width: `${transfer.percent ?? 0}%` }} />
+          </i>
+          <span>{transfer.message}</span>
         </div>
-        <MediaGallery game={game} />
-        <div className="copy detail-rail">
+      )}
+      {/*
+        The right rail used to carry the description, the metadata list, every
+        acquisition control and every outbound link stacked in one narrow
+        column beside the media. Reading a game meant reading a gutter. The
+        cover column now owns the game's identity — art, then its description
+        and facts directly beneath it — and the media column owns everything
+        that moves.
+      */}
+      <div className="detail-body">
+        <aside className="detail-side">
+          <div className="detail-art">
+            <CoverImage game={game} />
+          </div>
           <p className="description">{game.description}</p>
           <blockquote>“{game.curatorNote}”</blockquote>
           <dl>
@@ -730,36 +740,40 @@ const Detail = forwardRef<
               Get English patch <ExternalLink />
             </button>
           )}
-          <button
-            className="transfer-button"
-            disabled={transfer.state === "copying"}
-            onClick={sendToFpga}
-          >
-            <HardDriveUpload />
-            {transfer.state === "copying"
-              ? `Transferring ${transfer.percent ?? 0}%`
-              : "Send to SuperStation / MiSTer"}
-          </button>
-          {transfer.state !== "idle" && (
-            <div className={`transfer-status ${transfer.state}`}>
-              <i>
-                <b style={{ width: `${transfer.percent ?? 0}%` }} />
-              </i>
-              <span>{transfer.message}</span>
-            </div>
-          )}
-          <Acquisition game={game} />
-          <div className="links content-links">
-            {game.links.map((l) => (
-              <button key={l.url} onClick={() => open(l.url)}>
-                <i className={l.state} />
-                {l.label}
-                <span>{l.state}</span>
-                <ExternalLink />
+          <details className="side-more">
+            <summary>Artwork and sources</summary>
+            <button onClick={onFindArt}>
+              <Image /> Search alternate box art
+            </button>
+            {artwork.hasOverride(game) && (
+              <button
+                className="ghost"
+                onClick={() => artwork.clearOverride(game)}
+              >
+                <RotateCcw /> Reset to automatic
               </button>
-            ))}
-          </div>
-        </div>
+            )}
+            <small>
+              {art.source}
+              {art.confidence ? ` · ${art.confidence} confidence` : ""}
+              {art.variant ? ` · ${art.variant}` : ""}
+            </small>
+            <div className="links content-links">
+              {game.links.map((l) => (
+                <button key={l.url} onClick={() => open(l.url)}>
+                  <i className={l.state} />
+                  {l.label}
+                  <span>{l.state}</span>
+                  <ExternalLink />
+                </button>
+              ))}
+            </div>
+          </details>
+        </aside>
+        <section className="detail-media">
+          <Acquisition game={game} />
+          <MediaGallery game={game} />
+        </section>
       </div>
     </div>
   );
@@ -791,31 +805,92 @@ function Acquisition({ game }: { game: Game }) {
       setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
     }
   };
-  const findConfiguredRelease = async () => {
-    setSearching(true); setState({ status: "idle" });
+  /**
+   * Add to Cart is one action. The collection is already indexed — indexing
+   * happens once, when the source is saved in Settings — so this reads a stored
+   * manifest and offers the releases of *this* game that are actually worth
+   * choosing between: its own region, a World release, or an English
+   * translation of an import. Everything else in the collection stays out of
+   * the way. When exactly one release qualifies there is nothing to choose, so
+   * it is taken directly.
+   */
+  const addToCart = async () => {
+    setSearching(true);
+    setState({ status: "idle" });
+    setCandidates([]);
     try {
       const found = await window.gameStore!.searchCollections(game.title, game.region);
-      setCandidates(found);
-      if (!found.length) setState({ status: "error", message: "No confident release match was found in configured collections." });
-    } catch (e) { setState({ status: "error", message: e instanceof Error ? e.message : String(e) }); }
-    finally { setSearching(false); }
+      if (!found.length)
+        setState({
+          status: "error",
+          message:
+            "No release of this game was found in your indexed collections. Add or re-index a source in Settings.",
+        });
+      else if (found.length === 1) await take(found[0]);
+      else setCandidates(found);
+    } catch (e) {
+      setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setSearching(false);
+    }
   };
+  const take = async (candidate: CollectionCandidate) => {
+    setCandidates([]);
+    setState({ status: "downloading", percent: 0, message: `Fetching ${candidate.path.split("/").pop()}…` });
+    try {
+      const result = await window.gameStore!.downloadCollectionSelection(
+        candidate.sourceUrl,
+        [candidate.path],
+        game.title,
+      );
+      setState({
+        status: "done",
+        percent: 100,
+        message: `In your MiSTer cart · ${result.directory}`,
+      });
+    } catch (e) {
+      setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
+    }
+  };
+  const busy = searching || state.status === "downloading";
   return (
     <section className="acquisition">
-      <div className="acquisition-title">
-        <span><Download /> Download</span>
-        <button onClick={() => setOpenPanel(!openPanel)}>{openPanel ? "Close" : "Use provider"}</button>
+      <div className="acquisition-bar">
+        <button className="add-to-cart" disabled={busy} onClick={addToCart}>
+          <ShoppingCart />
+          {searching
+            ? "Finding releases…"
+            : state.status === "downloading"
+              ? `Downloading ${state.percent ?? 0}%`
+              : state.status === "done"
+                ? "In cart · add again"
+                : "Add to cart"}
+        </button>
+        <button className="ghost" onClick={() => setOpenPanel(!openPanel)}>
+          <Download /> {openPanel ? "Hide direct link" : "Paste a link"}
+        </button>
+        <button
+          className="ghost"
+          onClick={() => open(`https://retrogametalk.com/repo/?s=${encodeURIComponent(game.title)}`)}
+        >
+          <Search /> Search the web <ExternalLink />
+        </button>
       </div>
-      <button className="source-fallback primary-source" disabled={searching} onClick={findConfiguredRelease}>
-        <Search /> {searching ? "Indexing collection…" : "Find release in configured collections"}
-      </button>
-      {!!candidates.length && <div className="collection-candidates">
-        {candidates.slice(0, 6).map((candidate) => <button key={`${candidate.sourceUrl}:${candidate.path}`} onClick={async () => {
-          setState({ status: "downloading", percent: 0, message: `Selecting only ${candidate.path}…` });
-          try { const result = await window.gameStore!.downloadCollectionSelection(candidate.sourceUrl, [candidate.path], game.title); setState({ status: "done", percent: 100, message: `Ready and added to the MiSTer cart · ${result.directory}` }); }
-          catch (e) { setState({ status: "error", message: e instanceof Error ? e.message : String(e) }); }
-        }}><b>{candidate.path.split("/").pop()}</b><span>{candidate.collection} · {formatBytes(candidate.bytes)} · {Math.round(candidate.score * 100)}% match</span></button>)}
-      </div>}
+      {!!candidates.length && (
+        <div className="collection-candidates">
+          <p>Choose a release</p>
+          {candidates.map((candidate) => (
+            <button key={`${candidate.sourceUrl}:${candidate.path}`} onClick={() => void take(candidate)}>
+              <b>{candidate.variant.label}</b>
+              <em>{candidate.path.split("/").pop()}</em>
+              <span>
+                {candidate.collection} · {formatBytes(candidate.bytes)} ·{" "}
+                {Math.round(candidate.score * 100)}% match
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
       {openPanel && <div className="acquisition-form">
         <select value={provider} onChange={(e) => setProvider(e.target.value as "realdebrid" | "torbox")}>
           <option value="realdebrid">Real-Debrid</option>
@@ -838,11 +913,7 @@ function Acquisition({ game }: { game: Game }) {
         } catch (e) {
           setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
         } finally { setSending(false); }
-      }}><HardDriveUpload /> {sending ? "Sending…" : "Send downloaded files to SuperStation / MiSTer"}</button>}
-      <button className="source-fallback" onClick={() => open(`https://retrogametalk.com/repo/?s=${encodeURIComponent(game.title)}`)}>
-        Search RetroGameTalk fallback <ExternalLink />
-      </button>
-      <small>User-selected sources only. GameStore does not bundle a ROM index.</small>
+      }}><HardDriveUpload /> {sending ? "Sending…" : "Send this game to SuperStation / MiSTer now"}</button>}
     </section>
   );
 }
@@ -897,8 +968,13 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
   const [saved, setSaved] = useState(false);
   const [test, setTest] = useState("");
   const [debrid, setDebrid] = useState({ realdebrid: "", torbox: "" });
+  const [emu, setEmu] = useState({ username: "", password: "" });
+  const [emuState, setEmuState] = useState<EmuMoviesSettings | null>(null);
+  const [emuStatus, setEmuStatus] = useState("");
+  const [emuBusy, setEmuBusy] = useState(false);
   const [debridState, setDebridState] = useState<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>({ hasRealDebrid: false, hasTorBox: false, collections: [] });
   const [collection, setCollection] = useState({ name: "PS1 collection", url: "", platform: "PS1" });
+  const [indexing, setIndexing] = useState("");
   const [devices, setDevices] = useState<NetworkCandidate[]>([]);
   const [scan, setScan] = useState("");
   const [cache, setCache] = useState<MediaCacheStats | null>(null);
@@ -916,16 +992,75 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
       .then((f) => f && setDevice((d) => ({ ...d, ...f, password: "" })));
     window.gameStore?.getMediaCacheStats().then(setCache);
     window.gameStore?.getDebridSettings().then(setDebridState);
+    window.gameStore?.getEmuMoviesSettings().then((state) => {
+      setEmuState(state);
+      setEmu((current) => ({ ...current, username: state.username }));
+    });
     return window.gameStore?.onFpgaDiscoveryProgress(({ done, total }) =>
       setScan(`Scanning local network · ${done}/${total}`),
     );
   }, []);
+  /**
+   * Saving a collection source is also when it gets indexed. Every Add to Cart
+   * used to re-download the whole `.torrent` — up to 64 MB — and re-decode its
+   * bencode before it could rank one filename, so searching felt like indexing
+   * because it was. The manifest is parsed once, here, and kept.
+   */
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
     await window.gameStore?.setFpgaSettings(device);
-    setDebridState((await window.gameStore?.setDebridSettings({ ...debrid, collections: collection.url ? [collection] : debridState.collections })) ?? debridState);
+    const collections = collection.url ? [collection] : debridState.collections;
+    setDebridState(
+      (await window.gameStore?.setDebridSettings({ ...debrid, collections })) ??
+        debridState,
+    );
+    for (const source of collections) {
+      setIndexing(`Indexing ${source.name}…`);
+      try {
+        const result = await window.gameStore!.indexCollection(source);
+        setIndexing(`${source.name}: ${result.files.toLocaleString()} files indexed`);
+      } catch (e) {
+        setIndexing(e instanceof Error ? e.message : String(e));
+      }
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
+  };
+  /**
+   * Signing in and indexing are one button.
+   *
+   * The account's entitlement decides everything that follows — Basic members
+   * get no file-server access and therefore no snaps at all — and asking the
+   * member to recall their tier is asking them to guess. Connecting reads the
+   * answer off the directory, so the login reports which qualities the account
+   * can actually see, and then indexes the listing once the way a collection
+   * source is indexed once.
+   */
+  const loginEmuMovies = async () => {
+    setEmuBusy(true);
+    setEmuStatus("Connecting to EmuMovies…");
+    try {
+      const probe = await window.gameStore!.loginEmuMovies(emu);
+      setEmuStatus(probe.message);
+      if (!probe.ok) return;
+      setEmu((current) => ({ ...current, password: "" }));
+      setEmuStatus(`${probe.message} Indexing video snaps…`);
+      const indexed = await window.gameStore!.indexEmuMovies();
+      setEmuStatus(
+        `Signed in. ${indexed.snaps.toLocaleString()} ${indexed.quality} video snaps indexed.`,
+      );
+      setEmuState(await window.gameStore!.getEmuMoviesSettings());
+    } catch (error) {
+      setEmuStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      setEmuBusy(false);
+    }
+  };
+  const forgetEmuMovies = async () => {
+    await window.gameStore?.forgetEmuMovies();
+    setEmu({ username: "", password: "" });
+    setEmuState(await window.gameStore!.getEmuMoviesSettings());
+    setEmuStatus("EmuMovies credentials removed from this machine.");
   };
   const scanNetwork = async () => {
     setScan("Finding SSH/SFTP devices…");
@@ -1003,10 +1138,68 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           PS1 collection torrent URL {debridState.collections.length > 0 && <small>· {debridState.collections.length} saved</small>}
           <input value={collection.url} onChange={(e) => setCollection({ ...collection, url: e.target.value })} placeholder="Paste one HTTPS .torrent URL once" />
         </label>
-        <small>GameStore indexes only sources you configure. After saving, each game can locate its exact file automatically.</small>
+        <small>GameStore indexes only sources you configure, once, when you save. Every game then finds its exact file instantly.</small>
+        {indexing && <p className="index-status">{indexing}</p>}
         <div className="settings-actions split-actions">
           <button onClick={() => testDebridProvider("realdebrid")}>Test Real-Debrid</button>
           <button onClick={() => testDebridProvider("torbox")}>Test TorBox</button>
+        </div>
+        <hr />
+        <h2><Film /> EmuMovies account</h2>
+        <p>
+          Sign in and GameStore uses EmuMovies video snaps for previews — one
+          curated clip per release, thirty seconds of gameplay, matched to your
+          game by its exact Redump filename. Without an account, previews fall
+          back to streaming Internet Archive longplays.
+        </p>
+        <label>
+          EmuMovies username
+          <input
+            value={emu.username}
+            autoComplete="off"
+            onChange={(e) => setEmu({ ...emu, username: e.target.value })}
+            placeholder="Your emumovies.com login"
+          />
+        </label>
+        <label>
+          EmuMovies password {emuState?.hasPassword && <small>· saved</small>}
+          <input
+            type="password"
+            value={emu.password}
+            autoComplete="off"
+            onChange={(e) => setEmu({ ...emu, password: e.target.value })}
+            placeholder={emuState?.hasPassword ? "Blank keeps saved password" : "Your emumovies.com password"}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !emuBusy) void loginEmuMovies();
+            }}
+          />
+        </label>
+        <small>
+          Stored encrypted with the operating system keychain, used only to
+          reach the EmuMovies file server, and never written to exports, logs,
+          or catalog data. Video snaps need a Supporting or Lifetime membership;
+          signing in reports which quality tiers your account can see.
+        </small>
+        {emuState?.indexed && (
+          <p className="index-status">
+            {emuState.snaps.toLocaleString()} {emuState.quality} snaps indexed ·
+            reindex any time to pick up new releases
+          </p>
+        )}
+        {emuStatus && <p className="index-status">{emuStatus}</p>}
+        <div className="settings-actions split-actions">
+          <button disabled={emuBusy} onClick={loginEmuMovies}>
+            {emuBusy
+              ? "Signing in…"
+              : emuState?.indexed
+                ? "Sign in and reindex"
+                : "Sign in to EmuMovies"}
+          </button>
+          {emuState?.hasPassword && (
+            <button disabled={emuBusy} onClick={forgetEmuMovies}>
+              Forget account
+            </button>
+          )}
         </div>
         <hr />
         <h2>
@@ -1014,9 +1207,9 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
         </h2>
         <p>
           GameStore checks every title in a throttled startup batch and fills
-          missing screenshots in the background. Release-matched previews under
-          120 MB cache automatically; oversized longplays are rejected as ambient
-          previews and never begin downloading silently.
+          missing screenshots in the background. EmuMovies snaps cache locally
+          after sign-in; otherwise, matched Internet Archive longplays stream a
+          short loop without silently downloading the full recording.
         </p>
         <div className="cache-row">
           <div>
