@@ -14,6 +14,18 @@ interface Window {
       folder: string,
       force?: boolean,
     ): Promise<{ folder: string; files: string[]; fetchedAt: number }>;
+    getLongplays(
+      force?: boolean,
+    ): Promise<{ identifier: string; title: string }[]>;
+    cacheScreenshots(
+      gameId: string,
+      urls: string[],
+    ): Promise<{ sourceUrl: string; localUrl: string }[]>;
+    getVideoInfo(identifier: string): Promise<LocalVideoInfo>;
+    downloadVideo(identifier: string): Promise<LocalVideoInfo>;
+    getMediaCacheStats(): Promise<MediaCacheStats>;
+    clearMediaCache(): Promise<MediaCacheStats>;
+    onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     setFpgaSettings(
       settings: Partial<FpgaSettings> & { password?: string },
@@ -57,4 +69,19 @@ type UpdateStatus = {
   version?: string;
   percent?: number;
   message?: string;
+};
+type LocalVideoInfo = {
+  identifier: string;
+  name: string;
+  size: number;
+  format: string;
+  cached: boolean;
+  localUrl?: string;
+};
+type MediaCacheStats = { bytes: number; path: string };
+type VideoProgress = {
+  identifier: string;
+  bytes: number;
+  total: number;
+  percent: number;
 };

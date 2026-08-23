@@ -9,6 +9,22 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.invoke("thegamesdb-art", title),
   getArtIndex: (folder: string, force?: boolean) =>
     ipcRenderer.invoke("art-index-get", folder, force),
+  getLongplays: (force?: boolean) =>
+    ipcRenderer.invoke("media-longplays-get", force),
+  cacheScreenshots: (gameId: string, urls: string[]) =>
+    ipcRenderer.invoke("media-screens-cache", gameId, urls),
+  getVideoInfo: (identifier: string) =>
+    ipcRenderer.invoke("media-video-info", identifier),
+  downloadVideo: (identifier: string) =>
+    ipcRenderer.invoke("media-video-download", identifier),
+  getMediaCacheStats: () => ipcRenderer.invoke("media-cache-stats"),
+  clearMediaCache: () => ipcRenderer.invoke("media-cache-clear"),
+  onVideoProgress: (listener: (progress: unknown) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) =>
+      listener(progress);
+    ipcRenderer.on("media-video-progress", wrapped);
+    return () => ipcRenderer.removeListener("media-video-progress", wrapped);
+  },
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
   setFpgaSettings: (settings: unknown) =>
     ipcRenderer.invoke("fpga-settings-set", settings),
