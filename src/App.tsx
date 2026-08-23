@@ -72,7 +72,6 @@ function Catalog() {
   const [sort, setSort] = useState<Sort>("curated");
   const [selected, setSelected] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(loadFavs);
-  const [saved, setSaved] = useState(false);
   const [settings, setSettings] = useState(false);
   const [artPicker, setArtPicker] = useState<Game | null>(null);
   const [menu, setMenu] = useState<{ game: Game; x: number; y: number } | null>(
@@ -141,22 +140,6 @@ function Catalog() {
     addEventListener("keydown", key);
     return () => removeEventListener("keydown", key);
   }, []);
-  const exportShelf = async () => {
-    const payload = JSON.stringify(
-      {
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        favorites: [...favorites],
-      },
-      null,
-      2,
-    );
-    if (window.gameStore) {
-      await window.gameStore.saveExport(payload);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    }
-  };
   const reset = () => {
     setQuery("");
     setRegion("All regions");
@@ -232,9 +215,6 @@ function Catalog() {
           <MediaAuditIndicator />
           <LibraryCart />
           <UpdaterButton />
-          <button className="export" onClick={exportShelf}>
-            {saved ? "Saved" : "Export shelf"}
-          </button>
         </header>
         <main>
           <div className="platforms">
@@ -372,11 +352,16 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.10.0</b>
+          <b>GameStore 0.10.1</b>
           <ArtworkStatus />
         </footer>
       </div>
-      {settings && <ProviderSettings onClose={() => setSettings(false)} />}
+      {settings && (
+        <ProviderSettings
+          favorites={favorites}
+          onClose={() => setSettings(false)}
+        />
+      )}
       {artPicker && (
         <ArtPicker game={artPicker} onClose={() => setArtPicker(null)} />
       )}
@@ -963,9 +948,16 @@ function LibraryCart() {
   );
 }
 
-function ProviderSettings({ onClose }: { onClose: () => void }) {
+function ProviderSettings({
+  favorites,
+  onClose,
+}: {
+  favorites: Set<string>;
+  onClose: () => void;
+}) {
   const [key, setKey] = useState("");
   const [saved, setSaved] = useState(false);
+  const [exported, setExported] = useState(false);
   const [test, setTest] = useState("");
   const [debrid, setDebrid] = useState({ realdebrid: "", torbox: "" });
   const [emu, setEmu] = useState({ username: "", password: "" });
@@ -1089,6 +1081,22 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
       setTest(e instanceof Error ? e.message : String(e));
     }
   };
+  const exportShelf = async () => {
+    const payload = JSON.stringify(
+      {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        favorites: [...favorites],
+      },
+      null,
+      2,
+    );
+    if (window.gameStore) {
+      await window.gameStore.saveExport(payload);
+      setExported(true);
+      setTimeout(() => setExported(false), 2500);
+    }
+  };
   return (
     <div
       className="modal-backdrop"
@@ -1121,6 +1129,17 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           The key is encrypted with the operating system keychain when available
           and never enters exports or GitHub.
         </small>
+        <hr />
+        <h2><Library /> Library export</h2>
+        <p>
+          Save a small JSON backup of your Favorites. It contains no game files,
+          credentials, downloaded media, or MiSTer settings.
+        </p>
+        <div className="settings-actions">
+          <button onClick={exportShelf}>
+            <Download /> {exported ? "Shelf exported" : "Export favorites"}
+          </button>
+        </div>
         <hr />
         <h2><Download /> Download providers</h2>
         <p>
