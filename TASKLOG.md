@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-23 — EmuMovies FTP credential clarification
+
+- **What was done:** Corrected the EmuMovies account flow to call for the provider's separately generated FTP/file-server username and password, rather than falsely presenting the emumovies.com website login as interchangeable. Authentication rejections now explain that a generated FTP username commonly ends in `@emumovies-fileserver.com` and explicitly do not diagnose membership tier from a 530/430 response. Settings copy and placeholders now make the required credentials clear.
+- **Artifacts:** Local changes in `electron/emuMovies.ts`, `electron/main.ts`, `src/App.tsx`, and `CONTEXT.md`; pending commit/release at this entry. No user credentials were read, logged, or stored by this work.
+- **State:** Done locally; `npm test -- --run` passed 86 tests, `npm run lint`, production web/Electron build, and `git diff --check` passed. Live FTP authentication awaits Omid entering the generated file-server credentials.
+- **Next owner + concrete artifact:** Gonzo publishes the patch release; Omid then uses **Settings → EmuMovies account** with the FTP/file-server credentials supplied by EmuMovies, rather than the website email/password.
+- **Failure mode:** Version 0.10.0 labeled the fields as EmuMovies website credentials and converted any FTP authentication failure into a claim that the account lacked Supporting/Lifetime entitlement. EmuMovies website and FTP credentials can be distinct, so this was both misleading and wrong.
+
 ## 2026-08-23 — v0.10.1 library-export hierarchy polish
 
 - **What was done:** Removed the prominent header-level **Export shelf** control. The same Favorites-only JSON export now lives in **Settings → Library export**, where its copy states exactly what it includes and excludes.

@@ -390,9 +390,9 @@ ipcMain.handle("emumovies-settings-get", async () => {
 });
 /**
  * Saving credentials and signing in are one action, because a saved credential
- * that has never been tried tells the member nothing. The probe reports what
- * the account can actually see, which is also how the membership tier is
- * established without asking anyone to recall it.
+ * that has never been tried tells the member nothing. The probe reports the
+ * directories this FTP/file-server account can actually see. Authentication
+ * failure alone says nothing about the website membership tier.
  */
 ipcMain.handle(
   "emumovies-login",
@@ -403,7 +403,7 @@ ipcMain.handle(
     if (!username || !password)
       return {
         ok: false,
-        message: "Enter your EmuMovies username and password.",
+        message: "Enter your EmuMovies FTP/file-server username and password.",
         qualities: [],
         systems: [],
         secure: false,

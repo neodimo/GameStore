@@ -1021,12 +1021,10 @@ function ProviderSettings({
   /**
    * Signing in and indexing are one button.
    *
-   * The account's entitlement decides everything that follows — Basic members
-   * get no file-server access and therefore no snaps at all — and asking the
-   * member to recall their tier is asking them to guess. Connecting reads the
-   * answer off the directory, so the login reports which qualities the account
-   * can actually see, and then indexes the listing once the way a collection
-   * source is indexed once.
+   * A successful file-server login exposes the quality directories this
+   * account can see, then indexes the listing once the way a collection source
+   * is indexed once. A failed FTP login must not be treated as a membership
+   * verdict — EmuMovies website and generated FTP credentials may differ.
    */
   const loginEmuMovies = async () => {
     setEmuBusy(true);
@@ -1172,32 +1170,34 @@ function ProviderSettings({
           back to streaming Internet Archive longplays.
         </p>
         <label>
-          EmuMovies username
+          EmuMovies FTP username
           <input
             value={emu.username}
             autoComplete="off"
             onChange={(e) => setEmu({ ...emu, username: e.target.value })}
-            placeholder="Your emumovies.com login"
+            placeholder="Generated FTP username (often …@emumovies-fileserver.com)"
           />
         </label>
         <label>
-          EmuMovies password {emuState?.hasPassword && <small>· saved</small>}
+          EmuMovies FTP password {emuState?.hasPassword && <small>· saved</small>}
           <input
             type="password"
             value={emu.password}
             autoComplete="off"
             onChange={(e) => setEmu({ ...emu, password: e.target.value })}
-            placeholder={emuState?.hasPassword ? "Blank keeps saved password" : "Your emumovies.com password"}
+            placeholder={emuState?.hasPassword ? "Blank keeps saved FTP password" : "Generated FTP password"}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !emuBusy) void loginEmuMovies();
             }}
           />
         </label>
         <small>
+          These are the separately generated EmuMovies FTP/file-server
+          credentials — often different from your website email/password.
           Stored encrypted with the operating system keychain, used only to
-          reach the EmuMovies file server, and never written to exports, logs,
-          or catalog data. Video snaps need a Supporting or Lifetime membership;
-          signing in reports which quality tiers your account can see.
+          reach the file server, and never written to exports, logs, or catalog
+          data. Successful sign-in reports which quality tiers the FTP account
+          can see.
         </small>
         {emuState?.indexed && (
           <p className="index-status">

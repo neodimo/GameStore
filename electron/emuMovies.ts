@@ -17,7 +17,10 @@ import { mediaAssetUrl } from "./mediaCache";
  * problem into a filename lookup, and turns the preview from a 2 GB stream into
  * a file measured in megabytes that can simply be cached and looped.
  *
- * Access is the member's own FTP login. The published API
+ * Access is the member's own FTP/file-server login. This is deliberately
+ * distinct from the emumovies.com website login: EmuMovies generates an FTP
+ * username (commonly ending in `@emumovies-fileserver.com`) for members, and
+ * it may have a different password. The published API
  * (`api.gamesdbase.com/login.aspx?user=&api=&product=`) additionally requires a
  * registered partner product key, which this application does not have, so the
  * credential a member can actually supply is the FTP one.
@@ -36,12 +39,10 @@ export type SnapManifest = {
 /**
  * What a login is allowed to conclude.
  *
- * Membership tier is not a question the member should have to answer from
- * memory: EmuMovies grants FTP to supporting tiers only, and publishes video
- * snaps at HD1080/HQ480/SQ240 depending on entitlement. Connecting and reading
- * the directory answers both — whether this account has file-server access at
- * all, and which qualities it can actually see — so the app reports the tier
- * rather than asking for it.
+ * The available directories disclose video quality once the file-server
+ * account is authenticated. A failed FTP login does *not* disclose membership
+ * tier: it can equally mean the member entered their website login instead of
+ * their separately generated FTP credentials.
  */
 export type AccountProbe = {
   ok: boolean;
@@ -114,7 +115,7 @@ const isAuthFailure = (error: unknown) => {
 
 const explain = (error: unknown) => {
   if (isAuthFailure(error))
-    return "EmuMovies rejected these credentials. FTP access requires a Supporting or Lifetime membership; Basic accounts can sign in to the website but are not granted file-server access.";
+    return "EmuMovies rejected the FTP/file-server credentials. These are often different from your emumovies.com website email and password: use the generated FTP username (commonly ending in @emumovies-fileserver.com) and its FTP password. A rejected login cannot determine your membership tier.";
   const message = error instanceof Error ? error.message : String(error);
   return `Could not reach the EmuMovies file server: ${message}`;
 };
