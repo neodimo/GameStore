@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-22 — GameStore v0.1.1 released
+
+- **What was done:** Published the public `neodimo/GameStore` repository and production GitHub release `v0.1.1`. GitHub's Windows runner passed install, catalog tests, TypeScript validation, production bundling, NSIS packaging, and release upload.
+- **Artifacts:** Source is committed/pushed at `https://github.com/neodimo/GameStore` (HEAD `309c1f5` before this log-only follow-up). Installer `GameStore-Setup-0.1.1-x64.exe` is attached to `https://github.com/neodimo/GameStore/releases/tag/v0.1.1`; SHA-256 `1a247a83c263279326dd226d77b9de3a28e767e9c0ec782c3d87a464beda0ce3`.
+- **State:** Done. Windows installer was produced and uploaded by a successful Windows CI run. It is currently unsigned, so Windows SmartScreen may show an unknown-publisher warning. Installation on Omid's specific machine remains user verification.
+- **Next owner + concrete artifact:** Omid downloads and runs `GameStore-Setup-0.1.1-x64.exe`; report UI/data issues in `#gamestore` with the affected title/filter and a screenshot.
+
 ## 2026-08-22 — Windows release packaging correction
 
 - **What was done:** Corrected electron-builder so tagged CI builds produce the NSIS installer without electron-builder attempting its own unauthenticated parallel publication. Artifact publication remains owned by the explicit GitHub Release action.
