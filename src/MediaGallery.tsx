@@ -63,58 +63,6 @@ export function MediaGallery({ game }: { game: Game }) {
   };
   return (
     <section className="media-gallery">
-      <div className="local-video">
-        <div className="media-heading">
-          <span>
-            <Film />
-            Local gameplay preview
-          </span>
-          {videoId && (
-            <button onClick={() => window.gameStore?.openExternal(archiveUrl)}>
-              Source <ExternalLink />
-            </button>
-          )}
-        </div>
-        {video?.cached && video.localUrl ? (
-          <video src={video.localUrl} controls preload="metadata" />
-        ) : videoState === "loading" ? (
-          <MediaWait
-            icon={<LoaderCircle className="spin" />}
-            title="Finding a release-matched longplay…"
-          />
-        ) : videoState === "empty" ? (
-          <MediaWait
-            icon={<Film />}
-            title="No verified longplay found"
-            detail="Screenshots remain available; GameStore will not attach a vaguely similar video."
-          />
-        ) : videoState === "downloading" ? (
-          <MediaWait
-            icon={<Download />}
-            title={`Downloading local video · ${progress}%`}
-            detail="Playback starts from the local cache when complete."
-            progress={progress}
-          />
-        ) : video ? (
-          <MediaWait
-            icon={<Download />}
-            title={`Download local preview · ${bytes(video.size)}`}
-            detail={`${video.format} · cached only after you approve the download.`}
-            action="Download to cache"
-            onAction={download}
-          />
-        ) : (
-          <MediaWait
-            icon={<RefreshCw />}
-            title="Video unavailable"
-            detail={
-              error ||
-              record?.videoError ||
-              "The provider could not resolve a playable MP4."
-            }
-          />
-        )}
-      </div>
       <div className="screenshot-browser">
         <div className="media-heading">
           <span>
@@ -133,32 +81,75 @@ export function MediaGallery({ game }: { game: Game }) {
           <div className="shot-scroll">
             {shots.map((shot, i) => (
               <figure key={shot.url}>
-                <img
-                  src={shot.localUrl}
-                  alt={`${game.title} ${shot.kind.toLowerCase()} ${i + 1}`}
-                  loading="lazy"
-                />
-                <figcaption>
-                  {shot.kind}
-                  <span>{shot.label}</span>
-                </figcaption>
+                <img src={shot.localUrl} alt={`${game.title} ${shot.kind.toLowerCase()} ${i + 1}`} loading="lazy" />
+                <figcaption>{shot.kind}<span>{shot.label}</span></figcaption>
               </figure>
             ))}
           </div>
         ) : shotState === "loading" ? (
+          <MediaWait icon={<LoaderCircle className="spin" />} title="Resolving and caching screenshots…" />
+        ) : (
+          <MediaWait icon={<Image />} title={shotState === "empty" ? "No release-matched screenshots found" : "Screenshots unavailable"} detail="No unrelated game imagery will be substituted." />
+        )}
+      </div>
+      <div className="local-video">
+        <div className="media-heading">
+          <span>
+            <Film />
+            Short gameplay loop
+          </span>
+          {videoId && (
+            <button onClick={() => window.gameStore?.openExternal(archiveUrl)}>
+              Source <ExternalLink />
+            </button>
+          )}
+        </div>
+        {video?.cached && video.localUrl ? (
+          <video
+            src={video.localUrl}
+            controls
+            loop
+            muted
+            preload="metadata"
+            onTimeUpdate={(event) => {
+              if (event.currentTarget.currentTime > 45) event.currentTarget.currentTime = 8;
+            }}
+          />
+        ) : videoState === "loading" ? (
           <MediaWait
             icon={<LoaderCircle className="spin" />}
-            title="Resolving and caching screenshots…"
+            title="Finding a release-matched preview…"
+          />
+        ) : videoState === "empty" ? (
+          <MediaWait
+            icon={<Film />}
+            title="No verified short preview found"
+            detail="Screenshots remain available; GameStore will not attach a vaguely similar video."
+          />
+        ) : videoState === "downloading" ? (
+          <MediaWait
+            icon={<Download />}
+            title={`Downloading local video · ${progress}%`}
+            detail="Playback starts from the local cache when complete."
+            progress={progress}
+          />
+        ) : video ? (
+          <MediaWait
+            icon={<Download />}
+            title={video.size > 250 * 1024 ** 2 ? "Longplay rejected as preview" : `Download local preview · ${bytes(video.size)}`}
+            detail={video.size > 250 * 1024 ** 2 ? "This source is too large for an ambient game preview. GameStore will wait for a short-form provider result." : `${video.format} · cached only after you approve the download.`}
+            action={video.size > 250 * 1024 ** 2 ? undefined : "Download to cache"}
+            onAction={video.size > 250 * 1024 ** 2 ? undefined : download}
           />
         ) : (
           <MediaWait
-            icon={<Image />}
-            title={
-              shotState === "empty"
-                ? "No release-matched screenshots found"
-                : "Screenshots unavailable"
+            icon={<RefreshCw />}
+            title="Video unavailable"
+            detail={
+              error ||
+              record?.videoError ||
+              "The provider could not resolve a playable MP4."
             }
-            detail="No unrelated game imagery will be substituted."
           />
         )}
       </div>

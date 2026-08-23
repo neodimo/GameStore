@@ -10,6 +10,12 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import SftpClient from "ssh2-sftp-client";
 import { configureUpdater } from "./updater";
+import { discoverFpgaDevices } from "./networkDiscovery";
+import {
+  downloadResolvedLink,
+  testDebrid,
+  type DebridProvider,
+} from "./downloadManager";
 import { getArtIndex } from "./artIndex";
 import {
   cacheScreenshots,
@@ -64,6 +70,11 @@ const settingsFile = () =>
   path.join(app.getPath("userData"), "provider-settings.json");
 type ProviderSettings = {
   theGamesDbKey?: string;
+  debrid?: {
+    realdebrid?: string;
+    torbox?: string;
+    encrypted?: boolean;
+  };
   fpga?: {
     host: string;
     port: number;
@@ -90,6 +101,16 @@ const readSettings = async (): Promise<ProviderSettings> => {
           ? safeStorage.decryptString(
               Buffer.from(stored.fpga.password, "base64"),
             )
+          : undefined,
+      };
+    if (stored.debrid?.encrypted && safeStorage.isEncryptionAvailable())
+      result.debrid = {
+        encrypted: true,
+        realdebrid: stored.debrid.realdebrid
+          ? safeStorage.decryptString(Buffer.from(stored.debrid.realdebrid, "base64"))
+          : undefined,
+        torbox: stored.debrid.torbox
+          ? safeStorage.decryptString(Buffer.from(stored.debrid.torbox, "base64"))
           : undefined,
       };
     return result;
@@ -123,6 +144,53 @@ ipcMain.handle("provider-key-set", async (_e, key: string) => {
   });
   return true;
 });
+ipcMain.handle("debrid-settings-get", async () => {
+  const debrid = (await readSettings()).debrid;
+  return {
+    hasRealDebrid: !!debrid?.realdebrid,
+    hasTorBox: !!debrid?.torbox,
+  };
+});
+ipcMain.handle(
+  "debrid-settings-set",
+  async (_e, incoming: { realdebrid?: string; torbox?: string }) => {
+    const current = await readSettings();
+    const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+    const realdebrid = String(incoming.realdebrid || current.debrid?.realdebrid || "").trim();
+    const torbox = String(incoming.torbox || current.debrid?.torbox || "").trim();
+    const encrypted = safeStorage.isEncryptionAvailable();
+    await writeSettings({
+      ...raw,
+      debrid: {
+        encrypted,
+        realdebrid: realdebrid
+          ? encrypted
+            ? safeStorage.encryptString(realdebrid).toString("base64")
+            : realdebrid
+          : undefined,
+        torbox: torbox
+          ? encrypted
+            ? safeStorage.encryptString(torbox).toString("base64")
+            : torbox
+          : undefined,
+      },
+    });
+    return { hasRealDebrid: !!realdebrid, hasTorBox: !!torbox };
+  },
+);
+ipcMain.handle("debrid-test", async (_e, provider: DebridProvider) => {
+  const token = (await readSettings()).debrid?.[provider];
+  if (!token) throw new Error(`Add your ${provider === "torbox" ? "TorBox" : "Real-Debrid"} API token in Settings first.`);
+  return testDebrid(provider, token);
+});
+ipcMain.handle(
+  "game-download",
+  async (_e, provider: DebridProvider, link: string, gameTitle: string) => {
+    const token = (await readSettings()).debrid?.[provider];
+    if (!token) throw new Error("Configure this provider in Settings first.");
+    return downloadResolvedLink({ provider, token, link, gameTitle, window: win });
+  },
+);
 ipcMain.handle("art-index-get", async (_e, folder: string, force?: boolean) =>
   getArtIndex(folder, !!force),
 );
@@ -206,6 +274,11 @@ const publicFpga = async () => {
     : null;
 };
 ipcMain.handle("fpga-settings-get", publicFpga);
+ipcMain.handle("fpga-discover", async () =>
+  discoverFpgaDevices((done, total) =>
+    win?.webContents.send("fpga-discovery-progress", { done, total }),
+  ),
+);
 ipcMain.handle(
   "fpga-settings-set",
   async (
@@ -260,25 +333,22 @@ const connectFpga = async () => {
 ipcMain.handle("fpga-test", async () => {
   const { client, f } = await connectFpga();
   try {
+    const mediaFat = await client.exists("/media/fat");
     const exists = await client.exists(`${f.root}/PSX`);
     return {
       ok: true,
-      message: exists
-        ? "Connected — PSX folder found."
-        : "Connected — PSX folder will be created on first transfer.",
+      message: mediaFat
+        ? exists
+          ? "Confirmed MiSTer/SuperStation layout — PSX folder found."
+          : "Confirmed MiSTer/SuperStation layout — PSX folder will be created on first transfer."
+        : `SSH connected, but /media/fat was not found. Verify that ${f.host} is the intended device.`,
     };
   } finally {
     await client.end();
   }
 });
-ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
-  const picked = await dialog.showOpenDialog(win!, {
-    title: `Select ${gameTitle} game files`,
-    properties: ["openFile", "multiSelections"],
-    filters: [{ name: "MiSTer CD images", extensions: ["chd", "cue", "bin"] }],
-  });
-  if (picked.canceled || !picked.filePaths.length) return { canceled: true };
-  const extensions = picked.filePaths.map((file) =>
+const transferFilesToFpga = async (gameTitle: string, filePaths: string[]) => {
+  const extensions = filePaths.map((file) =>
     path.extname(file).toLowerCase(),
   );
   if (extensions.some((ext) => ![".chd", ".cue", ".bin"].includes(ext)))
@@ -289,12 +359,12 @@ ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
   const safeName = gameTitle.replace(/[\\/:*?"<>|]/g, "-").trim();
   const remoteDir = `${f.root}/PSX/${safeName}`;
   const total = (
-    await Promise.all(picked.filePaths.map((file) => fs.stat(file)))
+    await Promise.all(filePaths.map((file) => fs.stat(file)))
   ).reduce((n, s) => n + s.size, 0);
   let finished = 0;
   try {
     await client.mkdir(remoteDir, true);
-    for (const local of picked.filePaths) {
+    for (const local of filePaths) {
       const size = (await fs.stat(local)).size;
       const remote = `${remoteDir}/${path.basename(local)}`;
       await client.fastPut(local, remote, {
@@ -309,8 +379,25 @@ ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
       });
       finished += size;
     }
-    return { canceled: false, files: picked.filePaths.length, remoteDir };
+    return { canceled: false, files: filePaths.length, remoteDir };
   } finally {
     await client.end();
   }
+};
+ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
+  const picked = await dialog.showOpenDialog(win!, {
+    title: `Select ${gameTitle} game files`,
+    properties: ["openFile", "multiSelections"],
+    filters: [{ name: "MiSTer CD images", extensions: ["chd", "cue", "bin"] }],
+  });
+  if (picked.canceled || !picked.filePaths.length) return { canceled: true };
+  return transferFilesToFpga(gameTitle, picked.filePaths);
+});
+ipcMain.handle("fpga-transfer-library", async (_e, gameTitle: string) => {
+  const dir = path.join(app.getPath("documents"), "GameStore", "Games", gameTitle.replace(/[\\/:*?"<>|]/g, "-").trim());
+  const files = (await fs.readdir(dir).catch(() => []))
+    .filter((name) => [".chd", ".cue", ".bin"].includes(path.extname(name).toLowerCase()))
+    .map((name) => path.join(dir, name));
+  if (!files.length) throw new Error("No CHD or BIN/CUE files are ready in this game's local library folder.");
+  return transferFilesToFpga(gameTitle, files);
 });
