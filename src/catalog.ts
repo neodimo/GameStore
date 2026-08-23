@@ -79,7 +79,7 @@ const g = (
   ],
 });
 
-export const games: Game[] = [
+const coreGames: Game[] = [
   g(
     "incredible-crisis",
     "Incredible Crisis",
@@ -550,6 +550,93 @@ export const games: Game[] = [
     "1-2",
     "Polygon Magic",
   ),
+];
+
+type BroaderSeed = [string, string, number, Game["region"], string[], string, string];
+const broaderSeeds: BroaderSeed[] = [
+  ["castlevania-sotn", "Castlevania: Symphony of the Night", 1997, "USA", ["Action", "RPG"], "Explore Dracula's inverted castle in a lavish nonlinear action RPG.", "Castlevania - Symphony of the Night (USA)"],
+  ["metal-gear-solid", "Metal Gear Solid", 1998, "USA", ["Stealth", "Action"], "Sneak through Shadow Moses in Kojima's cinematic tactical espionage classic.", "Metal Gear Solid (USA) (Disc 1)"],
+  ["silent-hill", "Silent Hill", 1999, "USA", ["Horror", "Adventure"], "Search a fogbound town where guilt and industrial nightmares bleed together.", "Silent Hill (USA)"],
+  ["resident-evil-2", "Resident Evil 2", 1998, "USA", ["Horror", "Adventure"], "Survive a zombie outbreak across Raccoon City's police station.", "Resident Evil 2 (USA) (Disc 1)"],
+  ["resident-evil-3", "Resident Evil 3: Nemesis", 1999, "USA", ["Horror", "Action"], "Escape Raccoon City while an unstoppable bioweapon hunts you.", "Resident Evil 3 - Nemesis (USA)"],
+  ["parasite-eve", "Parasite Eve", 1998, "USA", ["RPG", "Horror"], "A New York cop confronts mitochondrial body horror in a brisk cinematic RPG.", "Parasite Eve (USA) (Disc 1)"],
+  ["parasite-eve-2", "Parasite Eve II", 2000, "USA", ["RPG", "Horror"], "Aya Brea investigates another outbreak through tense survival-RPG combat.", "Parasite Eve II (USA) (Disc 1)"],
+  ["final-fantasy-7", "Final Fantasy VII", 1997, "USA", ["RPG"], "A mercenary joins an eco-rebellion and discovers a planetary conspiracy.", "Final Fantasy VII (USA) (Disc 1)"],
+  ["final-fantasy-8", "Final Fantasy VIII", 1999, "USA", ["RPG"], "Teen mercenaries, time compression, and an ambitious junction system collide.", "Final Fantasy VIII (USA) (Disc 1)"],
+  ["final-fantasy-9", "Final Fantasy IX", 2000, "USA", ["RPG"], "A theatrical fantasy adventure about identity, mortality, and found family.", "Final Fantasy IX (USA) (Disc 1)"],
+  ["final-fantasy-tactics", "Final Fantasy Tactics", 1998, "USA", ["Strategy", "RPG"], "Deep tactical battles frame a ruthless political tragedy.", "Final Fantasy Tactics (USA)"],
+  ["vagrant-story", "Vagrant Story", 2000, "USA", ["RPG", "Action"], "Investigate the cursed city of Leá Monde through intricate weapon-driven combat.", "Vagrant Story (USA)"],
+  ["xenogears", "Xenogears", 1998, "USA", ["RPG"], "Martial arts, giant robots, theology, and fractured psychology in maximalist form.", "Xenogears (USA) (Disc 1)"],
+  ["chrono-cross", "Chrono Cross", 2000, "USA", ["RPG"], "Cross parallel worlds in a dreamlike sequel with a vast playable cast.", "Chrono Cross (USA) (Disc 1)"],
+  ["suikoden", "Suikoden", 1996, "USA", ["RPG"], "Recruit 108 allies and build a resistance headquarters against an empire.", "Suikoden (USA)"],
+  ["suikoden-2", "Suikoden II", 1999, "USA", ["RPG"], "Friendship and civil war anchor one of the system's finest political RPGs.", "Suikoden II (USA)"],
+  ["wild-arms", "Wild Arms", 1997, "USA", ["RPG"], "A western-flavored fantasy RPG built around tools, puzzles, and ancient machines.", "Wild Arms (USA)"],
+  ["wild-arms-2", "Wild Arms 2", 2000, "USA", ["RPG"], "A tokusatsu-tinged western RPG about heroism and sacrifice.", "Wild Arms 2 (USA) (Disc 1)"],
+  ["legend-of-dragoon", "The Legend of Dragoon", 2000, "USA", ["RPG"], "Timing-based attacks and armored transformations power a grand four-disc quest.", "Legend of Dragoon, The (USA) (Disc 1)"],
+  ["legend-of-legaia", "Legend of Legaia", 1999, "USA", ["RPG"], "Build martial-arts combos while restoring a world swallowed by monster-filled mist.", "Legend of Legaia (USA)"],
+  ["grandia", "Grandia", 1999, "USA", ["RPG"], "A joyous expedition with one of the genre's liveliest battle systems.", "Grandia (USA) (Disc 1)"],
+  ["lunar-sssc", "Lunar: Silver Star Story Complete", 1999, "USA", ["RPG"], "A warm, animated coming-of-age quest in deluxe two-disc form.", "Lunar - Silver Star Story Complete (USA) (Disc 1)"],
+  ["alundra", "Alundra", 1998, "USA", ["Action", "RPG"], "Enter villagers' dreams in a dark, demanding action adventure.", "Alundra (USA)"],
+  ["breath-of-fire-3", "Breath of Fire III", 1998, "USA", ["RPG"], "A dragon child grows up across a colorful, melancholic journey.", "Breath of Fire III (USA)"],
+  ["breath-of-fire-4", "Breath of Fire IV", 2000, "USA", ["RPG"], "Two converging journeys unfold through gorgeous sprite work and moral ambiguity.", "Breath of Fire IV (USA)"],
+  ["kartia", "Kartia: The Word of Fate", 1998, "USA", ["Strategy", "RPG"], "Create weapons and soldiers from magical cards in a dual-story tactical RPG.", "Kartia - The Word of Fate (USA)"],
+  ["jade-cocoon", "Jade Cocoon: Story of the Tamamayu", 1999, "USA", ["RPG"], "Capture and fuse forest creatures in a compact Ghibli-touched RPG.", "Jade Cocoon - Story of the Tamamayu (USA)"],
+  ["azure-dreams", "Azure Dreams", 1998, "USA", ["RPG", "Roguelike"], "Raise monsters, climb a shifting tower, and rebuild a desert town.", "Azure Dreams (USA)"],
+  ["tomba", "Tomba!", 1998, "USA", ["Platformer", "Adventure"], "A pink-haired feral hero tackles quests across a playful interconnected world.", "Tomba! (USA)"],
+  ["tomba-2", "Tomba! 2: The Evil Swine Return", 1999, "USA", ["Platformer", "Adventure"], "The pig-wrestling quest system returns in a lively 2.5D world.", "Tomba! 2 - The Evil Swine Return (USA)"],
+  ["klonoa", "Klonoa: Door to Phantomile", 1998, "USA", ["Platformer"], "A breezy 2.5D platformer whose dreamlike story lands with surprising force.", "Klonoa - Door to Phantomile (USA)"],
+  ["ape-escape", "Ape Escape", 1999, "USA", ["Platformer", "Action"], "Use both analog sticks and a gadget wheel to recapture time-traveling apes.", "Ape Escape (USA)"],
+  ["medievil", "MediEvil", 1998, "USA", ["Action", "Adventure"], "A failed knight gets a second chance in a crooked gothic storybook.", "MediEvil (USA)"],
+  ["legacy-of-kain-sr", "Legacy of Kain: Soul Reaver", 1999, "USA", ["Action", "Adventure"], "Shift between material and spectral realms in a ruined vampire kingdom.", "Legacy of Kain - Soul Reaver (USA)"],
+  ["oddworld-abe", "Oddworld: Abe's Oddysee", 1997, "USA", ["Platformer", "Puzzle"], "Guide a fragile factory worker through lethal puzzles and corporate satire.", "Oddworld - Abe's Oddysee (USA)"],
+  ["oddworld-exoddus", "Oddworld: Abe's Exoddus", 1998, "USA", ["Platformer", "Puzzle"], "Rescue hundreds of workers through an expanded cinematic puzzle-platformer.", "Oddworld - Abe's Exoddus (USA) (Disc 1)"],
+  ["crash-bandicoot", "Crash Bandicoot", 1996, "USA", ["Platformer"], "Run toward and away from the camera through dense cartoon obstacle courses.", "Crash Bandicoot (USA)"],
+  ["crash-2", "Crash Bandicoot 2: Cortex Strikes Back", 1997, "USA", ["Platformer"], "A polished sequel adds broader movement and hub-driven levels.", "Crash Bandicoot 2 - Cortex Strikes Back (USA)"],
+  ["crash-3", "Crash Bandicoot: Warped", 1998, "USA", ["Platformer"], "Time-traveling stages fold vehicles and new abilities into the series formula.", "Crash Bandicoot - Warped (USA)"],
+  ["spyro", "Spyro the Dragon", 1998, "USA", ["Platformer"], "Glide across colorful open levels while freeing crystalized dragons.", "Spyro the Dragon (USA)"],
+  ["spyro-2", "Spyro 2: Ripto's Rage!", 1999, "USA", ["Platformer"], "New abilities and compact challenges deepen the dragon's bright collectathon.", "Spyro 2 - Ripto's Rage! (USA)"],
+  ["rayman", "Rayman", 1995, "USA", ["Platformer"], "Gorgeous hand-drawn worlds conceal a famously demanding platformer.", "Rayman (USA)"],
+  ["heart-of-darkness", "Heart of Darkness", 1998, "USA", ["Platformer", "Adventure"], "A boy crosses a beautifully animated nightmare world to rescue his dog.", "Heart of Darkness (USA) (Disc 1)"],
+  ["einhander", "Einhänder", 1998, "USA", ["Shooter"], "Square's cinematic side-scroller lets you steal and juggle enemy weapons.", "Einhänder (USA)"],
+  ["r-type-delta", "R-Type Delta", 1999, "USA", ["Shooter"], "A moody 3D evolution of the methodical side-scrolling shooter.", "R-Type Delta (USA)"],
+  ["g-darius", "G-Darius", 1998, "USA", ["Shooter"], "Capture enemies and fire spectacular beam duels through branching stages.", "G-Darius (USA)"],
+  ["raiden-project", "The Raiden Project", 1995, "USA", ["Shooter"], "Two precise arcade vertical shooters arrive in a clean console package.", "Raiden Project, The (USA)"],
+  ["strider-2", "Strider 2", 2000, "USA", ["Action", "Platformer"], "A razor-fast arcade action game built around impossible acrobatics.", "Strider 2 (USA)"],
+  ["mega-man-x4", "Mega Man X4", 1997, "USA", ["Action", "Platformer"], "Choose X or Zero for two distinct routes through Capcom's polished action game.", "Mega Man X4 (USA)"],
+  ["mega-man-legends", "Mega Man Legends", 1998, "USA", ["Action", "Adventure"], "Explore ruins and a cheerful island town in Mega Man's charming 3D reinvention.", "Mega Man Legends (USA)"],
+  ["tron-bonne", "The Misadventures of Tron Bonne", 2000, "USA", ["Action", "Adventure"], "Command tiny Servbots through heists, puzzles, and debt repayment.", "Misadventures of Tron Bonne, The (USA)"],
+  ["tekken-3", "Tekken 3", 1998, "USA", ["Fighting"], "A fast, generous 3D fighter that became a defining PlayStation showcase.", "Tekken 3 (USA)"],
+  ["soul-blade", "Soul Blade", 1997, "USA", ["Fighting"], "Weapon fighting, dramatic ring-outs, and an unforgettable opening cinematic.", "Soul Blade (USA)"],
+  ["rival-schools", "Rival Schools", 1998, "USA", ["Fighting"], "School clubs settle an abduction conspiracy through exuberant tag battles.", "Rival Schools - United by Fate (USA) (Disc 1)"],
+  ["bushido-blade", "Bushido Blade", 1997, "USA", ["Fighting"], "Weapon duels reject health bars in favor of decisive, often fatal strikes.", "Bushido Blade (USA)"],
+  ["bloody-roar-2", "Bloody Roar II", 1999, "USA", ["Fighting"], "Fighters transform into beasts mid-combo in a brisk arcade brawler.", "Bloody Roar II (USA)"],
+  ["gran-turismo-2", "Gran Turismo 2", 1999, "USA", ["Racing", "Simulation"], "A vast garage and nuanced handling turn car collecting into an obsession.", "Gran Turismo 2 (USA) (Arcade Mode)"],
+  ["ridge-racer-type-4", "R4: Ridge Racer Type 4", 1999, "USA", ["Racing"], "Stylish drift racing, immaculate menus, and a landmark soundtrack.", "R4 - Ridge Racer Type 4 (USA)"],
+  ["wipeout-xl", "Wipeout XL", 1996, "USA", ["Racing"], "Anti-gravity racing accelerates through sharp graphic design and club music.", "Wipeout XL (USA)"],
+  ["driver", "Driver", 1999, "USA", ["Driving", "Action"], "Go undercover across four open cities in cinematic car chases.", "Driver - You Are the Wheelman (USA)"],
+  ["twisted-metal-2", "Twisted Metal 2", 1996, "USA", ["Action", "Driving"], "Weaponized vehicles destroy global arenas in a gleefully grim tournament.", "Twisted Metal 2 (USA)"],
+  ["tony-hawk-2", "Tony Hawk's Pro Skater 2", 2000, "USA", ["Sports", "Action"], "Chain tricks through tightly designed stages to a generation-defining soundtrack.", "Tony Hawk's Pro Skater 2 (USA)"],
+  ["cool-boarders-2", "Cool Boarders 2", 1997, "USA", ["Sports", "Racing"], "Arcade snowboarding balances speed, tricks, and gloriously severe presentation.", "Cool Boarders 2 (USA)"],
+  ["intelligent-qube", "Intelligent Qube", 1997, "USA", ["Puzzle"], "Survive advancing walls of cubes in a stark, orchestral puzzle arena.", "Intelligent Qube (USA)"],
+  ["kula-world", "Roll Away", 1998, "USA", ["Puzzle"], "Roll a beach ball across gravity-bending floating mazes.", "Roll Away (USA)"],
+  ["kurushi-final", "Kurushi Final: Mental Blocks", 1999, "Europe", ["Puzzle"], "The minimalist cube-crushing puzzle returns with broader modes and pressure.", "Kurushi Final - Mental Blocks (Europe)"],
+  ["future-cop-lapd", "Future Cop: L.A.P.D.", 1998, "USA", ["Action", "Strategy"], "Pilot a transforming police mech through missions and a proto-MOBA precinct mode.", "Future Cop - L.A.P.D. (USA)"],
+  ["omega-boost", "Omega Boost", 1999, "USA", ["Shooter", "Action"], "Polyphony Digital sends a transforming mech through dazzling rail-shooter battles.", "Omega Boost (USA)"],
+  ["colony-wars", "Colony Wars", 1997, "USA", ["Simulation", "Shooter"], "Fight a branching space war whose campaign continues through failure.", "Colony Wars (USA) (Disc 1)"],
+  ["fear-effect", "Fear Effect", 2000, "USA", ["Action", "Adventure"], "Mercenaries cross a cel-shaded cyberpunk thriller with supernatural horror.", "Fear Effect (USA) (Disc 1)"],
+];
+
+const broaderGames = broaderSeeds.map(([id, title, year, region, genres, description, cover]) =>
+  g(id, title, year, region, genres, [], description, "A strong reason to keep exploring the PlayStation library.", "1", "Various", cover),
+);
+
+export const games: Game[] = [...coreGames, ...broaderGames];
+
+export const curatedShelves = [
+  { title: "Beautifully Weird", subtitle: "Surreal worlds, bad ideas, and brilliant accidents.", ids: ["tail-sun", "incredible-crisis", "rising-zan", "mr-domino", "cho-aniki", "internal-section"] },
+  { title: "Midnight Dread", subtitle: "Fog, body horror, and games best played after everyone sleeps.", ids: ["silent-hill", "resident-evil-2", "parasite-eve", "baroque", "fear-effect", "germs"] },
+  { title: "One More Run", subtitle: "Arcade precision, score chasing, and immediate restarts.", ids: ["einhander", "r-type-delta", "g-darius", "strider-2", "ridge-racer-type-4", "tony-hawk-2"] },
+  { title: "Lose a Weekend", subtitle: "Big journeys, deep systems, and dangerous save files.", ids: ["suikoden-2", "xenogears", "final-fantasy-tactics", "vagrant-story", "chrono-cross", "grandia"] },
 ];
 
 export const facetOrder = [

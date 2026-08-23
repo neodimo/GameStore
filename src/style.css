@@ -541,6 +541,11 @@ main {
   gap: 23px;
   margin-top: 24px;
 }
+.detail-body.media-first {
+  grid-template-columns: minmax(120px, 170px) minmax(520px, 1fr) minmax(250px, 320px);
+  align-items: start;
+}
+.detail-rail { min-width: 0; }
 .detail-art .art-frame {
   max-height: 330px;
 }
@@ -721,10 +726,39 @@ main {
 .media-gallery {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(300px, 1.35fr) minmax(190px, 0.65fr);
+  grid-template-columns: minmax(360px, 1.55fr) minmax(260px, 0.85fr);
   gap: 12px;
   align-items: start;
 }
+.screenshot-browser .shot-scroll {
+  max-height: 430px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 9px;
+}
+.screenshot-browser .shot-scroll figure { min-width: 0; margin: 0; }
+.screenshot-browser .shot-scroll img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+.local-video video { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #050606; }
+.acquisition { margin-top: 14px; border: 1px solid #41464a; border-radius: 7px; background: #101214; padding: 10px; }
+.acquisition-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.acquisition-title span { display: flex; gap: 7px; align-items: center; font: 600 12px "Space Grotesk"; color: var(--amber); }
+.acquisition-title svg { width: 16px; }
+.acquisition button, .acquisition input, .acquisition select { border: 1px solid #41464a; background: #1b1f21; color: #e8e8e6; border-radius: 5px; padding: 8px; }
+.acquisition-form { display: grid; gap: 7px; margin-top: 10px; }
+.acquisition-form input { min-width: 0; }
+.acquisition-form button { color: var(--amber); cursor: pointer; }
+.acquisition .source-fallback { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+.acquisition .source-fallback svg { width: 14px; }
+.acquisition > small { display: block; color: #72787b; font-size: 9px; margin-top: 7px; }
+.content-links { margin-top: 14px; border-top: 1px solid #2d3133; padding-top: 8px; }
+.device-candidates { display: grid; gap: 6px; margin: 8px 0 14px; max-height: 190px; overflow: auto; }
+.device-candidates button { display: grid; text-align: left; gap: 2px; padding: 9px; border: 1px solid #3b4043; background: #16191b; border-radius: 6px; cursor: pointer; }
+.device-candidates button:hover { border-color: var(--cyan); }
+.device-candidates span, .device-candidates small, .scan-actions span { color: #808689; font-size: 10px; }
+.split-actions, .scan-actions { justify-content: flex-start; }
 .local-video,
 .screenshot-browser {
   min-width: 0;

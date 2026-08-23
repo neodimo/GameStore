@@ -26,15 +26,32 @@ contextBridge.exposeInMainWorld("gameStore", {
     return () => ipcRenderer.removeListener("media-video-progress", wrapped);
   },
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
+  discoverFpga: () => ipcRenderer.invoke("fpga-discover"),
+  onFpgaDiscoveryProgress: (listener: (progress: unknown) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);
+    ipcRenderer.on("fpga-discovery-progress", wrapped);
+    return () => ipcRenderer.removeListener("fpga-discovery-progress", wrapped);
+  },
   setFpgaSettings: (settings: unknown) =>
     ipcRenderer.invoke("fpga-settings-set", settings),
   testFpga: () => ipcRenderer.invoke("fpga-test"),
   transferToFpga: (title: string) => ipcRenderer.invoke("fpga-transfer", title),
+  transferLibraryToFpga: (title: string) => ipcRenderer.invoke("fpga-transfer-library", title),
   onFpgaProgress: (listener: (progress: unknown) => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) =>
       listener(progress);
     ipcRenderer.on("fpga-transfer-progress", wrapped);
     return () => ipcRenderer.removeListener("fpga-transfer-progress", wrapped);
+  },
+  getDebridSettings: () => ipcRenderer.invoke("debrid-settings-get"),
+  setDebridSettings: (settings: unknown) => ipcRenderer.invoke("debrid-settings-set", settings),
+  testDebrid: (provider: string) => ipcRenderer.invoke("debrid-test", provider),
+  downloadGame: (provider: string, link: string, title: string) =>
+    ipcRenderer.invoke("game-download", provider, link, title),
+  onGameDownloadProgress: (listener: (progress: unknown) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);
+    ipcRenderer.on("game-download-progress", wrapped);
+    return () => ipcRenderer.removeListener("game-download-progress", wrapped);
   },
   getUpdateStatus: () => ipcRenderer.invoke("update-status-get"),
   checkForUpdates: () => ipcRenderer.invoke("update-check"),

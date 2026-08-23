@@ -2,7 +2,7 @@
 
 Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
-The first PS1 discovery release is now in active development. Version 0.7 audits and fills missing media in a throttled background batch during startup.
+The PS1 discovery release is in active development. Version 0.8 expands the catalog to 100 games, makes detail views media-first, adds private debrid-backed acquisition, and discovers SuperStation/MiSTer candidates on the local network.
 
 ## Approved identity
 
@@ -12,7 +12,7 @@ The first PS1 discovery release is now in active development. Version 0.7 audits
 
 ## Current planning direction
 
-- Begin with PS1 and 30 adversarial catalog fixtures.
+- Begin with PS1, retaining 30 adversarial fixtures inside a broader 100-game catalog.
 - Model catalog data as `Game → Release → Revision/media set`.
 - Prefer USA releases, then Europe/UK where no USA release exists, then Japan-exclusive games with verified English translations.
 - Use local SQLite with JSON shelf export/import.
@@ -29,7 +29,7 @@ The first PS1 discovery release is now in active development. Version 0.7 audits
 - Game box art, screenshots, video thumbnails, and other per-game media are not bundled in the repository or installers. The installed app fetches them on demand through its built-in auto-scrapers/providers.
 - Media downloads are user-initiated or governed by an explicit in-app download/cache setting. The UI must show source, storage use, progress, failures, and retry/clear controls.
 - Cached media lives in the user's application-data directory and remains disposable/rebuildable. User-selected artwork overrides and provenance records are preserved separately when the media cache is cleared.
-- Video is never bundled. When a verified longplay exists, GameStore shows the derivative size first and downloads it to the disposable local cache only after approval; playback uses the local file.
+- Video is never bundled. Short release-matched previews under the automatic cache ceiling may download during the startup audit; oversized longplays are rejected as ambient previews. Playback always uses the local cache.
 - Small product assets required to identify and operate the app—icons, logos, loading states, and missing-media placeholders—may remain bundled.
 - `npm run check:media-light` rejects catalog media and oversized UI assets in the source tree. Release CI also enforces explicit web, Electron, and installer size ceilings from `config/media-light.json`.
 
@@ -44,13 +44,13 @@ Build the web/client bundle with `npm run build`. Windows NSIS installers, Linux
 
 Linux users can run the portable AppImage (mark it executable first) or install the `.deb` on Debian/Ubuntu-family systems. Both packages contain the same catalog and features as the Windows build.
 
-## What v0.1 includes
+## What v0.8 includes
 
-- 30 deliberately unusual PS1 games, including English fan-translation leads.
+- 100 PS1 games, retaining 30 deliberately unusual/translation-heavy fixtures and adding horror, arcade, RPG, action, racing, and platformer shelves.
 - Search; region, genre, weird-facet, and translation filters; sorting.
 - Editorial discovery shelves with explainable curator notes.
 - Responsive box-art grid and anchored inline details.
-- Click-to-play video, explicit unavailable-media states, source/link health, and translation/base-release records.
+- Screenshot-first detail views, short looping local video, explicit unavailable-media states, source/link health, and translation/base-release records.
 - Local favorites and JSON shelf export.
 - No bundled games, ROMs, patches, or silent downloads.
 
@@ -70,8 +70,8 @@ Media candidates are downloaded after installation from their original providers
 
 - Shortly after first paint, a three-worker startup audit checks every catalog title. A compact header indicator reports index, progress, completion, or failure while normal browsing remains available.
 - Opening a game resolves its Libretro `Named_Snaps` and `Named_Titles`, downloads the release-matched images to the local media cache, and displays them in a scrollable rail beside the video pane.
-- GameStore searches the Internet Archive PSX longplay corpus and attaches a video only when the title matcher clears its strict automatic-match floor. Near-misses remain visibly empty.
-- A matched longplay displays the smallest suitable MP4 derivative and its size. **Download to cache** must finish before playback; the app does not offer remote streaming or an embedded third-party player.
+- GameStore strictly matches preview candidates to a release. Near-misses remain visibly empty, and longplays larger than the preview ceiling are rejected.
+- Eligible previews under 120 MB cache during the background audit and loop a short 8–45 second segment locally. Larger candidates require a future short-form provider instead of silently consuming gigabytes.
 - **Settings → Local media cache** reports storage use and location and can clear fetched screenshots/video without touching favorites, catalog corrections, or artwork overrides.
 - Clearing media automatically starts a fresh background audit. Existing files are validated and reused on ordinary starts, so the check does not redownload healthy cache entries.
 
@@ -85,6 +85,15 @@ Media candidates are downloaded after installation from their original providers
 ## RetroGameTalk and FPGA transfer
 
 - Each game includes an explicit RetroGameTalk repository search as an unverified fallback. It opens the source page in the user's browser; GameStore does not scrape or silently resolve its changing download endpoint.
-- Configure a SuperStation One or MiSTer under **Settings → SuperStation / MiSTer**. GameStore tests the SFTP connection and transfers selected PS1 media into `/media/fat/games/PSX/<game>` by default.
+- **Scan network** performs a short, rate-limited SSH/SFTP probe of the local subnet, ranks likely hostnames, and exposes every candidate for explicit selection. Credential testing confirms `/media/fat` before calling a device MiSTer/SuperStation-compatible.
+- Configure a selected SuperStation One or MiSTer under **Settings → SuperStation / MiSTer**. GameStore transfers selected PS1 media into `/media/fat/games/PSX/<game>` by default.
 - PS1 transfers accept CHD or complete BIN/CUE sets. CD files stay unzipped, related tracks move together, and multi-file titles remain grouped under one game folder as MiSTer expects.
 - Transfer progress is shown in the expanded detail view. Device credentials remain local and use OS-backed encryption when available.
+
+## Private download providers
+
+- Real-Debrid and TorBox API tokens live under **Settings → Download providers** and are stored through Electron `safeStorage` when the OS keychain is available. Tokens never enter exports, catalog data, logs, or GitHub.
+- Real-Debrid resolves supported host links and magnets, selects the torrent's files, waits for provider completion, and downloads allowed game-image/archive files into `Documents/GameStore/Games/<title>/` with progress.
+- TorBox resolves supported host links. TorBox magnet file selection remains explicitly unavailable until its multi-file path is verified; the UI does not pretend otherwise.
+- Executables and unrelated provider payloads are refused. GameStore accepts known disc-image, playlist, and archive extensions only.
+- Completed compatible CHD/BIN/CUE downloads can be sent directly from the organized local game folder to the configured SuperStation/MiSTer.

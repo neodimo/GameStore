@@ -22,7 +22,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { facetOrder, games, Game } from "./catalog";
+import { curatedShelves, facetOrder, games, Game } from "./catalog";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
@@ -270,27 +270,28 @@ function Catalog() {
               <option value="year-old">Sort: Oldest</option>
             </select>
           </div>
-          <section className="feature">
-            <div>
-              <p>CURATOR'S SHELF</p>
-              <h1>Beautifully Weird</h1>
-              <span>Surreal worlds, bad ideas, and brilliant accidents.</span>
-            </div>
-            <div className="feature-cards">
-              {[games[3], games[0], games[4], games[1], games[5], games[6]].map(
-                (g) => (
-                  <MiniCover
-                    key={g.id}
-                    game={g}
-                    onClick={() => {
-                      setSelected(g.id);
-                      setFacet("All flavors");
-                    }}
-                  />
-                ),
-              )}
-            </div>
-          </section>
+          <div className="curated-shelves">
+            {curatedShelves.map((shelf) => (
+              <section className="feature" key={shelf.title}>
+                <div>
+                  <p>CURATOR'S SHELF</p>
+                  <h1>{shelf.title}</h1>
+                  <span>{shelf.subtitle}</span>
+                </div>
+                <div className="feature-cards">
+                  {shelf.ids
+                    .map((id) => games.find((game) => game.id === id))
+                    .filter((game): game is Game => !!game)
+                    .map((game) => (
+                      <MiniCover key={game.id} game={game} onClick={() => {
+                        setSelected(game.id);
+                        setFacet("All flavors");
+                      }} />
+                    ))}
+                </div>
+              </section>
+            ))}
+          </div>
           <div className="catalog-head">
             <div>
               <h2>{filtered.length} PlayStation games</h2>
@@ -646,7 +647,7 @@ const Detail = forwardRef<
           </button>
         </div>
       </div>
-      <div className="detail-body">
+      <div className="detail-body media-first">
         <div className="detail-art">
           <CoverImage game={game} />
           <button onClick={onFindArt}>
@@ -666,7 +667,8 @@ const Detail = forwardRef<
             {art.variant ? ` · ${art.variant}` : ""}
           </small>
         </div>
-        <div className="copy">
+        <MediaGallery game={game} />
+        <div className="copy detail-rail">
           <p className="description">{game.description}</p>
           <blockquote>“{game.curatorNote}”</blockquote>
           <dl>
@@ -717,7 +719,8 @@ const Detail = forwardRef<
               <span>{transfer.message}</span>
             </div>
           )}
-          <div className="links">
+          <Acquisition game={game} />
+          <div className="links content-links">
             {game.links.map((l) => (
               <button key={l.url} onClick={() => open(l.url)}>
                 <i className={l.state} />
@@ -728,16 +731,80 @@ const Detail = forwardRef<
             ))}
           </div>
         </div>
-        <MediaGallery game={game} />
       </div>
     </div>
   );
 });
 
+function Acquisition({ game }: { game: Game }) {
+  const [openPanel, setOpenPanel] = useState(false);
+  const [provider, setProvider] = useState<"realdebrid" | "torbox">("realdebrid");
+  const [link, setLink] = useState("");
+  const [state, setState] = useState<{ status: "idle" | "downloading" | "done" | "error"; percent?: number; message?: string }>({ status: "idle" });
+  const [sending, setSending] = useState(false);
+  useEffect(
+    () =>
+      window.gameStore?.onGameDownloadProgress((progress) => {
+        if (progress.gameTitle === game.title)
+          setState({ status: "downloading", percent: progress.percent, message: `${progress.filename} · ${formatBytes(progress.bytes)}${progress.total ? ` / ${formatBytes(progress.total)}` : ""}` });
+      }),
+    [game.title],
+  );
+  const download = async () => {
+    if (!link.trim() || !window.gameStore) return;
+    setState({ status: "downloading", percent: 0, message: "Resolving provider link…" });
+    try {
+      const result = await window.gameStore.downloadGame(provider, link.trim(), game.title);
+      setState({ status: "done", percent: 100, message: `Ready in ${result.directory}` });
+    } catch (e) {
+      setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
+    }
+  };
+  return (
+    <section className="acquisition">
+      <div className="acquisition-title">
+        <span><Download /> Download</span>
+        <button onClick={() => setOpenPanel(!openPanel)}>{openPanel ? "Close" : "Use provider"}</button>
+      </div>
+      {openPanel && <div className="acquisition-form">
+        <select value={provider} onChange={(e) => setProvider(e.target.value as "realdebrid" | "torbox")}>
+          <option value="realdebrid">Real-Debrid</option>
+          <option value="torbox">TorBox</option>
+        </select>
+        <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a supported host link or magnet" />
+        <button disabled={!link.trim() || state.status === "downloading"} onClick={download}>
+          {state.status === "downloading" ? `Downloading ${state.percent ?? 0}%` : "Resolve & download"}
+        </button>
+      </div>}
+      {state.status !== "idle" && <div className={`transfer-status ${state.status}`}>
+        <i><b style={{ width: `${state.percent ?? 0}%` }} /></i>
+        <span>{state.message}</span>
+      </div>}
+      {state.status === "done" && <button className="source-fallback" disabled={sending} onClick={async () => {
+        setSending(true);
+        try {
+          const result = await window.gameStore!.transferLibraryToFpga(game.title);
+          setState({ status: "done", percent: 100, message: `Downloaded and copied to ${result.remoteDir}` });
+        } catch (e) {
+          setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
+        } finally { setSending(false); }
+      }}><HardDriveUpload /> {sending ? "Sending…" : "Send downloaded files to SuperStation / MiSTer"}</button>}
+      <button className="source-fallback" onClick={() => open(`https://retrogametalk.com/repo/?s=${encodeURIComponent(game.title)}`)}>
+        Search RetroGameTalk fallback <ExternalLink />
+      </button>
+      <small>User-selected sources only. GameStore does not bundle a ROM index.</small>
+    </section>
+  );
+}
+
 function ProviderSettings({ onClose }: { onClose: () => void }) {
   const [key, setKey] = useState("");
   const [saved, setSaved] = useState(false);
   const [test, setTest] = useState("");
+  const [debrid, setDebrid] = useState({ realdebrid: "", torbox: "" });
+  const [debridState, setDebridState] = useState({ hasRealDebrid: false, hasTorBox: false });
+  const [devices, setDevices] = useState<NetworkCandidate[]>([]);
+  const [scan, setScan] = useState("");
   const [cache, setCache] = useState<MediaCacheStats | null>(null);
   const [device, setDevice] = useState({
     host: "MiSTer",
@@ -752,12 +819,36 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
       ?.getFpgaSettings()
       .then((f) => f && setDevice((d) => ({ ...d, ...f, password: "" })));
     window.gameStore?.getMediaCacheStats().then(setCache);
+    window.gameStore?.getDebridSettings().then(setDebridState);
+    return window.gameStore?.onFpgaDiscoveryProgress(({ done, total }) =>
+      setScan(`Scanning local network · ${done}/${total}`),
+    );
   }, []);
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
     await window.gameStore?.setFpgaSettings(device);
+    setDebridState((await window.gameStore?.setDebridSettings(debrid)) ?? debridState);
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
+  };
+  const scanNetwork = async () => {
+    setScan("Finding SSH/SFTP devices…");
+    try {
+      const found = (await window.gameStore?.discoverFpga()) ?? [];
+      setDevices(found);
+      setScan(found.length ? `${found.length} candidate${found.length === 1 ? "" : "s"} found` : "No SSH/SFTP devices found");
+    } catch (e) {
+      setScan(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const testDebridProvider = async (provider: "realdebrid" | "torbox") => {
+    try {
+      await window.gameStore?.setDebridSettings(debrid);
+      const result = await window.gameStore!.testDebrid(provider);
+      setTest(`${provider === "torbox" ? "TorBox" : "Real-Debrid"}: ${result.account}`);
+    } catch (e) {
+      setTest(e instanceof Error ? e.message : String(e));
+    }
   };
   const testDevice = async () => {
     setTest("Connecting…");
@@ -800,13 +891,31 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           and never enters exports or GitHub.
         </small>
         <hr />
+        <h2><Download /> Download providers</h2>
+        <p>
+          Paste provider API tokens here. They are encrypted locally and omitted from logs, exports, and catalog data. Game downloads land under Documents/GameStore/Games.
+        </p>
+        <label>
+          Real-Debrid API token {debridState.hasRealDebrid && <small>· saved</small>}
+          <input type="password" value={debrid.realdebrid} onChange={(e) => setDebrid({ ...debrid, realdebrid: e.target.value })} placeholder="Blank keeps saved token" />
+        </label>
+        <label>
+          TorBox API token {debridState.hasTorBox && <small>· saved</small>}
+          <input type="password" value={debrid.torbox} onChange={(e) => setDebrid({ ...debrid, torbox: e.target.value })} placeholder="Blank keeps saved token" />
+        </label>
+        <div className="settings-actions split-actions">
+          <button onClick={() => testDebridProvider("realdebrid")}>Test Real-Debrid</button>
+          <button onClick={() => testDebridProvider("torbox")}>Test TorBox</button>
+        </div>
+        <hr />
         <h2>
           <Database /> Local media cache
         </h2>
         <p>
           GameStore checks every title in a throttled startup batch and fills
-          missing screenshots in the background. Longplay availability and size
-          are preloaded; the large video file still requires approval.
+          missing screenshots in the background. Release-matched previews under
+          120 MB cache automatically; oversized longplays are rejected as ambient
+          previews and never begin downloading silently.
         </p>
         <div className="cache-row">
           <div>
@@ -833,6 +942,17 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           Transfers PSX CHD or complete BIN/CUE sets over SFTP into one folder
           per game.
         </p>
+        <div className="settings-actions scan-actions">
+          <button onClick={scanNetwork}><Wifi /> Scan network</button>
+          {scan && <span>{scan}</span>}
+        </div>
+        {!!devices.length && <div className="device-candidates">
+          {devices.map((candidate) => <button key={candidate.host} onClick={() => setDevice({ ...device, host: candidate.host, port: candidate.port })}>
+            <b>{candidate.hostname || candidate.host}</b>
+            <span>{candidate.host} · {candidate.confidence}</span>
+            <small>{candidate.reason}</small>
+          </button>)}
+        </div>}
         <div className="device-fields">
           <label>
             Hostname / IP

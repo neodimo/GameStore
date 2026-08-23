@@ -27,6 +27,8 @@ interface Window {
     clearMediaCache(): Promise<MediaCacheStats>;
     onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
     getFpgaSettings(): Promise<FpgaSettings | null>;
+    discoverFpga(): Promise<NetworkCandidate[]>;
+    onFpgaDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
     setFpgaSettings(
       settings: Partial<FpgaSettings> & { password?: string },
     ): Promise<FpgaSettings>;
@@ -34,7 +36,13 @@ interface Window {
     transferToFpga(
       title: string,
     ): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
+    transferLibraryToFpga(title: string): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
     onFpgaProgress(listener: (progress: FpgaProgress) => void): () => void;
+    getDebridSettings(): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean }>;
+    setDebridSettings(settings: { realdebrid?: string; torbox?: string }): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean }>;
+    testDebrid(provider: "realdebrid" | "torbox"): Promise<{ ok: boolean; account: string }>;
+    downloadGame(provider: "realdebrid" | "torbox", link: string, title: string): Promise<{ path: string; filename: string; bytes: number; directory: string }>;
+    onGameDownloadProgress(listener: (progress: GameDownloadProgress) => void): () => void;
     getUpdateStatus(): Promise<UpdateStatus>;
     checkForUpdates(): Promise<void>;
     downloadUpdate(): Promise<void>;
@@ -48,6 +56,20 @@ type FpgaSettings = {
   username: string;
   root: string;
   hasPassword: boolean;
+};
+type NetworkCandidate = {
+  host: string;
+  hostname?: string;
+  port: number;
+  confidence: "likely" | "unknown";
+  reason: string;
+};
+type GameDownloadProgress = {
+  gameTitle: string;
+  filename: string;
+  bytes: number;
+  total: number;
+  percent: number;
 };
 type FpgaProgress = {
   gameTitle: string;

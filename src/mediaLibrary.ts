@@ -68,6 +68,16 @@ const loadResources = () =>
   })));
 
 export const ensureGameMedia = (game: Game) => {
+  if (!window.gameStore) {
+    patchRecord(game.id, {
+      shots: [],
+      shotState: "empty",
+      videoId: null,
+      video: null,
+      videoState: "empty",
+    });
+    return Promise.resolve(records.get(game.id)!);
+  }
   const existing = inflight.get(game.id);
   if (existing) return existing;
   patchRecord(game.id, {
@@ -96,7 +106,12 @@ export const ensureGameMedia = (game: Game) => {
         patchRecord(game.id, { videoId: match.identifier });
         videoJob = window
           .gameStore!.getVideoInfo(match.identifier)
-          .then((video) => patchRecord(game.id, { video, videoState: "ready" }))
+          .then(async (video) => {
+            if (!video.cached && video.size <= 120 * 1024 ** 2) {
+              const cached = await window.gameStore!.downloadVideo(match.identifier);
+              patchRecord(game.id, { video: cached, videoState: "ready" });
+            } else patchRecord(game.id, { video, videoState: "ready" });
+          })
           .catch((error) =>
             patchRecord(game.id, {
               video: null,
