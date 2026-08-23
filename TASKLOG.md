@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-22 — Background in-app updater
+
+- **What was done:** Added a header updater flow with check, update-available, background download progress, ready, restart, current, unsupported, and error states. Windows NSIS and Linux AppImage builds use GitHub Releases through `electron-updater`; `.deb` installs explicitly defer to the package manager. The renderer receives status through a narrow preload IPC bridge, and release CI now uploads updater manifests and blockmaps with installers. Evidence: catalog tests, TypeScript validation, production web/Electron build, media-light guard, and runtime-only dependency audit passed.
+- **Artifacts:** `electron/updater.ts`, `electron/main.ts`, `electron/preload.ts`, `src/App.tsx`, `src/style.css`, `src/vite-env.d.ts`, `package.json`, `package-lock.json`, `.github/workflows/release.yml`, `README.md`, and `CONTEXT.md`. Intended repository status: committed/pushed on `feat/in-app-updater`, merged through GitHub, and released as v0.3.1.
+- **State:** Implementation complete locally. A true end-to-end update requires two published versions; v0.3.1 establishes the updater-capable baseline, and its check/no-update path can be tested immediately after release. The next release will exercise download/stage/restart from v0.3.1.
+- **Failure mode:** The first packaged AppImage smoke test exposed that a default import from `electron-updater` compiled but resolved undefined under the CommonJS Electron bundle. The updater now uses the library's named `autoUpdater` import; packaged launch is a mandatory release gate because the renderer/dev build cannot catch this interop failure.
+- **Next owner + concrete artifact:** Gonzo publishes v0.3.1 and verifies its updater metadata assets. Omid installs v0.3.1 once; the next GameStore release should then arrive through the header button without a visible installer.
+
 ## 2026-08-22 — Mockup-aligned UI and release-ratio artwork
 
 - **What was done:** Rebuilt the live desktop shell around the approved mockups: fixed navigation rail, global search, platform and filter bars, dense editorial shelf, six-column catalog, and an anchored three-part detail accordion. Cover frames now adopt each loaded scan's intrinsic aspect ratio and render with containment, preventing the former universal 3:4 crop. Added a local TheGamesDB API-key setting and explicit front-cover candidate search/apply flow; Libretro remains the zero-configuration source. Evidence: catalog tests, TypeScript validation, production web/Electron build, media-light source guard, and a 1600×1000 Linux Chromium visual smoke test passed.

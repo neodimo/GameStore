@@ -62,3 +62,10 @@ Media candidates are downloaded after installation from their original providers
 - A TheGamesDB API key can be added under **Settings → Artwork scrapers**. It is stored only in the local application-data directory and encrypted through Electron's OS-backed `safeStorage` when available.
 - **Find official box art** in an expanded game row searches TheGamesDB and requires an explicit Apply action. The key is never bundled, exported, logged, or committed.
 - Cover frames adopt the selected scan's intrinsic dimensions. Artwork is shown uncropped at the release scan's real aspect ratio; missing art remains a labeled placeholder.
+
+## In-app updates
+
+- Installed Windows NSIS and Linux AppImage builds can check GitHub Releases from the header button.
+- The button exposes checking, available, download progress, ready-to-restart, current, unsupported, and error states. Downloads and staging stay in the background; the user chooses when to restart and apply.
+- Linux `.deb` installs remain managed by the system package manager because replacing a system package requires distro-specific privileges. The app says so explicitly instead of invoking a visible or privileged installer.
+- Release CI publishes the updater metadata and blockmaps alongside each installer. Development builds disable update checks.
