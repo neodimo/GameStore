@@ -2,7 +2,7 @@
 
 Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
-The first PS1 discovery release is now in active development. Version 0.3 moves the live interface toward the approved desktop mockups and adds configurable artwork providers.
+The first PS1 discovery release is now in active development. Version 0.4 adds source-page fallbacks and direct SuperStation One / MiSTer transfers.
 
 ## Approved identity
 
@@ -69,3 +69,10 @@ Media candidates are downloaded after installation from their original providers
 - The button exposes checking, available, download progress, ready-to-restart, current, unsupported, and error states. Downloads and staging stay in the background; the user chooses when to restart and apply.
 - Linux `.deb` installs remain managed by the system package manager because replacing a system package requires distro-specific privileges. The app says so explicitly instead of invoking a visible or privileged installer.
 - Release CI publishes the updater metadata and blockmaps alongside each installer. Development builds disable update checks.
+
+## RetroGameTalk and FPGA transfer
+
+- Each game includes an explicit RetroGameTalk repository search as an unverified fallback. It opens the source page in the user's browser; GameStore does not scrape or silently resolve its changing download endpoint.
+- Configure a SuperStation One or MiSTer under **Settings → SuperStation / MiSTer**. GameStore tests the SFTP connection and transfers selected PS1 media into `/media/fat/games/PSX/<game>` by default.
+- PS1 transfers accept CHD or complete BIN/CUE sets. CD files stay unzipped, related tracks move together, and multi-file titles remain grouped under one game folder as MiSTer expects.
+- Transfer progress is shown in the expanded detail view. Device credentials remain local and use OS-backed encryption when available.

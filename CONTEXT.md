@@ -23,11 +23,13 @@ GameStore is a Windows and Linux retro-game discovery catalog inspired by the br
 
 ## Current implementation
 
-Version 0.3 is an Electron + React/TypeScript desktop application with matching Windows and Linux functionality. Its desktop shell follows the approved mockup direction: fixed navigation rail, global search, platform/filter bars, dense art-led shelves, and anchored inline details. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, translation records, media/video states, and stateful outbound sources. GitHub Actions builds a Windows NSIS installer plus Linux AppImage and Debian packages.
+Version 0.4 is an Electron + React/TypeScript desktop application with matching Windows and Linux functionality. Its desktop shell follows the approved mockup direction: fixed navigation rail, global search, platform/filter bars, dense art-led shelves, and anchored inline details. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, translation records, media/video states, and stateful outbound sources. GitHub Actions builds a Windows NSIS installer plus Linux AppImage and Debian packages.
 
 Libretro Thumbnails is the zero-configuration art source. Users can store a TheGamesDB API key locally from Settings and explicitly apply searched front-cover candidates from a game's expanded details. Cover containers derive their ratio from the loaded scan and use `object-fit: contain`, so the UI preserves official package/scan proportions rather than cropping every system into one poster shape. TheGamesDB secrets stay in Electron's main process and use OS-backed safe storage where available.
 
 Commercial game files are not bundled or directly downloaded. The application links to references and patch discovery records through visible external-source actions.
+
+RetroGameTalk repository search is retained as an explicit, unverified source-page fallback per game. SuperStation One and MiSTer devices use a locally configured SFTP target; PS1 CHD or complete BIN/CUE file sets transfer to `/media/fat/games/PSX/<game>` with byte progress and per-game grouping. The SuperStation One runs MiSTer and therefore follows the same documented games-folder convention. Hardware-specific connection/write validation remains a user-side acceptance step.
 
 The header includes an in-app release updater. Windows NSIS and Linux AppImage builds check the public GitHub Releases feed, download and stage updates in the background with progress, then require an explicit **Restart to update** action. `.deb` installations report that updates belong to the system package manager. Release jobs must attach `latest.yml` / `latest-linux.yml` plus blockmaps so installed clients can resolve differential updates.
 
