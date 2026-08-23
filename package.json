@@ -1,6 +1,6 @@
 {
   "name": "gamestore",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A Windows and Linux visual catalog for discovering English-playable retro games.",
   "author": "Omid & Gonzo",
   "license": "MIT",
@@ -13,6 +13,9 @@
     "build": "npm run build:web && npm run build:electron",
     "dist:win": "npm run build && electron-builder --win nsis --publish never",
     "dist:linux": "npm run build && electron-builder --linux AppImage deb --publish never",
+    "check:media-light": "node scripts/check-media-light.mjs source",
+    "check:bundle-size": "node scripts/check-media-light.mjs build",
+    "check:package-size": "node scripts/check-media-light.mjs artifacts",
     "test": "vitest run",
     "lint": "tsc -b --pretty false"
   },
@@ -39,17 +42,40 @@
   "build": {
     "appId": "com.neodimo.gamestore",
     "productName": "GameStore",
-    "directories": { "output": "release" },
-    "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
-    "win": { "target": ["nsis"], "artifactName": "GameStore-Setup-${version}-${arch}.${ext}" },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "GameStore-Setup-${version}-${arch}.${ext}"
+    },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "artifactName": "GameStore-${version}-${arch}.${ext}",
       "category": "Game",
       "maintainer": "Omid & Gonzo",
       "synopsis": "Discover English-playable retro games"
     },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
-    "publish": { "provider": "github", "owner": "neodimo", "repo": "GameStore" }
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "neodimo",
+      "repo": "GameStore"
+    }
   }
 }

@@ -19,10 +19,13 @@ GameStore is a Windows and Linux retro-game discovery catalog inspired by the br
 - Store fetched media in the platform application-data/cache directory. Cache clearing must not erase favorites, catalog corrections, artwork override history, or provenance.
 - Stream video from attributed providers by default. Bundled media is limited to small app-owned assets such as the icon, logo, loading UI, and missing-media placeholders.
 - CI should guard this invariant with repository/release size budgets and a check that rejects newly bundled per-game media.
+- The enforced budgets and UI-asset allowlist live in `config/media-light.json`; `scripts/check-media-light.mjs` checks the source tree, compiled bundles, and platform artifacts in release CI.
 
 ## Current implementation
 
-Version 0.2 is an Electron + React/TypeScript desktop application with matching Windows and Linux functionality. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, inline details, translation records, media/video states, and stateful outbound sources. GitHub Actions builds a Windows NSIS installer plus Linux AppImage and Debian packages.
+Version 0.3 is an Electron + React/TypeScript desktop application with matching Windows and Linux functionality. Its desktop shell follows the approved mockup direction: fixed navigation rail, global search, platform/filter bars, dense art-led shelves, and anchored inline details. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, translation records, media/video states, and stateful outbound sources. GitHub Actions builds a Windows NSIS installer plus Linux AppImage and Debian packages.
+
+Libretro Thumbnails is the zero-configuration art source. Users can store a TheGamesDB API key locally from Settings and explicitly apply searched front-cover candidates from a game's expanded details. Cover containers derive their ratio from the loaded scan and use `object-fit: contain`, so the UI preserves official package/scan proportions rather than cropping every system into one poster shape. TheGamesDB secrets stay in Electron's main process and use OS-backed safe storage where available.
 
 Commercial game files are not bundled or directly downloaded. The application links to references and patch discovery records through visible external-source actions.
 

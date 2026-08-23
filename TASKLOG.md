@@ -1,5 +1,19 @@
 # GameStore task log
 
+## 2026-08-22 — Mockup-aligned UI and release-ratio artwork
+
+- **What was done:** Rebuilt the live desktop shell around the approved mockups: fixed navigation rail, global search, platform and filter bars, dense editorial shelf, six-column catalog, and an anchored three-part detail accordion. Cover frames now adopt each loaded scan's intrinsic aspect ratio and render with containment, preventing the former universal 3:4 crop. Added a local TheGamesDB API-key setting and explicit front-cover candidate search/apply flow; Libretro remains the zero-configuration source. Evidence: catalog tests, TypeScript validation, production web/Electron build, media-light source guard, and a 1600×1000 Linux Chromium visual smoke test passed.
+- **Artifacts:** `src/App.tsx`, `src/style.css`, `electron/main.ts`, `electron/preload.ts`, `src/vite-env.d.ts`, `README.md`, and `CONTEXT.md`. Visual QA capture is deliberate temporary scratch at `/tmp/gamestore-v003.png`; generated bundles remain ignored local artifacts. Intended repository status: commit/push through PR #4, followed by the v0.3.0 release pipeline.
+- **State:** Implementation complete locally. TheGamesDB live lookup still needs user-key validation against Omid's account/quota; no API key was requested, exposed, or committed. Provider overrides are local and explicit; a fuller append-only override-history UI remains future work.
+- **Next owner + concrete artifact:** Gonzo publishes and verifies PR #4 and the v0.3.0 Windows/Linux release artifacts. Omid adds the key under **Settings → Artwork scrapers**, opens a game, and tests **Find official box art** with an exact-region title.
+
+## 2026-08-22 — Media-light repository and package guard implemented
+
+- **What was done:** Enforced the standing lightweight-core rule in package configuration and release CI. The source guard rejects bundled video, catalog/media archives, artwork outside explicit app-owned UI paths, and oversized UI assets. Separate checks enforce tracked-core, compiled web/Electron bundle, Windows installer, Linux AppImage, and Debian package budgets. Evidence: tests, TypeScript validation, production build, bundle checks, and current Linux artifact checks passed; a deliberate `data/covers/should-fail.png` fixture was correctly rejected and then removed.
+- **Artifacts:** `scripts/check-media-light.mjs`, `config/media-light.json`, `package.json`, `.github/workflows/release.yml`, `README.md`, and `CONTEXT.md`. Intended status: committed and pushed through the repository workflow; generated `dist/`, `dist-electron/`, and `release/` outputs remain ignored/local build artifacts.
+- **State:** Done. Current measurements: tracked core 0.35 MiB of 5 MiB; web bundle 0.22 MiB of 3 MiB; Linux AppImage 115.76 MiB of 130 MiB; Debian package 158.58 MiB of 180 MiB. Windows size enforcement will run on the Windows CI runner.
+- **Next owner + concrete artifact:** Gonzo maintains thresholds and allowlists in `config/media-light.json` when dependencies or app-owned UI assets change; pull-request CI in `.github/workflows/ci.yml` and package checks in `.github/workflows/release.yml` are the acceptance gates.
+
 ## 2026-08-22 — Media-light distribution rule adopted
 
 - **What was done:** Recorded Omid's standing rule that GameStore's repository and downloadable installers stay lightweight. Per-game artwork, screenshots, thumbnails, and video are acquired after installation through built-in auto-scrapers/providers; only code, compact metadata, provider logic, and small app-owned UI assets ship. Cache behavior, user control, provenance preservation, video streaming, and future CI size guards are now explicit requirements.
