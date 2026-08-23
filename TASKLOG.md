@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-22 — Media-light distribution rule adopted
+
+- **What was done:** Recorded Omid's standing rule that GameStore's repository and downloadable installers stay lightweight. Per-game artwork, screenshots, thumbnails, and video are acquired after installation through built-in auto-scrapers/providers; only code, compact metadata, provider logic, and small app-owned UI assets ship. Cache behavior, user control, provenance preservation, video streaming, and future CI size guards are now explicit requirements.
+- **Artifacts:** `README.md` and `CONTEXT.md`, committed/pushed project documentation.
+- **State:** Done as a durable product invariant. The current vertical slice already loads remote media rather than bundling a media archive; scraper orchestration, cache controls, and CI size-budget enforcement remain future implementation work.
+- **Next owner + concrete artifact:** Gonzo uses the distribution invariant in `CONTEXT.md` when implementing the media-provider/cache layer; the acceptance artifact is a CI check plus an in-app media/cache settings screen.
+
 ## 2026-08-22 — Linux parity and v0.2 packaging
 
 - **What was done:** Added Linux as a first-class release target without removing or conditionalizing catalog features. Electron now uses native window chrome outside macOS, and the release workflow independently tests and packages Windows and Linux. Evidence: catalog tests, TypeScript validation, production bundling, AppImage packaging, Debian packaging, runtime-only dependency audit, and a real Linux Electron visual smoke test passed locally.

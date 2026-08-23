@@ -23,6 +23,15 @@ The first PS1 discovery release is now in active development.
 - Treat artwork changes as explicit, reversible, provenance-preserving overrides.
 - Include screenshots and click-to-play video in the same expanded detail view.
 
+## Lightweight distribution rule
+
+- GitHub releases contain the application, schemas, provider adapters, and compact catalog metadata only.
+- Game box art, screenshots, video thumbnails, and other per-game media are not bundled in the repository or installers. The installed app fetches them on demand through its built-in auto-scrapers/providers.
+- Media downloads are user-initiated or governed by an explicit in-app download/cache setting. The UI must show source, storage use, progress, failures, and retry/clear controls.
+- Cached media lives in the user's application-data directory and remains disposable/rebuildable. User-selected artwork overrides and provenance records are preserved separately when the media cache is cleared.
+- Video streams from its attributed provider by default rather than being copied into GitHub releases or the local cache.
+- Small product assets required to identify and operate the app—icons, logos, loading states, and missing-media placeholders—may remain bundled.
+
 ## Run locally
 
 ```bash
@@ -44,4 +53,4 @@ Linux users can run the portable AppImage (mark it executable first) or install 
 - Local favorites and JSON shelf export.
 - No bundled games, ROMs, patches, or silent downloads.
 
-Media candidates are loaded from their original providers. Missing or unverifiable assets remain visibly missing instead of being silently associated with the wrong release.
+Media candidates are downloaded after installation from their original providers. Missing or unverifiable assets remain visibly missing instead of being silently associated with the wrong release.
