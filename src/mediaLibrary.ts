@@ -125,6 +125,29 @@ export const ensureGameMedia = (game: Game) => {
         Named_Snaps: data.snaps,
         Named_Titles: data.titles,
       });
+      // Start still caching immediately. It is independent of the video
+      // provider and used to sit behind an FTP probe, so a slow/unconfigured
+      // EmuMovies account made both the preview and screenshots look stalled.
+      const shotsJob = !resolved.length
+        ? Promise.resolve(patchRecord(game.id, { shots: [], shotState: "empty" }))
+        : window
+            .gameStore!.cacheScreenshots(
+              game.id,
+              resolved.map((shot) => shot.url),
+            )
+            .then((cached) => {
+              const paths = new Map(
+                cached.map((item) => [item.sourceUrl, item.localUrl]),
+              );
+              const shots = resolved
+                .filter((shot) => paths.has(shot.url))
+                .map((shot) => ({ ...shot, localUrl: paths.get(shot.url)! }));
+              patchRecord(game.id, {
+                shots,
+                shotState: shots.length ? "ready" : "error",
+              });
+            })
+            .catch(() => patchRecord(game.id, { shots: [], shotState: "error" }));
       /**
        * EmuMovies first, when the member has signed in.
        *
@@ -137,67 +160,37 @@ export const ensureGameMedia = (game: Game) => {
        * healthy. The archive path stays behind it for everything EmuMovies does
        * not carry, or when no account is configured.
        */
-      const snap = await snapPreview(game);
-      if (snap) {
-        patchRecord(game.id, {
-          videoId: null,
-          video: snap,
-          videoState: "ready",
-        });
-      }
-      const match = snap ? null : resolveLongplay(game.title, data.longplays);
-      let videoJob: Promise<void> = Promise.resolve();
-      if (snap) {
-        /* preview already resolved */
-      } else if (!match)
-        patchRecord(game.id, {
-          videoId: null,
-          video: null,
-          videoState: "empty",
-          frameState: "unavailable",
-        });
-      else {
+      const videoJob = snapPreview(game).then((snap) => {
+        if (snap) {
+          patchRecord(game.id, {
+            videoId: null,
+            video: snap,
+            videoState: "ready",
+          });
+          return;
+        }
+        const match = resolveLongplay(game.title, data.longplays);
+        if (!match) {
+          patchRecord(game.id, {
+            videoId: null,
+            video: null,
+            videoState: "empty",
+            frameState: "unavailable",
+          });
+          return;
+        }
         patchRecord(game.id, { videoId: match.identifier });
-        /**
-         * Resolution stops at metadata. The previous step here downloaded any
-         * recording under 120 MB, which for this collection means almost never
-         * — matched runtimes are 448 MB to 2.28 GB — so the audit's real
-         * output was a download button. Playback streams instead.
-         */
-        videoJob = window
-          .gameStore!.getVideoPreview(match.identifier)
-          .then((video) => patchRecord(game.id, { video, videoState: "ready" }))
-          .catch((error) =>
+        return window.gameStore!.getVideoPreview(match.identifier).then(
+          (video) => patchRecord(game.id, { video, videoState: "ready" }),
+          (error) =>
             patchRecord(game.id, {
               video: null,
               videoState: "error",
               videoError: errorText(error),
             }),
-          );
-      }
-      if (!resolved.length)
-        patchRecord(game.id, { shots: [], shotState: "empty" });
-      else {
-        try {
-          const cached = await window.gameStore!.cacheScreenshots(
-            game.id,
-            resolved.map((shot) => shot.url),
-          );
-          const paths = new Map(
-            cached.map((item) => [item.sourceUrl, item.localUrl]),
-          );
-          const shots = resolved
-            .filter((shot) => paths.has(shot.url))
-            .map((shot) => ({ ...shot, localUrl: paths.get(shot.url)! }));
-          patchRecord(game.id, {
-            shots,
-            shotState: shots.length ? "ready" : "error",
-          });
-        } catch {
-          patchRecord(game.id, { shots: [], shotState: "error" });
-        }
-      }
-      await videoJob;
+        );
+      });
+      await Promise.all([shotsJob, videoJob]);
       return records.get(game.id)!;
     })
     .finally(() => inflight.delete(game.id));
@@ -205,44 +198,30 @@ export const ensureGameMedia = (game: Game) => {
   return job;
 };
 
-export const startMediaAudit = (games: Game[]) => {
+/**
+ * Starts only the shared index warm-up. Earlier releases walked the full
+ * catalog after startup, which meant 100 screenshot-cache requests plus up to
+ * 100 provider checks ran while the user was simply trying to browse. Media
+ * remains lazy per title; this lightweight warm-up is retained for the first
+ * opened detail pane.
+ */
+export const startMediaAudit = (_games: Game[]) => {
   if (started || !window.gameStore) return;
   started = true;
   audit = {
     state: "indexing",
     completed: 0,
-    total: games.length,
-    message: "Loading media indexes",
+    total: 0,
+    message: "Warming media indexes",
   };
   emit();
   loadResources()
-    .then(async () => {
-      audit = {
-        state: "scanning",
-        completed: 0,
-        total: games.length,
-        message: "Checking missing media",
-      };
-      emit();
-      let cursor = 0;
-      const worker = async () => {
-        while (cursor < games.length) {
-          const game = games[cursor++];
-          await ensureGameMedia(game);
-          audit = {
-            ...audit,
-            completed: audit.completed + 1,
-            message: game.title,
-          };
-          emit();
-        }
-      };
-      await Promise.all([worker(), worker(), worker()]);
+    .then(() => {
       audit = {
         state: "complete",
-        completed: games.length,
-        total: games.length,
-        message: "Media cache checked",
+        completed: 0,
+        total: 0,
+        message: "Media ready on demand",
       };
       emit();
     })
@@ -250,7 +229,7 @@ export const startMediaAudit = (games: Game[]) => {
       audit = {
         state: "error",
         completed: audit.completed,
-        total: games.length,
+        total: 0,
         message: errorText(error),
       };
       emit();
