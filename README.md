@@ -2,7 +2,7 @@
 
 Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
-The first PS1 discovery release is now in active development.
+The first PS1 discovery release is now in active development. Version 0.3 moves the live interface toward the approved desktop mockups and adds configurable artwork providers.
 
 ## Approved identity
 
@@ -55,3 +55,10 @@ Linux users can run the portable AppImage (mark it executable first) or install 
 - No bundled games, ROMs, patches, or silent downloads.
 
 Media candidates are downloaded after installation from their original providers. Missing or unverifiable assets remain visibly missing instead of being silently associated with the wrong release.
+
+## Artwork providers
+
+- Libretro Thumbnails supplies zero-configuration artwork candidates for the compact catalog.
+- A TheGamesDB API key can be added under **Settings → Artwork scrapers**. It is stored only in the local application-data directory and encrypted through Electron's OS-backed `safeStorage` when available.
+- **Find official box art** in an expanded game row searches TheGamesDB and requires an explicit Apply action. The key is never bundled, exported, logged, or committed.
+- Cover frames adopt the selected scan's intrinsic dimensions. Artwork is shown uncropped at the release scan's real aspect ratio; missing art remains a labeled placeholder.

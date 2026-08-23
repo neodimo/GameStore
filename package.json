@@ -1,6 +1,6 @@
 {
   "name": "gamestore",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A Windows and Linux visual catalog for discovering English-playable retro games.",
   "author": "Omid & Gonzo",
   "license": "MIT",
@@ -42,17 +42,40 @@
   "build": {
     "appId": "com.neodimo.gamestore",
     "productName": "GameStore",
-    "directories": { "output": "release" },
-    "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
-    "win": { "target": ["nsis"], "artifactName": "GameStore-Setup-${version}-${arch}.${ext}" },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "GameStore-Setup-${version}-${arch}.${ext}"
+    },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "artifactName": "GameStore-${version}-${arch}.${ext}",
       "category": "Game",
       "maintainer": "Omid & Gonzo",
       "synopsis": "Discover English-playable retro games"
     },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
-    "publish": { "provider": "github", "owner": "neodimo", "repo": "GameStore" }
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "neodimo",
+      "repo": "GameStore"
+    }
   }
 }
