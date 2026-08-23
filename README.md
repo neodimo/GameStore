@@ -59,6 +59,9 @@ Media candidates are downloaded after installation from their original providers
 ## Artwork providers
 
 - Libretro Thumbnails supplies zero-configuration artwork candidates for the compact catalog.
+- Covers are matched by scoring the whole Libretro filename index rather than requesting one exact filename, so romanization drift, dropped subtitles, swapped articles and alternate numbering still resolve to the right release. The index is cached locally for seven days and can be refreshed on demand.
+- The automatic matcher is deliberately strict and leaves a placeholder rather than attaching a plausible-but-wrong cover. Each match records its confidence and region.
+- **Right-click any game → Search alternate box art** opens a deeper, deliberately looser browse across box art, title screens, screenshots, and TheGamesDB, ranked by match score. Applying a candidate is an explicit, reversible override; **Reset to automatic match** restores the matcher's choice.
 - A TheGamesDB API key can be added under **Settings → Artwork scrapers**. It is stored only in the local application-data directory and encrypted through Electron's OS-backed `safeStorage` when available.
 - **Find official box art** in an expanded game row searches TheGamesDB and requires an explicit Apply action. The key is never bundled, exported, logged, or committed.
 - Cover frames adopt the selected scan's intrinsic dimensions. Artwork is shown uncropped at the release scan's real aspect ratio; missing art remains a labeled placeholder.

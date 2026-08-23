@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.invoke("provider-key-set", key),
   findTheGamesDbArt: (title: string) =>
     ipcRenderer.invoke("thegamesdb-art", title),
+  getArtIndex: (folder: string, force?: boolean) =>
+    ipcRenderer.invoke("art-index-get", folder, force),
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
   setFpgaSettings: (settings: unknown) =>
     ipcRenderer.invoke("fpga-settings-set", settings),

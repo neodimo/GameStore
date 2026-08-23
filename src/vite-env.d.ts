@@ -10,6 +10,10 @@ interface Window {
     ): Promise<
       { url: string; gameId: number; title: string; source: string }[]
     >;
+    getArtIndex(
+      folder: string,
+      force?: boolean,
+    ): Promise<{ folder: string; files: string[]; fetchedAt: number }>;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     setFpgaSettings(
       settings: Partial<FpgaSettings> & { password?: string },
