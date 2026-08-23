@@ -83,6 +83,39 @@ async function resolveLink(provider: DebridProvider, token: string, link: string
   return [{ url: direct as string, filename: payload.data?.name || "download.bin", bytes: 0 }];
 }
 
+export async function resolveRealDebridTorrentSelection(token: string, torrent: Buffer, wantedPaths: string[]) {
+  const body = new FormData();
+  body.set("file", new Blob([torrent]), "collection.torrent");
+  const added = await fetch("https://api.real-debrid.com/rest/1.0/torrents/addTorrent", { method: "PUT", headers: auth(token), body });
+  if (!added.ok) await apiError(added);
+  const id = String(((await added.json()) as any).id);
+  let info: any;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const response = await fetch(`https://api.real-debrid.com/rest/1.0/torrents/info/${id}`, { headers: auth(token) });
+    if (!response.ok) await apiError(response);
+    info = await response.json();
+    if (info.files?.length) break;
+    await delay(500);
+  }
+  const wanted = new Set(wantedPaths.map((item) => item.replace(/^\//, "")));
+  const ids = (info?.files ?? []).filter((file: any) => wanted.has(String(file.path).replace(/^\//, ""))).map((file: any) => file.id);
+  if (!ids.length) throw new Error("The selected release could not be mapped to Real-Debrid's torrent file list.");
+  const selected = await fetch(`https://api.real-debrid.com/rest/1.0/torrents/selectFiles/${id}`, {
+    method: "POST", headers: { ...auth(token), "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ files: ids.join(",") }),
+  });
+  if (!selected.ok && selected.status !== 204) await apiError(selected);
+  for (let attempt = 0; attempt < 240; attempt++) {
+    const response = await fetch(`https://api.real-debrid.com/rest/1.0/torrents/info/${id}`, { headers: auth(token) });
+    if (!response.ok) await apiError(response);
+    info = await response.json();
+    if (info.status === "downloaded" && info.links?.length)
+      return Promise.all((info.links as string[]).map((item) => realDebridUnrestrict(token, item)));
+    if (["error", "magnet_error", "virus", "dead"].includes(info.status)) throw new Error(`Real-Debrid torrent failed: ${info.status}`);
+    await delay(1500);
+  }
+  throw new Error("Real-Debrid is still preparing the selected file. It remains in your account; retry shortly.");
+}
+
 export async function downloadResolvedLink(args: {
   provider: DebridProvider;
   token: string;
@@ -123,5 +156,27 @@ export async function downloadResolvedLink(args: {
     targets.push(target);
     combinedBytes += bytes;
   }
+  return { path: targets[0], files: targets, filename: path.basename(targets[0]), bytes: combinedBytes, directory: dir };
+}
+
+export async function downloadCollectionFiles(args: { token: string; torrent: Buffer; wantedPaths: string[]; gameTitle: string; window: BrowserWindow | null }) {
+  const resolvedFiles = await resolveRealDebridTorrentSelection(args.token, args.torrent, args.wantedPaths);
+  const dir = path.join(libraryRoot(), cleanName(args.gameTitle));
+  await fs.mkdir(dir, { recursive: true });
+  const targets: string[] = [];
+  let combinedBytes = 0;
+  for (const resolved of resolvedFiles.filter((file) => allowedGameExtensions.has(path.extname(file.filename).toLowerCase()))) {
+    const response = await fetch(resolved.url, { headers: { "User-Agent": `GameStore/${app.getVersion()}` } });
+    if (!response.ok || !response.body) await apiError(response);
+    if (!response.body) throw new Error("Download returned an empty response body.");
+    const filename = cleanName(resolved.filename);
+    const target = path.join(dir, filename); const temp = `${target}.part`;
+    const total = Number(response.headers.get("content-length") || resolved.bytes || 0); let bytes = 0;
+    const counter = new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) { bytes += chunk.byteLength; args.window?.webContents.send("game-download-progress", { gameTitle: args.gameTitle, filename, bytes, total, percent: total ? Math.min(100, Math.round(bytes / total * 100)) : 0 }); controller.enqueue(chunk); } });
+    const body = response.body;
+    await pipeline(Readable.fromWeb(body.pipeThrough(counter) as any), await fs.open(temp, "w").then((handle) => handle.createWriteStream()));
+    await fs.rename(temp, target); targets.push(target); combinedBytes += bytes;
+  }
+  if (!targets.length) throw new Error("The selected torrent files did not resolve to supported game-image/archive downloads.");
   return { path: targets[0], files: targets, filename: path.basename(targets[0]), bytes: combinedBytes, directory: dir };
 }
