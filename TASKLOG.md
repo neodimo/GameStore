@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-22 — Linux parity and v0.2 packaging
+
+- **What was done:** Added Linux as a first-class release target without removing or conditionalizing catalog features. Electron now uses native window chrome outside macOS, and the release workflow independently tests and packages Windows and Linux. Evidence: catalog tests, TypeScript validation, production bundling, AppImage packaging, Debian packaging, runtime-only dependency audit, and a real Linux Electron visual smoke test passed locally.
+- **Artifacts:** Source changes in `package.json`, `package-lock.json`, `electron/main.ts`, `.github/workflows/release.yml`, `README.md`, and `CONTEXT.md`. Local release candidates `release/GameStore-0.2.0-x86_64.AppImage` and `release/GameStore-0.2.0-amd64.deb` are deliberate ignored build output pending replacement by GitHub CI artifacts. Visual-QA captures are deliberate temporary files in `/tmp/gamestore-linux-qa.LZwZTL/`.
+- **State:** Implementation and local Linux validation done. GitHub CI, Windows regression packaging, tagged release publication, and attached screenshot delivery remain required before closure.
+- **Next owner + concrete artifact:** Gonzo publishes `v0.2.0`, verifies both workflow jobs and all three installer assets, then posts the Linux screenshots and release links in `#gamestore`.
+
 ## 2026-08-22 — GameStore v0.1.1 released
 
 - **What was done:** Published the public `neodimo/GameStore` repository and production GitHub release `v0.1.1`. GitHub's Windows runner passed install, catalog tests, TypeScript validation, production bundling, NSIS packaging, and release upload.

@@ -2,7 +2,7 @@
 
 ## Product premise
 
-GameStore is a Windows-first retro-game discovery catalog inspired by the breadth of CDRomance-style platform browsing. It emphasizes official regional box artwork, English playability, unusually strong filtering, editorial similarity shelves, transparent source provenance, and in-place game details.
+GameStore is a Windows and Linux retro-game discovery catalog inspired by the breadth of CDRomance-style platform browsing. It emphasizes official regional box artwork, English playability, unusually strong filtering, editorial similarity shelves, transparent source provenance, and in-place game details.
 
 ## Media plan
 
@@ -13,7 +13,7 @@ GameStore is a Windows-first retro-game discovery catalog inspired by the breadt
 
 ## Current implementation
 
-Version 0.1 is an Electron + React/TypeScript desktop application. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, inline details, translation records, media/video states, and stateful outbound sources. GitHub Actions builds NSIS and portable Windows executables.
+Version 0.2 is an Electron + React/TypeScript desktop application with matching Windows and Linux functionality. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, inline details, translation records, media/video states, and stateful outbound sources. GitHub Actions builds a Windows NSIS installer plus Linux AppImage and Debian packages.
 
 Commercial game files are not bundled or directly downloaded. The application links to references and patch discovery records through visible external-source actions.
 

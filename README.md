@@ -1,6 +1,6 @@
 # GameStore
 
-Windows-first visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
+Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
 The first PS1 discovery release is now in active development.
 
@@ -30,7 +30,9 @@ npm install
 npm run dev
 ```
 
-Build the web/client bundle with `npm run build`. Windows NSIS installers are built by GitHub Actions and attached to tagged releases.
+Build the web/client bundle with `npm run build`. Windows NSIS installers, Linux AppImages, and Debian packages are built by GitHub Actions and attached to tagged releases.
+
+Linux users can run the portable AppImage (mark it executable first) or install the `.deb` on Debian/Ubuntu-family systems. Both packages contain the same catalog and features as the Windows build.
 
 ## What v0.1 includes
 
