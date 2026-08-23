@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Compass,
   Download,
+  Database,
   ExternalLink,
   Gamepad2,
   Grid2X2,
@@ -11,23 +12,28 @@ import {
   Image,
   Library,
   LoaderCircle,
-  Play,
   RefreshCw,
   RotateCcw,
   Search,
   Settings,
   Settings2,
   Sparkles,
+  Trash2,
   Wifi,
   X,
 } from "lucide-react";
 import { facetOrder, games, Game } from "./catalog";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import { ArtPicker } from "./ArtPicker";
+import { MediaGallery } from "./MediaGallery";
 
 type Sort = "curated" | "title" | "year-new" | "year-old";
 const open = (url: string) =>
   window.gameStore?.openExternal(url) ?? window.open(url, "_blank", "noopener");
+const formatBytes = (value: number) =>
+  value >= 1024 ** 3
+    ? `${(value / 1024 ** 3).toFixed(1)} GB`
+    : `${(value / 1024 ** 2).toFixed(value < 10 * 1024 ** 2 ? 1 : 0)} MB`;
 const loadFavs = () => {
   try {
     return new Set<string>(
@@ -360,7 +366,9 @@ function ArtworkStatus() {
       </span>
     );
   if (index.status === "error")
-    return <span className="warn">Artwork index unavailable · {index.message}</span>;
+    return (
+      <span className="warn">Artwork index unavailable · {index.message}</span>
+    );
   return (
     <span>
       {games.length - unmatched}/{games.length} covers matched from{" "}
@@ -561,7 +569,6 @@ const Detail = forwardRef<
     onFindArt: () => void;
   }
 >(({ game, favorite, onFav, onClose, onFindArt }, ref) => {
-  const [media, setMedia] = useState<"video" | "screens">("video");
   const artwork = useArtwork();
   const art = artwork.artFor(game);
   const [transfer, setTransfer] = useState<{
@@ -636,7 +643,10 @@ const Detail = forwardRef<
             <Image /> Search alternate box art
           </button>
           {artwork.hasOverride(game) && (
-            <button className="ghost" onClick={() => artwork.clearOverride(game)}>
+            <button
+              className="ghost"
+              onClick={() => artwork.clearOverride(game)}
+            >
               <RotateCcw /> Reset to automatic
             </button>
           )}
@@ -708,45 +718,7 @@ const Detail = forwardRef<
             ))}
           </div>
         </div>
-        <div className="media">
-          <div className="media-tabs">
-            <button
-              className={media === "video" ? "active" : ""}
-              onClick={() => setMedia("video")}
-            >
-              Gameplay
-            </button>
-            <button
-              className={media === "screens" ? "active" : ""}
-              onClick={() => setMedia("screens")}
-            >
-              Screenshots
-            </button>
-          </div>
-          {media === "video" && game.video ? (
-            <iframe
-              src={game.video}
-              title={`${game.title} gameplay`}
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div className="no-media">
-              <Play />
-              <h3>
-                {media === "video"
-                  ? "Video unavailable"
-                  : "Screenshots not downloaded"}
-              </h3>
-              <p>
-                Media stays honest when no release-matched source is available.
-              </p>
-            </div>
-          )}
-          <p className="media-note">
-            Loaded on demand from its attributed source.
-          </p>
-        </div>
+        <MediaGallery game={game} />
       </div>
     </div>
   );
@@ -756,6 +728,7 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
   const [key, setKey] = useState("");
   const [saved, setSaved] = useState(false);
   const [test, setTest] = useState("");
+  const [cache, setCache] = useState<MediaCacheStats | null>(null);
   const [device, setDevice] = useState({
     host: "MiSTer",
     port: 22,
@@ -768,6 +741,7 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
     window.gameStore
       ?.getFpgaSettings()
       .then((f) => f && setDevice((d) => ({ ...d, ...f, password: "" })));
+    window.gameStore?.getMediaCacheStats().then(setCache);
   }, []);
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
@@ -815,6 +789,28 @@ function ProviderSettings({ onClose }: { onClose: () => void }) {
           The key is encrypted with the operating system keychain when available
           and never enters exports or GitHub.
         </small>
+        <hr />
+        <h2>
+          <Database /> Local media cache
+        </h2>
+        <p>
+          Covers and screenshots cache automatically after you open a game.
+          Longplay video downloads only after you approve its displayed size.
+        </p>
+        <div className="cache-row">
+          <div>
+            <b>{cache ? formatBytes(cache.bytes) : "Calculating…"}</b>
+            <small>{cache?.path}</small>
+          </div>
+          <button
+            onClick={async () => {
+              if (window.gameStore)
+                setCache(await window.gameStore.clearMediaCache());
+            }}
+          >
+            <Trash2 /> Clear media
+          </button>
+        </div>
         <hr />
         <h2>
           <Wifi /> SuperStation / MiSTer

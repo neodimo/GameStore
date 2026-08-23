@@ -2,7 +2,7 @@
 
 Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
-The first PS1 discovery release is now in active development. Version 0.4 adds source-page fallbacks and direct SuperStation One / MiSTer transfers.
+The first PS1 discovery release is now in active development. Version 0.6 adds release-matched screenshots and local-only longplay playback inside the expanded game view.
 
 ## Approved identity
 
@@ -29,7 +29,7 @@ The first PS1 discovery release is now in active development. Version 0.4 adds s
 - Game box art, screenshots, video thumbnails, and other per-game media are not bundled in the repository or installers. The installed app fetches them on demand through its built-in auto-scrapers/providers.
 - Media downloads are user-initiated or governed by an explicit in-app download/cache setting. The UI must show source, storage use, progress, failures, and retry/clear controls.
 - Cached media lives in the user's application-data directory and remains disposable/rebuildable. User-selected artwork overrides and provenance records are preserved separately when the media cache is cleared.
-- Video streams from its attributed provider by default rather than being copied into GitHub releases or the local cache.
+- Video is never bundled. When a verified longplay exists, GameStore shows the derivative size first and downloads it to the disposable local cache only after approval; playback uses the local file.
 - Small product assets required to identify and operate the app—icons, logos, loading states, and missing-media placeholders—may remain bundled.
 - `npm run check:media-light` rejects catalog media and oversized UI assets in the source tree. Release CI also enforces explicit web, Electron, and installer size ceilings from `config/media-light.json`.
 
@@ -65,6 +65,13 @@ Media candidates are downloaded after installation from their original providers
 - A TheGamesDB API key can be added under **Settings → Artwork scrapers**. It is stored only in the local application-data directory and encrypted through Electron's OS-backed `safeStorage` when available.
 - **Find official box art** in an expanded game row searches TheGamesDB and requires an explicit Apply action. The key is never bundled, exported, logged, or committed.
 - Cover frames adopt the selected scan's intrinsic dimensions. Artwork is shown uncropped at the release scan's real aspect ratio; missing art remains a labeled placeholder.
+
+## Screenshots and local video
+
+- Opening a game resolves its Libretro `Named_Snaps` and `Named_Titles`, downloads the release-matched images to the local media cache, and displays them in a scrollable rail beside the video pane.
+- GameStore searches the Internet Archive PSX longplay corpus and attaches a video only when the title matcher clears its strict automatic-match floor. Near-misses remain visibly empty.
+- A matched longplay displays the smallest suitable MP4 derivative and its size. **Download to cache** must finish before playback; the app does not offer remote streaming or an embedded third-party player.
+- **Settings → Local media cache** reports storage use and location and can clear fetched screenshots/video without touching favorites, catalog corrections, or artwork overrides.
 
 ## In-app updates
 

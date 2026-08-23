@@ -11,6 +11,14 @@ import fs from "node:fs/promises";
 import SftpClient from "ssh2-sftp-client";
 import { configureUpdater } from "./updater";
 import { getArtIndex } from "./artIndex";
+import {
+  cacheScreenshots,
+  cacheStats,
+  clearMediaCache,
+  downloadVideo,
+  getLongplayIndex,
+  getVideoInfo,
+} from "./mediaCache";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -115,10 +123,23 @@ ipcMain.handle("provider-key-set", async (_e, key: string) => {
   });
   return true;
 });
-ipcMain.handle(
-  "art-index-get",
-  async (_e, folder: string, force?: boolean) => getArtIndex(folder, !!force),
+ipcMain.handle("art-index-get", async (_e, folder: string, force?: boolean) =>
+  getArtIndex(folder, !!force),
 );
+ipcMain.handle("media-longplays-get", (_e, force?: boolean) =>
+  getLongplayIndex(!!force),
+);
+ipcMain.handle("media-screens-cache", (_e, gameId: string, urls: string[]) =>
+  cacheScreenshots(gameId, urls),
+);
+ipcMain.handle("media-video-info", (_e, identifier: string) =>
+  getVideoInfo(identifier),
+);
+ipcMain.handle("media-video-download", (_e, identifier: string) =>
+  downloadVideo(identifier, win),
+);
+ipcMain.handle("media-cache-stats", cacheStats);
+ipcMain.handle("media-cache-clear", clearMediaCache);
 const queryTheGamesDb = async (key: string, name: string) => {
   const url = new URL("https://api.thegamesdb.net/v1/Games/ByGameName");
   url.searchParams.set("apikey", key);
