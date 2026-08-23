@@ -37,6 +37,10 @@ interface Window {
       title: string,
     ): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
     transferLibraryToFpga(title: string): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
+    getLibraryCart(): Promise<LibraryItem[]>;
+    removeLibraryCartItem(id: string): Promise<LibraryItem[]>;
+    checkoutLibraryCart(): Promise<{ items: number; files: number }>;
+    onLibraryChanged(listener: () => void): () => void;
     onFpgaProgress(listener: (progress: FpgaProgress) => void): () => void;
     getDebridSettings(): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
     setDebridSettings(settings: { realdebrid?: string; torbox?: string; collections?: CollectionSource[] }): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
@@ -74,6 +78,7 @@ type GameDownloadProgress = {
   percent: number;
 };
 type CollectionSource = { name: string; url: string; platform: string };
+type LibraryItem = { id: string; title: string; platform: string; directory: string; files: string[]; queuedAt: string };
 type CollectionCandidate = { path: string; bytes: number; index: number; score: number; collection: string; sourceUrl: string };
 type FpgaProgress = {
   gameTitle: string;
