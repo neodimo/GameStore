@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-22 — RetroGameTalk fallback, box-art-grid icon, and FPGA transfer
+
+- **What was done:** Added an unverified RetroGameTalk repository search fallback to every catalog record. Replaced the package icon with a purpose-built grid of abstract retro box-art cases. Added locally configured SFTP transfer for SuperStation One and MiSTer: connection testing, encrypted credential storage, CHD/BIN/CUE selection and validation, `/media/fat/games/PSX/<game>` grouping, directory creation, and live byte progress in the detail accordion. Evidence: catalog tests, TypeScript validation, production web/Electron build, media-light guard, and production-dependency security audit passed.
+- **Artifacts:** `build/icon.png`, `electron/main.ts`, `electron/preload.ts`, `src/App.tsx`, `src/style.css`, `src/catalog.ts`, `src/vite-env.d.ts`, `package.json`, `package-lock.json`, `README.md`, and `CONTEXT.md`. The icon was generated with the built-in image tool from a no-text, no-character 3×3 abstract game-case prompt, then resized/optimized locally to 512×512 (384,690 bytes). Intended status: committed, pushed, and released as v0.4.0; generated installers remain ignored local/CI artifacts.
+- **State:** Implementation and local validation done. A physical network write is unverified because no SuperStation One or MiSTer was reachable from this environment; the in-app connection test and Omid's first hardware transfer are the acceptance gate. RetroGameTalk links are deliberately labeled unverified because repository entries can disappear or rename.
+- **Next owner + concrete artifact:** Omid installs v0.4.0, enters the device host and credentials under Settings, runs **Test connection**, then uses **Send to SuperStation / MiSTer** on a legally obtained CHD or complete BIN/CUE set. Report the exact displayed error and device firmware if the hardware test fails.
+
 ## 2026-08-22 — Background in-app updater
 
 - **What was done:** Added a header updater flow with check, update-available, background download progress, ready, restart, current, unsupported, and error states. Windows NSIS and Linux AppImage builds use GitHub Releases through `electron-updater`; `.deb` installs explicitly defer to the package manager. The renderer receives status through a narrow preload IPC bridge, and release CI now uploads updater manifests and blockmaps with installers. Evidence: catalog tests, TypeScript validation, production web/Electron build, media-light guard, and runtime-only dependency audit passed.
