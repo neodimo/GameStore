@@ -11,6 +11,15 @@ GameStore is a Windows and Linux retro-game discovery catalog inspired by the br
 - Expanded details include screenshot galleries and a click-to-play 16:9 video area for gameplay, trailers, and longplays.
 - Media records retain scope, region, provider ID, source, dimensions/duration, attribution, freshness, confidence, and override history.
 
+## Distribution and storage invariant
+
+- Keep the repository and installers media-light: ship executable code, UI assets, schemas, provider adapters, and compact textual/catalog metadata.
+- Do not commit or package per-game covers, screenshots, video files, or bulk media archives. Users obtain those after installation through built-in auto-scrapers/providers.
+- Downloads require an explicit user action or an enabled in-app cache policy. Show provider attribution, progress, failures, retries, cache size, and clear-cache controls.
+- Store fetched media in the platform application-data/cache directory. Cache clearing must not erase favorites, catalog corrections, artwork override history, or provenance.
+- Stream video from attributed providers by default. Bundled media is limited to small app-owned assets such as the icon, logo, loading UI, and missing-media placeholders.
+- CI should guard this invariant with repository/release size budgets and a check that rejects newly bundled per-game media.
+
 ## Current implementation
 
 Version 0.2 is an Electron + React/TypeScript desktop application with matching Windows and Linux functionality. It contains the initial 30-game PS1 slice, local favorites/export, filters, editorial shelves, inline details, translation records, media/video states, and stateful outbound sources. GitHub Actions builds a Windows NSIS installer plus Linux AppImage and Debian packages.
