@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, safeStorage, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { configureUpdater } from './updater';
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -16,7 +17,7 @@ const createWindow = () => {
   const dev = process.env.VITE_DEV_SERVER_URL;
   if (dev) win.loadURL(dev); else win.loadFile(path.join(__dirname, '../dist/index.html'));
 };
-app.whenReady().then(createWindow);
+app.whenReady().then(() => { configureUpdater(); createWindow(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 ipcMain.handle('open-external', (_e, url: string) => { if (/^https?:\/\//.test(url)) return shell.openExternal(url); });

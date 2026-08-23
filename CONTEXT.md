@@ -29,6 +29,8 @@ Libretro Thumbnails is the zero-configuration art source. Users can store a TheG
 
 Commercial game files are not bundled or directly downloaded. The application links to references and patch discovery records through visible external-source actions.
 
+The header includes an in-app release updater. Windows NSIS and Linux AppImage builds check the public GitHub Releases feed, download and stage updates in the background with progress, then require an explicit **Restart to update** action. `.deb` installations report that updates belong to the system package manager. Release jobs must attach `latest.yml` / `latest-linux.yml` plus blockmaps so installed clients can resolve differential updates.
+
 ## Acceptance direction
 
 The initial 30 fixtures must expose region duplication, translations tied to exact base hashes, multi-disc grouping, revisions, missing/conflicting media, dead/unverified links, and provenance-preserving overrides. Expansion to 100 PS1 games follows only after the initial gate passes.
