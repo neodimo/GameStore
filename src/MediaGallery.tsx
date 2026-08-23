@@ -8,107 +8,40 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { Game } from "./catalog";
-import {
-  resolveLongplay,
-  resolveScreenshots,
-  type Screenshot,
-} from "./mediaMatch";
-
-type CachedShot = Screenshot & { localUrl: string };
+import { ensureGameMedia, setCachedVideo, useGameMedia } from "./mediaLibrary";
 const bytes = (value: number) =>
   value >= 1024 ** 3
     ? `${(value / 1024 ** 3).toFixed(1)} GB`
     : `${Math.round(value / 1024 ** 2)} MB`;
 
 export function MediaGallery({ game }: { game: Game }) {
-  const [shots, setShots] = useState<CachedShot[]>([]);
-  const [shotState, setShotState] = useState<
-    "loading" | "ready" | "empty" | "error"
-  >("loading");
-  const [video, setVideo] = useState<LocalVideoInfo | null>(null);
-  const [videoId, setVideoId] = useState<string | null>(null);
-  const [videoState, setVideoState] = useState<
-    "loading" | "ready" | "empty" | "downloading" | "error"
-  >("loading");
+  const record = useGameMedia(game.id);
+  const shots = record?.shots ?? [];
+  const shotState = record?.shotState ?? "loading";
+  const video = record?.video ?? null;
+  const videoId = record?.videoId ?? null;
+  const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const videoState = downloading
+    ? "downloading"
+    : error
+      ? "error"
+      : (record?.videoState ?? "loading");
   const archiveUrl = useMemo(
     () => (videoId ? `https://archive.org/details/${videoId}` : ""),
     [videoId],
   );
 
   useEffect(() => {
-    let alive = true;
-    setShots([]);
-    setShotState("loading");
-    setVideo(null);
-    setVideoId(null);
-    setVideoState("loading");
-    setError("");
-    if (!window.gameStore) {
-      setShotState("error");
-      setVideoState("error");
-      return;
-    }
-    Promise.all([
-      window.gameStore.getArtIndex("Named_Snaps"),
-      window.gameStore.getArtIndex("Named_Titles"),
-    ])
-      .then(async ([snaps, titles]) => {
-        const resolved = resolveScreenshots(game.title, game.region, {
-          Named_Snaps: snaps.files,
-          Named_Titles: titles.files,
-        });
-        if (!resolved.length) {
-          if (alive) setShotState("empty");
-          return;
-        }
-        const cached = await window.gameStore!.cacheScreenshots(
-          game.id,
-          resolved.map((s) => s.url),
-        );
-        const paths = new Map(cached.map((c) => [c.sourceUrl, c.localUrl]));
-        if (alive) {
-          setShots(
-            resolved
-              .filter((s) => paths.has(s.url))
-              .map((s) => ({ ...s, localUrl: paths.get(s.url)! })),
-          );
-          setShotState(cached.length ? "ready" : "error");
-        }
-      })
-      .catch(() => alive && setShotState("error"));
-    window.gameStore
-      .getLongplays()
-      .then(async (items) => {
-        const match = resolveLongplay(game.title, items);
-        if (!match) {
-          if (alive) setVideoState("empty");
-          return;
-        }
-        if (alive) setVideoId(match.identifier);
-        const info = await window.gameStore!.getVideoInfo(match.identifier);
-        if (alive) {
-          setVideo(info);
-          setVideoState("ready");
-        }
-      })
-      .catch((e) => {
-        if (alive) {
-          setError(e instanceof Error ? e.message : String(e));
-          setVideoState("error");
-        }
-      });
-    return () => {
-      alive = false;
-    };
-  }, [game.id, game.region, game.title]);
+    ensureGameMedia(game);
+  }, [game]);
   useEffect(
     () =>
       window.gameStore?.onVideoProgress((p) => {
         if (p.identifier === videoId) {
           setProgress(p.percent);
-          setVideoState("downloading");
+          setDownloading(true);
         }
       }),
     [videoId],
@@ -116,15 +49,16 @@ export function MediaGallery({ game }: { game: Game }) {
 
   const download = async () => {
     if (!videoId || !window.gameStore) return;
-    setVideoState("downloading");
+    setDownloading(true);
     setProgress(0);
+    setError("");
     try {
       const info = await window.gameStore.downloadVideo(videoId);
-      setVideo(info);
-      setVideoState("ready");
+      setCachedVideo(game.id, info);
+      setDownloading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-      setVideoState("error");
+      setDownloading(false);
     }
   };
   return (
@@ -173,7 +107,11 @@ export function MediaGallery({ game }: { game: Game }) {
           <MediaWait
             icon={<RefreshCw />}
             title="Video unavailable"
-            detail={error || "The provider could not resolve a playable MP4."}
+            detail={
+              error ||
+              record?.videoError ||
+              "The provider could not resolve a playable MP4."
+            }
           />
         )}
       </div>

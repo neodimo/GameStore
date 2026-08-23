@@ -2,7 +2,7 @@
 
 Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
-The first PS1 discovery release is now in active development. Version 0.6 adds release-matched screenshots and local-only longplay playback inside the expanded game view.
+The first PS1 discovery release is now in active development. Version 0.7 audits and fills missing media in a throttled background batch during startup.
 
 ## Approved identity
 
@@ -68,10 +68,12 @@ Media candidates are downloaded after installation from their original providers
 
 ## Screenshots and local video
 
+- Shortly after first paint, a three-worker startup audit checks every catalog title. A compact header indicator reports index, progress, completion, or failure while normal browsing remains available.
 - Opening a game resolves its Libretro `Named_Snaps` and `Named_Titles`, downloads the release-matched images to the local media cache, and displays them in a scrollable rail beside the video pane.
 - GameStore searches the Internet Archive PSX longplay corpus and attaches a video only when the title matcher clears its strict automatic-match floor. Near-misses remain visibly empty.
 - A matched longplay displays the smallest suitable MP4 derivative and its size. **Download to cache** must finish before playback; the app does not offer remote streaming or an embedded third-party player.
 - **Settings → Local media cache** reports storage use and location and can clear fetched screenshots/video without touching favorites, catalog corrections, or artwork overrides.
+- Clearing media automatically starts a fresh background audit. Existing files are validated and reused on ordinary starts, so the check does not redownload healthy cache entries.
 
 ## In-app updates
 
