@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   Play,
   RefreshCw,
+  RotateCcw,
   Search,
   Settings,
   Settings2,
@@ -21,14 +22,10 @@ import {
   X,
 } from "lucide-react";
 import { facetOrder, games, Game } from "./catalog";
+import { ArtworkProvider, useArtwork } from "./artwork";
+import { ArtPicker } from "./ArtPicker";
 
 type Sort = "curated" | "title" | "year-new" | "year-old";
-type ArtCandidate = {
-  url: string;
-  gameId: number;
-  title: string;
-  source: string;
-};
 const open = (url: string) =>
   window.gameStore?.openExternal(url) ?? window.open(url, "_blank", "noopener");
 const loadFavs = () => {
@@ -40,10 +37,15 @@ const loadFavs = () => {
     return new Set<string>();
   }
 };
-const preferredArt = (game: Game) =>
-  localStorage.getItem(`gamestore:art:${game.id}`) || game.cover;
-
 export function App() {
+  return (
+    <ArtworkProvider games={games}>
+      <Catalog />
+    </ArtworkProvider>
+  );
+}
+
+function Catalog() {
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("All regions");
   const [genre, setGenre] = useState("All genres");
@@ -54,7 +56,10 @@ export function App() {
   const [favorites, setFavorites] = useState<Set<string>>(loadFavs);
   const [saved, setSaved] = useState(false);
   const [settings, setSettings] = useState(false);
-  const [artVersion, setArtVersion] = useState(0);
+  const [artPicker, setArtPicker] = useState<Game | null>(null);
+  const [menu, setMenu] = useState<{ game: Game; x: number; y: number } | null>(
+    null,
+  );
   const detailsRef = useRef<HTMLDivElement>(null);
   const genres = useMemo(
     () => Array.from(new Set(games.flatMap((g) => g.genres))).sort(),
@@ -279,7 +284,7 @@ export function App() {
             </div>
             <Grid2X2 />
           </div>
-          <div className="grid-wrap" key={artVersion}>
+          <div className="grid-wrap">
             {groups.map((row, ri) => (
               <div className="row" key={`${ri}-${row[0]?.id}`}>
                 <div className="cards">
@@ -293,6 +298,7 @@ export function App() {
                       onOpen={() =>
                         setSelected(selected === game.id ? null : game.id)
                       }
+                      onContextMenu={(x, y) => setMenu({ game, x, y })}
                     />
                   ))}
                 </div>
@@ -303,7 +309,9 @@ export function App() {
                     favorite={favorites.has(selected!)}
                     onFav={() => toggleFav(selected!)}
                     onClose={() => setSelected(null)}
-                    onArtChanged={() => setArtVersion((v) => v + 1)}
+                    onFindArt={() =>
+                      setArtPicker(row.find((g) => g.id === selected)!)
+                    }
                   />
                 )}
               </div>
@@ -318,13 +326,124 @@ export function App() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.3 preview</b>
-          <span>
-            Media-light core · artwork fetched from attributed providers
-          </span>
+          <b>GameStore 0.5 preview</b>
+          <ArtworkStatus />
         </footer>
       </div>
       {settings && <ProviderSettings onClose={() => setSettings(false)} />}
+      {artPicker && (
+        <ArtPicker game={artPicker} onClose={() => setArtPicker(null)} />
+      )}
+      {menu && (
+        <GameMenu
+          game={menu.game}
+          x={menu.x}
+          y={menu.y}
+          favorite={favorites.has(menu.game.id)}
+          onClose={() => setMenu(null)}
+          onOpen={() => setSelected(menu.game.id)}
+          onFav={() => toggleFav(menu.game.id)}
+          onFindArt={() => setArtPicker(menu.game)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Footer readout of how much of the catalog resolved automatically. */
+function ArtworkStatus() {
+  const { index, unmatched, refreshIndex } = useArtwork();
+  if (index.status === "loading")
+    return (
+      <span>
+        <LoaderCircle className="spin" /> Matching box art…
+      </span>
+    );
+  if (index.status === "error")
+    return <span className="warn">Artwork index unavailable · {index.message}</span>;
+  return (
+    <span>
+      {games.length - unmatched}/{games.length} covers matched from{" "}
+      {index.files.length.toLocaleString()} Libretro scans · right-click a game
+      for alternates
+      <button className="link" onClick={() => void refreshIndex()}>
+        <RefreshCw /> Refresh
+      </button>
+    </span>
+  );
+}
+
+/** Right-click menu: the entry point Omid asked for on every card. */
+function GameMenu({
+  game,
+  x,
+  y,
+  favorite,
+  onClose,
+  onOpen,
+  onFav,
+  onFindArt,
+}: {
+  game: Game;
+  x: number;
+  y: number;
+  favorite: boolean;
+  onClose: () => void;
+  onOpen: () => void;
+  onFav: () => void;
+  onFindArt: () => void;
+}) {
+  const artwork = useArtwork();
+  const match = artwork.autoMatch(game);
+  const manual = artwork.hasOverride(game);
+  useEffect(() => {
+    const dismiss = () => onClose();
+    addEventListener("mousedown", dismiss);
+    addEventListener("resize", dismiss);
+    addEventListener("scroll", dismiss, true);
+    return () => {
+      removeEventListener("mousedown", dismiss);
+      removeEventListener("resize", dismiss);
+      removeEventListener("scroll", dismiss, true);
+    };
+  }, [onClose]);
+  const run = (action: () => void) => () => {
+    action();
+    onClose();
+  };
+  return (
+    <div
+      className="context-menu"
+      style={{
+        left: Math.min(x, innerWidth - 280),
+        top: Math.min(y, innerHeight - 210),
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <p>{game.title}</p>
+      <button onClick={run(onOpen)}>
+        <ChevronDown /> Open details
+      </button>
+      <button onClick={run(onFindArt)}>
+        <Image /> Search alternate box art…
+      </button>
+      <button
+        disabled={!manual}
+        onClick={run(() => artwork.clearOverride(game))}
+      >
+        <RotateCcw /> Reset to automatic match
+      </button>
+      <button onClick={run(onFav)}>
+        <Heart fill={favorite ? "currentColor" : "none"} />
+        {favorite ? "Remove favorite" : "Add favorite"}
+      </button>
+      <small>
+        {manual
+          ? "Using your chosen artwork"
+          : match
+            ? `Auto match · ${match.confidence} confidence · ${match.label}`
+            : "No confident automatic match yet"}
+      </small>
     </div>
   );
 }
@@ -332,13 +451,15 @@ export function App() {
 function CoverImage({ game }: { game: Game }) {
   const [bad, setBad] = useState(false);
   const [ratio, setRatio] = useState("1 / 1");
-  const src = preferredArt(game);
+  const { url } = useArtwork().artFor(game);
+  useEffect(() => setBad(false), [url]);
   return (
     <div className="art-frame" style={{ aspectRatio: ratio }}>
-      {src && !bad ? (
+      {url && !bad ? (
         <img
-          src={src}
-          alt={`${game.title} official release cover`}
+          key={url}
+          src={url}
+          alt={`${game.title} release cover`}
           loading="lazy"
           onLoad={(e) =>
             setRatio(
@@ -351,7 +472,7 @@ function CoverImage({ game }: { game: Game }) {
         <div className="cover-fallback">
           <Gamepad2 />
           <b>{game.title}</b>
-          <small>ART NOT DOWNLOADED</small>
+          <small>{bad ? "ART FAILED TO LOAD" : "NO CONFIDENT MATCH"}</small>
         </div>
       )}
     </div>
@@ -371,15 +492,29 @@ function GameCard({
   favorite,
   onFav,
   onOpen,
+  onContextMenu,
 }: {
   game: Game;
   selected: boolean;
   favorite: boolean;
   onFav: () => void;
   onOpen: () => void;
+  onContextMenu: (x: number, y: number) => void;
 }) {
+  const art = useArtwork().artFor(game);
   return (
-    <article className={`card ${selected ? "selected" : ""}`}>
+    <article
+      className={`card ${selected ? "selected" : ""}`}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu(e.clientX, e.clientY);
+      }}
+      title={
+        art.manual
+          ? "Your chosen artwork · right-click to change"
+          : "Right-click for alternate box art"
+      }
+    >
       <button className="cover" onClick={onOpen} aria-expanded={selected}>
         <CoverImage game={game} />
         <span className="region">
@@ -390,6 +525,9 @@ function GameCard({
               : "JP"}
         </span>
         {game.translation && <span className="translated">EN PATCH</span>}
+        {art.confidence === "low" && (
+          <span className="art-flag">CHECK ART</span>
+        )}
         <i>
           <ChevronDown />
         </i>
@@ -420,14 +558,12 @@ const Detail = forwardRef<
     favorite: boolean;
     onFav: () => void;
     onClose: () => void;
-    onArtChanged: () => void;
+    onFindArt: () => void;
   }
->(({ game, favorite, onFav, onClose, onArtChanged }, ref) => {
+>(({ game, favorite, onFav, onClose, onFindArt }, ref) => {
   const [media, setMedia] = useState<"video" | "screens">("video");
-  const [artOpen, setArtOpen] = useState(false);
-  const [candidates, setCandidates] = useState<ArtCandidate[]>([]);
-  const [artError, setArtError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const artwork = useArtwork();
+  const art = artwork.artFor(game);
   const [transfer, setTransfer] = useState<{
     state: "idle" | "copying" | "done" | "error";
     percent?: number;
@@ -444,25 +580,6 @@ const Detail = forwardRef<
       ),
     [],
   );
-  const findArt = async () => {
-    setArtOpen(true);
-    setLoading(true);
-    setArtError("");
-    try {
-      if (!window.gameStore)
-        throw new Error("Artwork lookup is available in the desktop app.");
-      setCandidates(await window.gameStore.findTheGamesDbArt(game.title));
-    } catch (e) {
-      setArtError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
-  const applyArt = (url: string) => {
-    localStorage.setItem(`gamestore:art:${game.id}`, url);
-    onArtChanged();
-    setArtOpen(false);
-  };
   const sendToFpga = async () => {
     setTransfer({
       state: "copying",
@@ -515,14 +632,18 @@ const Detail = forwardRef<
       <div className="detail-body">
         <div className="detail-art">
           <CoverImage game={game} />
-          <button onClick={findArt}>
-            <Image /> Find official box art
+          <button onClick={onFindArt}>
+            <Image /> Search alternate box art
           </button>
+          {artwork.hasOverride(game) && (
+            <button className="ghost" onClick={() => artwork.clearOverride(game)}>
+              <RotateCcw /> Reset to automatic
+            </button>
+          )}
           <small>
-            Current source:{" "}
-            {localStorage.getItem(`gamestore:art:${game.id}`)
-              ? "TheGamesDB override"
-              : "Libretro Thumbnails"}
+            {art.source}
+            {art.confidence ? ` · ${art.confidence} confidence` : ""}
+            {art.variant ? ` · ${art.variant}` : ""}
           </small>
         </div>
         <div className="copy">
@@ -627,26 +748,6 @@ const Detail = forwardRef<
           </p>
         </div>
       </div>
-      {artOpen && (
-        <div className="art-picker">
-          <div>
-            <h3>Official box-art candidates</h3>
-            <button onClick={() => setArtOpen(false)}>
-              <X />
-            </button>
-          </div>
-          {loading && <p>Searching TheGamesDB…</p>}
-          {artError && <p className="error">{artError}</p>}
-          <div className="candidate-grid">
-            {candidates.map((c) => (
-              <button key={c.url} onClick={() => applyArt(c.url)}>
-                <img src={c.url} alt={c.title} />
-                <span>{c.source} · Apply</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 });

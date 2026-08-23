@@ -17,8 +17,13 @@ export type Game = {
   translation?: { team: string; status: string; url: string; base: string };
   links: { label: string; url: string; state: LinkState }[];
 };
+/**
+ * Seed filenames only. Artwork is resolved at runtime by fuzzy-matching the
+ * live Libretro thumbnail index (see `artMatch.ts`); these values are the
+ * offline fallback for the web build, which cannot fetch that index.
+ */
 const lib = (name: string) =>
-  `https://raw.githubusercontent.com/libretro-thumbnails/Sony_-_PlayStation/master/Named_Boxarts/${encodeURIComponent(name)}.png`;
+  `https://thumbnails.libretro.com/Sony%20-%20PlayStation/Named_Boxarts/${encodeURIComponent(name)}.png`;
 const yt = (id: string) => `https://www.youtube.com/embed/${id}`;
 const wiki = (q: string) =>
   `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`;

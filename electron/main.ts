@@ -10,6 +10,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import SftpClient from "ssh2-sftp-client";
 import { configureUpdater } from "./updater";
+import { getArtIndex } from "./artIndex";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -114,21 +115,22 @@ ipcMain.handle("provider-key-set", async (_e, key: string) => {
   });
   return true;
 });
-ipcMain.handle("thegamesdb-art", async (_e, title: string) => {
-  const key = (await readSettings()).theGamesDbKey;
-  if (!key) throw new Error("Add your TheGamesDB API key in Settings first.");
+ipcMain.handle(
+  "art-index-get",
+  async (_e, folder: string, force?: boolean) => getArtIndex(folder, !!force),
+);
+const queryTheGamesDb = async (key: string, name: string) => {
   const url = new URL("https://api.thegamesdb.net/v1/Games/ByGameName");
   url.searchParams.set("apikey", key);
-  url.searchParams.set("name", title);
+  url.searchParams.set("name", name);
   url.searchParams.set("filter[platform]", "10");
   url.searchParams.set("include", "boxart");
   const response = await fetch(url);
   if (!response.ok) throw new Error(`TheGamesDB returned ${response.status}`);
   const payload = (await response.json()) as any;
-  const games = payload?.data?.games ?? [];
   const base = payload?.include?.boxart?.base_url?.original ?? "";
   const byGame = payload?.include?.boxart?.data ?? {};
-  const candidates = games.flatMap((game: any) =>
+  return ((payload?.data?.games ?? []) as any[]).flatMap((game) =>
     (byGame[String(game.id)] ?? [])
       .filter(
         (art: any) =>
@@ -141,7 +143,33 @@ ipcMain.handle("thegamesdb-art", async (_e, title: string) => {
         source: "TheGamesDB",
       })),
   );
-  return candidates.slice(0, 12);
+};
+/**
+ * TheGamesDB only does substring matching, so an exact catalog title with a
+ * subtitle or trailing punctuation often returns nothing. Progressively
+ * shortened queries recover those titles; the renderer ranks the union.
+ */
+ipcMain.handle("thegamesdb-art", async (_e, title: string) => {
+  const key = (await readSettings()).theGamesDbKey;
+  if (!key) throw new Error("Add your TheGamesDB API key in Settings first.");
+  const queries = [
+    title,
+    title.split(/\s[-:–]\s|:/)[0],
+    title.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " "),
+  ]
+    .map((q) => q.trim())
+    .filter((q, i, all) => q.length > 2 && all.indexOf(q) === i);
+  const seen = new Set<string>();
+  const candidates: any[] = [];
+  for (const query of queries) {
+    for (const candidate of await queryTheGamesDb(key, query)) {
+      if (seen.has(candidate.url)) continue;
+      seen.add(candidate.url);
+      candidates.push(candidate);
+    }
+    if (candidates.length >= 12) break;
+  }
+  return candidates.slice(0, 24);
 });
 
 const publicFpga = async () => {
