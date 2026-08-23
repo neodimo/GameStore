@@ -37,6 +37,14 @@ contextBridge.exposeInMainWorld("gameStore", {
   testFpga: () => ipcRenderer.invoke("fpga-test"),
   transferToFpga: (title: string) => ipcRenderer.invoke("fpga-transfer", title),
   transferLibraryToFpga: (title: string) => ipcRenderer.invoke("fpga-transfer-library", title),
+  getLibraryCart: () => ipcRenderer.invoke("library-cart-get"),
+  removeLibraryCartItem: (id: string) => ipcRenderer.invoke("library-cart-remove", id),
+  checkoutLibraryCart: () => ipcRenderer.invoke("library-cart-checkout"),
+  onLibraryChanged: (listener: () => void) => {
+    const wrapped = () => listener();
+    ipcRenderer.on("library-changed", wrapped);
+    return () => ipcRenderer.removeListener("library-changed", wrapped);
+  },
   onFpgaProgress: (listener: (progress: unknown) => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) =>
       listener(progress);

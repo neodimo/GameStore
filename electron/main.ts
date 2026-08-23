@@ -16,7 +16,9 @@ import {
   downloadCollectionFiles,
   testDebrid,
   type DebridProvider,
+  libraryRoot,
 } from "./downloadManager";
+import { checkoutCart, getCart, removeFromCart } from "./libraryManager";
 import { fetchTorrent, matchCollectionFiles, torrentFiles } from "./collectionIndex";
 import { getArtIndex } from "./artIndex";
 import {
@@ -200,7 +202,9 @@ ipcMain.handle("collection-download", async (_e, sourceUrl: string, paths: strin
   if (!allowed) throw new Error("This collection source is not configured in Settings.");
   const token = settings.debrid?.realdebrid;
   if (!token) throw new Error("Add a Real-Debrid API token in Settings first.");
-  return downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, window: win });
+  const result = await downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, platform: "PSX", window: win });
+  win?.webContents.send("library-changed");
+  return result;
 });
 ipcMain.handle("debrid-test", async (_e, provider: DebridProvider) => {
   const token = (await readSettings()).debrid?.[provider];
@@ -212,7 +216,9 @@ ipcMain.handle(
   async (_e, provider: DebridProvider, link: string, gameTitle: string) => {
     const token = (await readSettings()).debrid?.[provider];
     if (!token) throw new Error("Configure this provider in Settings first.");
-    return downloadResolvedLink({ provider, token, link, gameTitle, window: win });
+    const result = await downloadResolvedLink({ provider, token, link, gameTitle, platform: "PSX", window: win });
+    win?.webContents.send("library-changed");
+    return result;
   },
 );
 ipcMain.handle("art-index-get", async (_e, folder: string, force?: boolean) =>
@@ -408,6 +414,20 @@ const transferFilesToFpga = async (gameTitle: string, filePaths: string[]) => {
     await client.end();
   }
 };
+ipcMain.handle("library-cart-get", () => getCart(libraryRoot()));
+ipcMain.handle("library-cart-remove", async (_e, id: string) => {
+  const cart = await removeFromCart(libraryRoot(), id);
+  win?.webContents.send("library-changed");
+  return cart;
+});
+ipcMain.handle("library-cart-checkout", async () => {
+  if (!(await getCart(libraryRoot())).length) throw new Error("The MiSTer cart is empty.");
+  const completed = await checkoutCart(libraryRoot(), async (item) => {
+    if (item.platform !== "PSX") throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
+    await transferFilesToFpga(item.title, item.files);
+  }, () => win?.webContents.send("library-changed"));
+  return { items: completed.length, files: completed.reduce((sum, item) => sum + item.files.length, 0) };
+});
 ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
   const picked = await dialog.showOpenDialog(win!, {
     title: `Select ${gameTitle} game files`,
@@ -418,10 +438,10 @@ ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
   return transferFilesToFpga(gameTitle, picked.filePaths);
 });
 ipcMain.handle("fpga-transfer-library", async (_e, gameTitle: string) => {
-  const dir = path.join(app.getPath("documents"), "GameStore", "Games", gameTitle.replace(/[\\/:*?"<>|]/g, "-").trim());
-  const files = (await fs.readdir(dir).catch(() => []))
-    .filter((name) => [".chd", ".cue", ".bin"].includes(path.extname(name).toLowerCase()))
-    .map((name) => path.join(dir, name));
-  if (!files.length) throw new Error("No CHD or BIN/CUE files are ready in this game's local library folder.");
-  return transferFilesToFpga(gameTitle, files);
+  const item = (await getCart(libraryRoot())).find((entry) => entry.title === gameTitle);
+  if (!item) throw new Error("This game is not currently in the MiSTer cart.");
+  const result = await transferFilesToFpga(gameTitle, item.files);
+  await removeFromCart(libraryRoot(), item.id);
+  win?.webContents.send("library-changed");
+  return result;
 });

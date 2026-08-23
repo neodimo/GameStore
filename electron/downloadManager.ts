@@ -4,12 +4,13 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { addTorrent } from "./realDebrid";
+import { finalizeDownload } from "./libraryManager";
 
 export type DebridProvider = "realdebrid" | "torbox";
 
-const libraryRoot = () => path.join(app.getPath("documents"), "GameStore", "Games");
+export const libraryRoot = () => path.join(app.getPath("documents"), "GameStore");
 const cleanName = (value: string) => value.replace(/[\\/:*?"<>|]/g, "-").trim();
-const allowedGameExtensions = new Set([".chd", ".cue", ".bin", ".iso", ".pbp", ".zip", ".7z", ".rar", ".ccd", ".img", ".sub", ".m3u"]);
+const allowedGameExtensions = new Set([".chd", ".cue", ".bin", ".iso", ".pbp", ".zip", ".7z", ".rar", ".ccd", ".img", ".sub", ".m3u", ".gba", ".gb", ".gbc", ".z64", ".n64", ".v64", ".nes", ".sfc", ".smc", ".md", ".gen"]);
 const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 const apiError = async (response: Response) => {
   const body = await response.text();
@@ -120,6 +121,7 @@ export async function downloadResolvedLink(args: {
   token: string;
   link: string;
   gameTitle: string;
+  platform?: string;
   window: BrowserWindow | null;
 }) {
   if (!/^https?:\/\//i.test(args.link) && !args.link.startsWith("magnet:"))
@@ -131,7 +133,7 @@ export async function downloadResolvedLink(args: {
   );
   if (!resolvedFiles.length)
     throw new Error("The provider result contained no supported game-image or archive files. Executables and unrelated files are refused.");
-  const dir = path.join(libraryRoot(), cleanName(args.gameTitle));
+  const dir = path.join(libraryRoot(), ".incoming", `${cleanName(args.gameTitle)}-${Date.now()}`);
   await fs.mkdir(dir, { recursive: true });
   let combinedBytes = 0;
   const targets: string[] = [];
@@ -155,12 +157,14 @@ export async function downloadResolvedLink(args: {
     targets.push(target);
     combinedBytes += bytes;
   }
-  return { path: targets[0], files: targets, filename: path.basename(targets[0]), bytes: combinedBytes, directory: dir };
+  const item = await finalizeDownload({ root: libraryRoot(), title: args.gameTitle, platform: args.platform || "PSX", downloadedFiles: targets });
+  await fs.rm(dir, { recursive: true, force: true });
+  return { path: item.files[0], files: item.files, filename: path.basename(item.files[0]), bytes: combinedBytes, directory: item.directory, cartItem: item };
 }
 
-export async function downloadCollectionFiles(args: { token: string; torrent: Buffer; wantedPaths: string[]; gameTitle: string; window: BrowserWindow | null }) {
+export async function downloadCollectionFiles(args: { token: string; torrent: Buffer; wantedPaths: string[]; gameTitle: string; platform?: string; window: BrowserWindow | null }) {
   const resolvedFiles = await resolveRealDebridTorrentSelection(args.token, args.torrent, args.wantedPaths);
-  const dir = path.join(libraryRoot(), cleanName(args.gameTitle));
+  const dir = path.join(libraryRoot(), ".incoming", `${cleanName(args.gameTitle)}-${Date.now()}`);
   await fs.mkdir(dir, { recursive: true });
   const targets: string[] = [];
   let combinedBytes = 0;
@@ -177,5 +181,7 @@ export async function downloadCollectionFiles(args: { token: string; torrent: Bu
     await fs.rename(temp, target); targets.push(target); combinedBytes += bytes;
   }
   if (!targets.length) throw new Error("The selected torrent files did not resolve to supported game-image/archive downloads.");
-  return { path: targets[0], files: targets, filename: path.basename(targets[0]), bytes: combinedBytes, directory: dir };
+  const item = await finalizeDownload({ root: libraryRoot(), title: args.gameTitle, platform: args.platform || "PSX", downloadedFiles: targets });
+  await fs.rm(dir, { recursive: true, force: true });
+  return { path: item.files[0], files: item.files, filename: path.basename(item.files[0]), bytes: combinedBytes, directory: item.directory, cartItem: item };
 }

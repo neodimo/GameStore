@@ -15,6 +15,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  ShoppingCart,
   Settings,
   Settings2,
   Sparkles,
@@ -66,6 +67,7 @@ function Catalog() {
   const [genre, setGenre] = useState("All genres");
   const [facet, setFacet] = useState("All flavors");
   const [translation, setTranslation] = useState(false);
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [sort, setSort] = useState<Sort>("curated");
   const [selected, setSelected] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(loadFavs);
@@ -91,7 +93,8 @@ function Catalog() {
             (region === "All regions" || g.region === region) &&
             (genre === "All genres" || g.genres.includes(genre)) &&
             (facet === "All flavors" || g.facets.includes(facet)) &&
-            (!translation || !!g.translation)
+            (!translation || !!g.translation) &&
+            (!favoriteOnly || favorites.has(g.id))
           );
         })
         .sort((a, b) =>
@@ -103,7 +106,7 @@ function Catalog() {
                 ? a.year - b.year
                 : 0,
         ),
-    [query, region, genre, facet, translation, sort],
+    [query, region, genre, facet, translation, favoriteOnly, favorites, sort],
   );
   const groups = useMemo(() => {
     const rows: Game[][] = [];
@@ -159,7 +162,15 @@ function Catalog() {
     setGenre("All genres");
     setFacet("All flavors");
     setTranslation(false);
+    setFavoriteOnly(false);
   };
+  const browsing =
+    !!query ||
+    region !== "All regions" ||
+    genre !== "All genres" ||
+    facet !== "All flavors" ||
+    translation ||
+    favoriteOnly;
   return (
     <div className="shell">
       <aside>
@@ -172,23 +183,26 @@ function Catalog() {
           </b>
         </div>
         <nav>
-          <button className="active" onClick={reset}>
+          <button className={!favoriteOnly ? "active" : ""} onClick={reset}>
             <Compass />
             Discover
           </button>
-          <button>
+          <button disabled title="More platforms are coming after the PS1 catalog">
             <Gamepad2 />
             Platforms
           </button>
-          <button onClick={() => setFacet("Surreal")}>
+          <button onClick={() => { setFavoriteOnly(false); setFacet("Surreal"); }}>
             <Sparkles />
             Weird Picks
           </button>
-          <button onClick={() => setTranslation(true)}>
+          <button onClick={() => { setFavoriteOnly(false); setTranslation(true); }}>
             <Library />
             Translations
           </button>
-          <button onClick={() => setFacet("All flavors")}>
+          <button
+            className={favoriteOnly ? "active" : ""}
+            onClick={() => setFavoriteOnly(true)}
+          >
             <Heart />
             Favorites
           </button>
@@ -215,6 +229,7 @@ function Catalog() {
             )}
           </div>
           <MediaAuditIndicator />
+          <LibraryCart />
           <UpdaterButton />
           <button className="export" onClick={exportShelf}>
             {saved ? "Saved" : "Export shelf"}
@@ -270,7 +285,7 @@ function Catalog() {
               <option value="year-old">Sort: Oldest</option>
             </select>
           </div>
-          <div className="curated-shelves">
+          {!browsing && <div className="curated-shelves">
             {curatedShelves.map((shelf) => (
               <section className="feature" key={shelf.title}>
                 <div>
@@ -291,10 +306,14 @@ function Catalog() {
                 </div>
               </section>
             ))}
-          </div>
+          </div>}
           <div className="catalog-head">
             <div>
-              <h2>{filtered.length} PlayStation games</h2>
+              <h2>
+                {favoriteOnly
+                  ? `${filtered.length} favorite ${filtered.length === 1 ? "game" : "games"}`
+                  : `${filtered.length} PlayStation ${filtered.length === 1 ? "game" : "games"}`}
+              </h2>
               <p>
                 USA first · PAL fallback · Japan exclusives with English patches
               </p>
@@ -335,15 +354,24 @@ function Catalog() {
             ))}
             {!filtered.length && (
               <div className="empty">
-                <Sparkles />
-                <h2>Nothing in this corner.</h2>
-                <button onClick={reset}>Clear filters</button>
+                {favoriteOnly ? <Heart /> : <Sparkles />}
+                <h2>
+                  {favoriteOnly ? "No favorite games yet." : "Nothing in this corner."}
+                </h2>
+                <p>
+                  {favoriteOnly
+                    ? "Use the heart on any game to build your shelf."
+                    : "Try a broader search or reset the active filters."}
+                </p>
+                <button onClick={reset}>
+                  {favoriteOnly ? "Explore the catalog" : "Clear filters"}
+                </button>
               </div>
             )}
           </div>
         </main>
         <footer>
-          <b>GameStore 0.5 preview</b>
+          <b>GameStore 0.9.0</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -559,7 +587,8 @@ function GameCard({
           </p>
         </div>
         <button
-          aria-label="Favorite"
+          aria-label={favorite ? `Remove ${game.title} from favorites` : `Add ${game.title} to favorites`}
+          title={favorite ? "Remove from favorites" : "Add to favorites"}
           className={favorite ? "fav active" : "fav"}
           onClick={onFav}
         >
@@ -757,7 +786,7 @@ function Acquisition({ game }: { game: Game }) {
     setState({ status: "downloading", percent: 0, message: "Resolving provider link…" });
     try {
       const result = await window.gameStore.downloadGame(provider, link.trim(), game.title);
-      setState({ status: "done", percent: 100, message: `Ready in ${result.directory}` });
+      setState({ status: "done", percent: 100, message: `Ready and added to the MiSTer cart · ${result.directory}` });
     } catch (e) {
       setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
     }
@@ -783,7 +812,7 @@ function Acquisition({ game }: { game: Game }) {
       {!!candidates.length && <div className="collection-candidates">
         {candidates.slice(0, 6).map((candidate) => <button key={`${candidate.sourceUrl}:${candidate.path}`} onClick={async () => {
           setState({ status: "downloading", percent: 0, message: `Selecting only ${candidate.path}…` });
-          try { const result = await window.gameStore!.downloadCollectionSelection(candidate.sourceUrl, [candidate.path], game.title); setState({ status: "done", percent: 100, message: `Ready in ${result.directory}` }); }
+          try { const result = await window.gameStore!.downloadCollectionSelection(candidate.sourceUrl, [candidate.path], game.title); setState({ status: "done", percent: 100, message: `Ready and added to the MiSTer cart · ${result.directory}` }); }
           catch (e) { setState({ status: "error", message: e instanceof Error ? e.message : String(e) }); }
         }}><b>{candidate.path.split("/").pop()}</b><span>{candidate.collection} · {formatBytes(candidate.bytes)} · {Math.round(candidate.score * 100)}% match</span></button>)}
       </div>}
@@ -815,6 +844,51 @@ function Acquisition({ game }: { game: Game }) {
       </button>
       <small>User-selected sources only. GameStore does not bundle a ROM index.</small>
     </section>
+  );
+}
+
+function LibraryCart() {
+  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [openCart, setOpenCart] = useState(false);
+  const [checkout, setCheckout] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const refresh = async () => setItems((await window.gameStore?.getLibraryCart()) ?? []);
+  useEffect(() => {
+    void refresh();
+    return window.gameStore?.onLibraryChanged(() => void refresh());
+  }, []);
+  if (!window.gameStore) return null;
+  return (
+    <div className="library-cart">
+      <button className={items.length ? "cart-button ready" : "cart-button"} onClick={() => setOpenCart(!openCart)}>
+        <ShoppingCart /> MiSTer cart <b>{items.length}</b>
+      </button>
+      {openCart && <div className="cart-popover">
+        <div className="cart-heading">
+          <div><small>MANAGED TRANSFER QUEUE</small><h3>Ready for MiSTer</h3></div>
+          <button aria-label="Close MiSTer cart" onClick={() => setOpenCart(false)}><X /></button>
+        </div>
+        {!items.length ? <div className="cart-empty"><ShoppingCart /><p>Downloaded games will appear here automatically.</p></div> : <>
+          <div className="cart-items">
+            {items.map((item) => <div className="cart-item" key={item.id}>
+              <div><b>{item.title}</b><span>{item.platform} · {item.files.length} managed {item.files.length === 1 ? "file" : "files"}</span></div>
+              <button aria-label={`Remove ${item.title} from MiSTer cart`} title="Keep files, remove from cart" onClick={() => void window.gameStore!.removeLibraryCartItem(item.id)}><X /></button>
+            </div>)}
+          </div>
+          <button className="checkout" disabled={checkout === "sending"} onClick={async () => {
+            setCheckout("sending"); setMessage("Connecting and sending the full cart…");
+            try {
+              const result = await window.gameStore!.checkoutLibraryCart();
+              setCheckout("done"); setMessage(`Sent ${result.items} ${result.items === 1 ? "game" : "games"} · ${result.files} ${result.files === 1 ? "file" : "files"}`);
+            } catch (error) {
+              setCheckout("error"); setMessage(error instanceof Error ? error.message : String(error));
+            }
+          }}><HardDriveUpload /> {checkout === "sending" ? "Sending cart…" : `Send all ${items.length} to MiSTer`}</button>
+        </>}
+        {message && <p className={`cart-message ${checkout}`}>{message}</p>}
+        <small className="cart-footnote">Files stay in your managed library after checkout.</small>
+      </div>}
+    </div>
   );
 }
 
