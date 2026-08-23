@@ -1,6 +1,6 @@
 {
   "name": "gamestore",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Windows-first visual catalog for discovering English-playable retro games.",
   "author": "Omid & Gonzo",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "build:web": "tsc -b && vite build",
     "build:electron": "tsc -p electron/tsconfig.json",
     "build": "npm run build:web && npm run build:electron",
-    "dist:win": "npm run build && electron-builder --win nsis portable",
+    "dist:win": "npm run build && electron-builder --win nsis --publish never",
     "test": "vitest run",
     "lint": "tsc -b --pretty false"
   },
@@ -40,7 +40,7 @@
     "productName": "GameStore",
     "directories": { "output": "release" },
     "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
-    "win": { "target": ["nsis", "portable"], "artifactName": "GameStore-${version}-${arch}.${ext}" },
+    "win": { "target": ["nsis"], "artifactName": "GameStore-Setup-${version}-${arch}.${ext}" },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
     "publish": { "provider": "github", "owner": "neodimo", "repo": "GameStore" }
   }

@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-22 — Windows release packaging correction
+
+- **What was done:** Corrected electron-builder so tagged CI builds produce the NSIS installer without electron-builder attempting its own unauthenticated parallel publication. Artifact publication remains owned by the explicit GitHub Release action.
+- **Artifacts:** `package.json`, `package-lock.json`, and `.github/workflows/release.yml` in the GameStore repository. Intended committed/pushed release fix.
+- **State:** Fix prepared; the replacement Windows runner and attached installer require verification.
+- **Next owner + concrete artifact:** Gonzo tags `v0.1.1`, watches the GitHub Actions run, and verifies `GameStore-Setup-0.1.1-x64.exe` on the release page.
+- **Failure mode:** electron-builder detects Git tags and defaults to auto-publish when a `publish` config exists; without `GH_TOKEN` in its process it fails after successfully building. Always pass `--publish never` when a later workflow step owns release upload.
+
 ## 2026-08-22 — v0.1 Windows vertical slice implemented
 
 - **What was done:** Built the first GameStore desktop vertical slice in Electron, React, and TypeScript. Evidence: 30 unique PS1 catalog fixtures; search and deep filters; curated shelves/facets; inline detail accordion; translation/base-release records; stateful source links; click-to-play video and explicit missing-media states; responsive layouts; favorites and JSON export. Automated catalog tests, TypeScript validation, production build, runtime dependency audit, and desktop/narrow visual smoke tests pass. The runtime dependency audit reports zero known vulnerabilities.

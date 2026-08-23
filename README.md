@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Build the web/client bundle with `npm run build`. Windows installers are built by GitHub Actions and attached to tagged releases.
+Build the web/client bundle with `npm run build`. Windows NSIS installers are built by GitHub Actions and attached to tagged releases.
 
 ## What v0.1 includes
 
