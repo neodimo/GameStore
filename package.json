@@ -13,6 +13,9 @@
     "build": "npm run build:web && npm run build:electron",
     "dist:win": "npm run build && electron-builder --win nsis --publish never",
     "dist:linux": "npm run build && electron-builder --linux AppImage deb --publish never",
+    "check:media-light": "node scripts/check-media-light.mjs source",
+    "check:bundle-size": "node scripts/check-media-light.mjs build",
+    "check:package-size": "node scripts/check-media-light.mjs artifacts",
     "test": "vitest run",
     "lint": "tsc -b --pretty false"
   },

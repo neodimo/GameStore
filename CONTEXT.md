@@ -19,6 +19,7 @@ GameStore is a Windows and Linux retro-game discovery catalog inspired by the br
 - Store fetched media in the platform application-data/cache directory. Cache clearing must not erase favorites, catalog corrections, artwork override history, or provenance.
 - Stream video from attributed providers by default. Bundled media is limited to small app-owned assets such as the icon, logo, loading UI, and missing-media placeholders.
 - CI should guard this invariant with repository/release size budgets and a check that rejects newly bundled per-game media.
+- The enforced budgets and UI-asset allowlist live in `config/media-light.json`; `scripts/check-media-light.mjs` checks the source tree, compiled bundles, and platform artifacts in release CI.
 
 ## Current implementation
 

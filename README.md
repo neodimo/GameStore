@@ -31,6 +31,7 @@ The first PS1 discovery release is now in active development.
 - Cached media lives in the user's application-data directory and remains disposable/rebuildable. User-selected artwork overrides and provenance records are preserved separately when the media cache is cleared.
 - Video streams from its attributed provider by default rather than being copied into GitHub releases or the local cache.
 - Small product assets required to identify and operate the app—icons, logos, loading states, and missing-media placeholders—may remain bundled.
+- `npm run check:media-light` rejects catalog media and oversized UI assets in the source tree. Release CI also enforces explicit web, Electron, and installer size ceilings from `config/media-light.json`.
 
 ## Run locally
 

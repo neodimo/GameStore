@@ -1,0 +1,16 @@
+{
+  "allowedUiAssetPrefixes": [
+    "build/",
+    "public/app-assets/",
+    "src/assets/ui/"
+  ],
+  "maxUiAssetBytes": 524288,
+  "maxTrackedCoreBytes": 5242880,
+  "maxWebBundleBytes": 3145728,
+  "maxElectronBundleBytes": 524288,
+  "artifactBudgets": {
+    ".exe": 125829120,
+    ".AppImage": 136314880,
+    ".deb": 188743680
+  }
+}
