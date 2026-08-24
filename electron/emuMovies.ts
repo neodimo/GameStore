@@ -114,6 +114,7 @@ const QUALITIES: [RegExp, string][] = [
   [/(?:^|[^a-z])sq(?:240)?(?:[^a-z]|$)|240/i, "SQ240"],
 ];
 const SNAP_FOLDER = /video[\s_-]*snaps?/i;
+const VIDEO_FOLDER = /video|snap|movies?/i;
 /**
  * `PlayStation` alone also names every later Sony console, and those carry
  * their own complete snap sets — indexing PS3 against a PS1 catalog would
@@ -211,6 +212,23 @@ export class SnapSessionLost extends Error {
  */
 export type SnapScan = { folders: SnapFolder[]; truncated: boolean };
 
+/**
+ * Orders discovery by intent instead of breadth. EmuMovies roots can expose
+ * dozens of unrelated media/system folders; FIFO traversal paid to list every
+ * plausible sibling before reaching an obvious `Video Snaps` branch. Paths
+ * carrying both the requested console and video language are nearly terminal,
+ * followed by video/quality branches and system-first branches.
+ */
+const discoveryScore = (remote: string, alias: RegExp) => {
+  const system = alias.test(remote) && !LATER_SONY.test(remote);
+  const snaps = SNAP_FOLDER.test(remote);
+  const video = VIDEO_FOLDER.test(remote);
+  const quality = qualityOf(remote);
+  const qualityScore = quality === "HD1080" ? 40 : quality === "HQ480" ? 30 : quality === "SQ240" ? 20 : 0;
+  return (system && video ? 200 : 0) + (snaps ? 100 : video ? 60 : 0) +
+    (system ? 80 : 0) + qualityScore + (/official/i.test(remote) ? 20 : 0);
+};
+
 export const findSnapFolders = async (
   client: Pick<Client, "list">,
   system: string,
@@ -219,7 +237,7 @@ export const findSnapFolders = async (
 ): Promise<SnapScan> => {
   const alias = SYSTEM_ALIASES[system] ?? new RegExp(system, "i");
   const useful = /official|video|snap|media|download/i;
-  const queue = [{ path: "/", depth: 0 }];
+  const queue = [{ path: "/", depth: 0, score: Number.MAX_SAFE_INTEGER }];
   const visited = new Set<string>();
   const found: SnapFolder[] = [];
   let failureStreak = 0;
@@ -227,6 +245,7 @@ export const findSnapFolders = async (
   let listed = 0;
   let truncated = false;
   while (queue.length && visited.size < MAX_LISTINGS) {
+    queue.sort((a, b) => b.score - a.score || a.depth - b.depth || a.path.localeCompare(b.path));
     const current = queue.shift()!;
     if (visited.has(current.path) || current.depth > SYSTEM_DEPTH) continue;
     if (deadline.expired) {
@@ -235,7 +254,7 @@ export const findSnapFolders = async (
     }
     visited.add(current.path);
     onProgress?.(
-      `Scanning EmuMovies folders (${visited.size} checked, ${found.length} found)…`,
+      `Finding ${system} video folders (${visited.size} targeted paths checked)…`,
     );
     let entries: FileInfo[];
     try {
@@ -252,20 +271,29 @@ export const findSnapFolders = async (
       continue;
     }
     const pathHasSystem = alias.test(current.path) && !LATER_SONY.test(current.path);
-    const pathHasSnaps = SNAP_FOLDER.test(current.path);
-    if (pathHasSystem && pathHasSnaps && videoFiles(entries).length)
+    const pathHasVideo = VIDEO_FOLDER.test(current.path);
+    if (pathHasSystem && pathHasVideo && videoFiles(entries).length) {
       found.push({ path: current.path, quality: qualityOf(current.path) });
+      // The priority queue places the strongest console + video + quality path
+      // first. One readable snap directory is sufficient; walking the remaining
+      // provider tree only adds latency and bandwidth.
+      break;
+    }
 
     for (const name of directories(entries)) {
       const child = joinRemote(current.path, name);
       const childHasSystem = alias.test(name) && !LATER_SONY.test(name);
-      const childHasSnaps = SNAP_FOLDER.test(name);
+      const childHasVideo = VIDEO_FOLDER.test(name);
       const relevant =
         childHasSystem ||
-        childHasSnaps ||
+        childHasVideo ||
         useful.test(name) ||
         qualityOf(name) !== "Unknown";
-      if (relevant) queue.push({ path: child, depth: current.depth + 1 });
+      if (relevant) queue.push({
+        path: child,
+        depth: current.depth + 1,
+        score: discoveryScore(child, alias),
+      });
     }
   }
   // Nothing listed at all means the session never worked, not that the account
@@ -358,7 +386,7 @@ export async function indexSnaps(
       if (!folders.length)
         throw new Error(
           scan.truncated
-            ? `The targeted ${system} scan stopped before finding video snaps. Try again when the connection is stable.`
+            ? `No readable ${system} video folder was found within the targeted provider paths. EmuMovies may have renamed or moved this console; retrying the same broad scan is not required.`
             : `No ${system} video snap folder is visible to this account.`,
         );
     }
