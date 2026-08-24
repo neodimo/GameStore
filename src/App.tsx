@@ -400,7 +400,7 @@ function Catalog() {
 
 /** Footer readout of how much of the catalog resolved automatically. */
 function ArtworkStatus() {
-  const { index, unmatched, refreshIndex } = useArtwork();
+  const { index, unmatched, resolving, refreshIndex } = useArtwork();
   if (index.status === "loading")
     return (
       <span>
@@ -410,6 +410,14 @@ function ArtworkStatus() {
   if (index.status === "error")
     return (
       <span className="warn">Artwork index unavailable · {index.message}</span>
+    );
+  // Seeded covers land at once; the fuzzy tail fills in behind this readout.
+  if (resolving)
+    return (
+      <span>
+        <LoaderCircle className="spin" /> {games.length - unmatched}/
+        {games.length} covers matched · still searching the rest
+      </span>
     );
   return (
     <span>
@@ -498,19 +506,89 @@ function GameMenu({
   );
 }
 
-function CoverImage({ game }: { game: Game }) {
+/**
+ * Latches true once the element first comes near the viewport. Cover resolution
+ * has to be gated on this: the catalog mounts every card at once, so resolving
+ * on mount would pull the whole library on first launch instead of the handful
+ * of covers actually being looked at. The margin resolves a screen or two ahead
+ * so covers are already there by the time a scroll reaches them.
+ */
+function useNearViewport<T extends Element>(rootMargin = "800px") {
+  const ref = useRef<T | null>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (near) return;
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setNear(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true);
+      },
+      { rootMargin },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [near, rootMargin]);
+  return [ref, near] as const;
+}
+
+/**
+ * Resolves a cover to its locally downscaled copy, caching it on first sight.
+ * A cache failure falls back to the remote original, so this can cost bandwidth
+ * but never costs a visible cover. The detail view opts out and keeps the
+ * full-resolution original, which is the one place the extra pixels show.
+ */
+function useCachedCover(url: string | undefined, full: boolean, active: boolean) {
+  const [src, setSrc] = useState<string | undefined>(undefined);
+  // One effect owns every transition, including clearing a stale cover. Split
+  // across two, the reset runs after the resolve on mount and blanks the result.
+  useEffect(() => {
+    if (!url || !active) {
+      setSrc(undefined);
+      return;
+    }
+    if (full || !window.gameStore) {
+      setSrc(url);
+      return;
+    }
+    let live = true;
+    void window.gameStore
+      .cacheCover(url)
+      .then((cached) => {
+        if (live) setSrc(cached ?? url);
+      })
+      .catch(() => {
+        if (live) setSrc(url);
+      });
+    return () => {
+      live = false;
+    };
+  }, [url, full, active]);
+  return src;
+}
+
+function CoverImage({ game, full = false }: { game: Game; full?: boolean }) {
   const [bad, setBad] = useState(false);
   const [ratio, setRatio] = useState("1 / 1");
   const { url } = useArtwork().artFor(game);
-  useEffect(() => setBad(false), [url]);
+  const [frameRef, near] = useNearViewport<HTMLDivElement>();
+  const src = useCachedCover(url, full, full || near);
+  useEffect(() => setBad(false), [src]);
+  // A cover still being resolved shows an empty frame rather than the
+  // no-match message, which would otherwise flash on every card while scrolling.
+  const pending = !!url && !src && !bad;
   return (
-    <div className="art-frame" style={{ aspectRatio: ratio }}>
-      {url && !bad ? (
+    <div className="art-frame" ref={frameRef} style={{ aspectRatio: ratio }}>
+      {src && !bad ? (
         <img
-          key={url}
-          src={url}
+          key={src}
+          src={src}
           alt={`${game.title} release cover`}
           loading="lazy"
+          decoding="async"
           onLoad={(e) =>
             setRatio(
               `${e.currentTarget.naturalWidth} / ${e.currentTarget.naturalHeight}`,
@@ -518,7 +596,7 @@ function CoverImage({ game }: { game: Game }) {
           }
           onError={() => setBad(true)}
         />
-      ) : (
+      ) : pending ? null : (
         <div className="cover-fallback">
           <Gamepad2 />
           <b>{game.title}</b>
@@ -715,7 +793,8 @@ const Detail = forwardRef<
       <div className="detail-body">
         <aside className="detail-side">
           <div className="detail-art">
-            <CoverImage game={game} />
+            {/* The one place the full-resolution original is worth its weight. */}
+            <CoverImage game={game} full />
           </div>
           {game.description ? (
             <>

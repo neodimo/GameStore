@@ -10,6 +10,12 @@ export type Game = {
   curatorNote?: string;
   descriptionSource?: { label: string; url: string };
   cover?: string;
+  /**
+   * No-Intro release name this game's artwork is published under. Lets the
+   * runtime resolver hit the thumbnail index by lookup instead of scoring the
+   * whole index; fuzzy matching is the fallback for titles without one.
+   */
+  coverName?: string;
   screenshots?: string[];
   video?: string;
   players: string;
@@ -58,6 +64,7 @@ const g = (
   players,
   developer,
   cover: coverName ? lib(coverName) : undefined,
+  coverName,
   video: video ? yt(video) : undefined,
   translation,
   rating: undefined,
