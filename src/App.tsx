@@ -8,6 +8,7 @@ import {
   Film,
   Gamepad2,
   Grid2X2,
+  HardDrive,
   HardDriveUpload,
   Heart,
   Image,
@@ -69,6 +70,7 @@ function Catalog() {
   const [menu, setMenu] = useState<{ game: Game; x: number; y: number } | null>(
     null,
   );
+  const [fpgaGameIds, setFpgaGameIds] = useState<Set<string>>(new Set());
   const detailsRef = useRef<HTMLDivElement>(null);
   const genres = useMemo(
     () => Array.from(new Set(games.flatMap((g) => g.genres))).sort(),
@@ -131,6 +133,14 @@ function Catalog() {
     };
     addEventListener("keydown", key);
     return () => removeEventListener("keydown", key);
+  }, []);
+  useEffect(() => {
+    const catalog = games.map(({ id, title }) => ({ id, title }));
+    const loadInventory = () => window.gameStore?.getFpgaInventory(catalog).then((result) => {
+      if (result?.status === "ready") setFpgaGameIds(new Set(result.gameIds));
+    });
+    void loadInventory();
+    return window.gameStore?.onFpgaInventoryChanged(() => void loadInventory());
   }, []);
   const reset = () => {
     setQuery("");
@@ -302,6 +312,7 @@ function Catalog() {
                       game={game}
                       selected={selected === game.id}
                       favorite={favorites.has(game.id)}
+                      onFpga={fpgaGameIds.has(game.id)}
                       onFav={() => toggleFav(game.id)}
                       onOpen={() =>
                         setSelected(selected === game.id ? null : game.id)
@@ -343,7 +354,7 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.10.4</b>
+          <b>GameStore 0.10.5</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -514,6 +525,7 @@ function GameCard({
   game,
   selected,
   favorite,
+  onFpga,
   onFav,
   onOpen,
   onContextMenu,
@@ -521,6 +533,7 @@ function GameCard({
   game: Game;
   selected: boolean;
   favorite: boolean;
+  onFpga: boolean;
   onFav: () => void;
   onOpen: () => void;
   onContextMenu: (x: number, y: number) => void;
@@ -549,6 +562,11 @@ function GameCard({
               : "JP"}
         </span>
         {game.translation && <span className="translated">EN PATCH</span>}
+        {onFpga && (
+          <span className="fpga-library" title="Already found in your connected MiSTer / SuperStation library" aria-label="Already in connected MiSTer or SuperStation library">
+            <HardDrive />
+          </span>
+        )}
         {art.confidence === "low" && (
           <span className="art-flag">CHECK ART</span>
         )}
@@ -1245,7 +1263,8 @@ function ProviderSettings({
         </h2>
         <p>
           Transfers PSX CHD or complete BIN/CUE sets over SFTP into one folder
-          per game.
+          per game. GameStore quietly indexes that PSX folder once in the
+          background and marks matching catalog covers already on your device.
         </p>
         <div className="settings-actions scan-actions">
           <button onClick={scanNetwork}><Wifi /> Scan network</button>
@@ -1310,6 +1329,15 @@ function ProviderSettings({
         </small>
         <div className="settings-actions">
           <button onClick={testDevice}>Test connection</button>
+          <button onClick={async () => {
+            setTest("Refreshing device library…");
+            try {
+              const result = await window.gameStore!.refreshFpgaInventory();
+              setTest(`${result.folders} PSX folder${result.folders === 1 ? "" : "s"} indexed on the device.`);
+            } catch (error) {
+              setTest(error instanceof Error ? error.message : String(error));
+            }
+          }}>Refresh device library</button>
           <button className="save-provider" onClick={save}>
             {saved ? "Saved" : "Save settings"}
           </button>

@@ -30,6 +30,13 @@ contextBridge.exposeInMainWorld("gameStore", {
     return () => ipcRenderer.removeListener("media-video-progress", wrapped);
   },
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
+  getFpgaInventory: (catalog: { id: string; title: string }[]) => ipcRenderer.invoke("fpga-inventory-get", catalog),
+  refreshFpgaInventory: () => ipcRenderer.invoke("fpga-inventory-refresh"),
+  onFpgaInventoryChanged: (listener: () => void) => {
+    const wrapped = () => listener();
+    ipcRenderer.on("fpga-inventory-changed", wrapped);
+    return () => ipcRenderer.removeListener("fpga-inventory-changed", wrapped);
+  },
   discoverFpga: () => ipcRenderer.invoke("fpga-discover"),
   onFpgaDiscoveryProgress: (listener: (progress: unknown) => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);

@@ -29,6 +29,9 @@ interface Window {
     clearMediaCache(): Promise<MediaCacheStats>;
     onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
     getFpgaSettings(): Promise<FpgaSettings | null>;
+    getFpgaInventory(catalog: { id: string; title: string }[]): Promise<FpgaInventory>;
+    refreshFpgaInventory(): Promise<{ folders: number }>;
+    onFpgaInventoryChanged(listener: () => void): () => void;
     discoverFpga(): Promise<NetworkCandidate[]>;
     onFpgaDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
     setFpgaSettings(
@@ -72,6 +75,7 @@ type FpgaSettings = {
   root: string;
   hasPassword: boolean;
 };
+type FpgaInventory = { status: "unconfigured" | "scanning" | "ready"; gameIds: string[]; scannedAt?: number };
 type NetworkCandidate = {
   host: string;
   hostname?: string;

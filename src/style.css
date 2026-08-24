@@ -488,6 +488,21 @@ main {
   border: 1px solid #555;
   border-radius: 3px;
 }
+.fpga-library {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  color: #8dd36e;
+  background: #10170edf;
+  border: 1px solid #5b9347;
+  border-radius: 50%;
+  box-shadow: 0 3px 12px #0009;
+}
+.fpga-library svg { width: 14px; height: 14px; }
 .translated {
   left: auto;
   right: 7px;

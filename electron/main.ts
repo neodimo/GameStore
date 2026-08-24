@@ -22,6 +22,7 @@ import {
   libraryRoot,
 } from "./downloadManager";
 import { checkoutCart, getCart, removeFromCart } from "./libraryManager";
+import { matchRemoteTitles, type InventoryCatalogGame } from "./fpgaInventory";
 import {
   ensureCollectionManifest,
   fetchTorrent,
@@ -220,6 +221,12 @@ type ProviderSettings = {
     password?: string;
     encrypted?: boolean;
     root: string;
+  };
+  fpgaInventory?: {
+    fingerprint: string;
+    scannedAt: number;
+    psxFolders: string[];
+    error?: string;
   };
 };
 const readSettings = async (): Promise<ProviderSettings> => {
@@ -604,7 +611,53 @@ const publicFpga = async () => {
       }
     : null;
 };
+const fpgaFingerprint = (f: NonNullable<ProviderSettings["fpga"]>) =>
+  `${f.host}:${f.port || 22}:${f.username || "root"}:${f.root}`;
+let inventoryRefresh: Promise<string[]> | undefined;
+const refreshFpgaInventory = async () => {
+  if (inventoryRefresh) return inventoryRefresh;
+  inventoryRefresh = (async () => {
+    const { client, f } = await connectFpga();
+    try {
+      // Catalog cards never touch the network. One shallow listing is enough for
+      // GameStore-managed PSX installs: /games/PSX/<game folder>.
+      const remoteDir = `${f.root}/PSX`;
+      const entries = await client.list(remoteDir).catch(() => []);
+      const psxFolders = entries
+        .filter((entry) => entry.type === "d")
+        .map((entry) => entry.name)
+        .filter((name) => name !== "." && name !== "..");
+      const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+      await writeSettings({
+        ...raw,
+        fpgaInventory: { fingerprint: fpgaFingerprint(f), scannedAt: Date.now(), psxFolders },
+      });
+      win?.webContents.send("fpga-inventory-changed");
+      return psxFolders;
+    } finally {
+      await client.end();
+      inventoryRefresh = undefined;
+    }
+  })();
+  return inventoryRefresh;
+};
 ipcMain.handle("fpga-settings-get", publicFpga);
+ipcMain.handle("fpga-inventory-get", async (_e, catalog: InventoryCatalogGame[]) => {
+  const settings = await readSettings();
+  const f = settings.fpga;
+  if (!f) return { status: "unconfigured" as const, gameIds: [] };
+  const cached = settings.fpgaInventory;
+  if (cached?.fingerprint === fpgaFingerprint(f))
+    return { status: "ready" as const, gameIds: matchRemoteTitles(cached.psxFolders, catalog), scannedAt: cached.scannedAt };
+  // Fire this exactly once per device configuration; the initial paint and all
+  // scrolling remain local while SFTP answers in the background.
+  void refreshFpgaInventory().catch(() => win?.webContents.send("fpga-inventory-changed"));
+  return { status: "scanning" as const, gameIds: [] };
+});
+ipcMain.handle("fpga-inventory-refresh", async () => {
+  const titles = await refreshFpgaInventory();
+  return { folders: titles.length };
+});
 ipcMain.handle("fpga-discover", async () =>
   discoverFpgaDevices((done, total) =>
     win?.webContents.send("fpga-discovery-progress", { done, total }),
@@ -641,6 +694,7 @@ ipcMain.handle(
         encrypted,
         root: String(incoming.root || "/media/fat/games").replace(/\/$/, ""),
       },
+      fpgaInventory: undefined,
     });
     return publicFpga();
   },

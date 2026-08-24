@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-23 — cached connected-device library badges
+
+- **What was done:** Added a green drive badge on catalog box art when an exact normalized title match exists in the configured MiSTer/SuperStation PSX library. The app performs one shallow SFTP listing of `<games root>/PSX` after a device is configured, persists only the folder-name inventory locally, and maps it to catalog IDs in the renderer. Card painting and scrolling make no network requests. A Settings-level **Refresh device library** action supports a deliberate rescan. The current scope is inventory/visibility only; existing cart checkout remains the add-to-device path and no remote deletion/overwrite behavior was introduced.
+- **Artifacts:** `electron/fpgaInventory.ts`, `electron/fpgaInventory.test.ts`, `electron/main.ts`, `electron/preload.ts`, `src/App.tsx`, `src/style.css`, `src/vite-env.d.ts`, and `CONTEXT.md`. Local working tree pending commit/release at this entry.
+- **State:** Local implementation is done and validated with 87 tests, TypeScript lint, and production web/Electron builds. Physical MiSTer/SuperStation inventory is unverified until a configured device is online.
+- **Next owner + concrete artifact:** Gonzo releases the next patch. Omid configures the device in **Settings → SuperStation / MiSTer**, then checks that an existing `PSX/<title>` folder earns the green drive badge; use **Refresh device library** after copying games outside GameStore.
+
 ## 2026-08-23 — EmuMovies FTP credential clarification
 
 - **What was done:** Corrected the EmuMovies account flow to call for the provider's separately generated FTP/file-server username and password, rather than falsely presenting the emumovies.com website login as interchangeable. Authentication rejections now explain that a generated FTP username commonly ends in `@emumovies-fileserver.com` and explicitly do not diagnose membership tier from a 530/430 response. Settings copy and placeholders now make the required credentials clear.
