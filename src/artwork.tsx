@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Game } from "./catalog";
 import {
+  exactArtMatch,
   resolveArt,
   type ArtFolder,
   type ArtMatch,
@@ -32,6 +33,18 @@ export type IndexState = {
 
 const OVERRIDE_PREFIX = "gamestore:art:";
 const OVERRIDE_META = "gamestore:art-meta";
+
+/**
+ * Budget for one slice of fuzzy matching. Comfortably inside a 60fps frame, so
+ * background resolution stays invisible even mid-scroll.
+ */
+const SLICE_MS = 8;
+/** Idle time when the browser offers it, next task otherwise. */
+const schedule = (run: () => void) => {
+  if (typeof requestIdleCallback === "function")
+    requestIdleCallback(() => run(), { timeout: 250 });
+  else setTimeout(run, 0);
+};
 
 const readOverrides = (): Record<string, Override> => {
   const meta = (() => {
@@ -57,6 +70,8 @@ const readOverrides = (): Record<string, Override> => {
 
 type ArtworkApi = {
   index: IndexState;
+  /** True while the fuzzy fallback is still filling in unseeded titles. */
+  resolving: boolean;
   artFor(game: Game): ResolvedArt;
   autoMatch(game: Game): ArtMatch | null;
   setOverride(game: Game, choice: Override): void;
@@ -128,21 +143,71 @@ export function ArtworkProvider({
     void load(false);
   }, [load]);
 
-  const auto = useMemo(() => {
-    const map: Record<string, ArtMatch | null> = {};
-    if (index.files.length)
-      for (const game of games)
-        map[game.id] = resolveArt(game.title, game.region, index.files, folder);
-    return map;
+  const [auto, setAuto] = useState<Record<string, ArtMatch | null>>({});
+  const [resolving, setResolving] = useState(false);
+
+  /**
+   * Resolution runs in two phases so the catalog paints immediately. Titles
+   * carrying a seeded No-Intro name resolve by map lookup in one synchronous
+   * pass; the rest are scored in small slices handed back to the event loop, so
+   * a long tail of fuzzy matching can never freeze scrolling or input.
+   */
+  useEffect(() => {
+    if (!index.files.length) {
+      setAuto({});
+      setResolving(false);
+      return;
+    }
+    const seeded: Record<string, ArtMatch | null> = {};
+    const pending: Game[] = [];
+    for (const game of games) {
+      const hit = exactArtMatch(game.coverName, index.files, folder);
+      if (hit) seeded[game.id] = hit;
+      else pending.push(game);
+    }
+    setAuto(seeded);
+    if (!pending.length) {
+      setResolving(false);
+      return;
+    }
+
+    let cancelled = false;
+    let cursor = 0;
+    setResolving(true);
+    const step = () => {
+      if (cancelled) return;
+      const deadline = performance.now() + SLICE_MS;
+      const batch: Record<string, ArtMatch | null> = {};
+      while (cursor < pending.length && performance.now() < deadline) {
+        const game = pending[cursor];
+        cursor += 1;
+        batch[game.id] = resolveArt(
+          game.title,
+          game.region,
+          index.files,
+          folder,
+        );
+      }
+      setAuto((prev) => ({ ...prev, ...batch }));
+      if (cursor < pending.length) schedule(step);
+      else setResolving(false);
+    };
+    schedule(step);
+    return () => {
+      cancelled = true;
+    };
   }, [games, index.files, folder]);
 
-  const persist = (next: Record<string, Override>) => {
+  const persist = useCallback((next: Record<string, Override>) => {
     localStorage.setItem(OVERRIDE_META, JSON.stringify(next));
     setOverrides(next);
-  };
+  }, []);
 
-  const api: ArtworkApi = {
+  // Memoized so a card only re-renders when artwork state actually changes,
+  // rather than on every render of the provider.
+  const api: ArtworkApi = useMemo(() => ({
     index,
+    resolving,
     autoMatch: (game) => auto[game.id] ?? null,
     artFor: (game) => {
       const manual = overrides[game.id];
@@ -178,7 +243,7 @@ export function ArtworkProvider({
     hasOverride: (game) => !!overrides[game.id],
     refreshIndex: () => load(true),
     unmatched: games.filter((g) => !overrides[g.id] && !auto[g.id]).length,
-  };
+  }), [index, resolving, auto, overrides, games, persist, load]);
   return (
     <ArtworkContext.Provider value={api}>{children}</ArtworkContext.Provider>
   );

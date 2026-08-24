@@ -402,8 +402,16 @@ main {
   align-items: start;
   margin-bottom: 28px;
 }
+/*
+ * A full catalog is over a thousand cards. `content-visibility` lets the engine
+ * skip layout, paint and decoded-image memory for cards scrolled out of view,
+ * which is what stops a long scroll from accumulating hundreds of megabytes of
+ * bitmaps. The intrinsic size keeps the scrollbar honest while they are skipped.
+ */
 .card {
   min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 .cover {
   width: 100%;

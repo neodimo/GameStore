@@ -3,11 +3,13 @@ import { games } from "./catalog";
 import { thumbnailIndexSample } from "./artMatch.fixture";
 import {
   BROWSE_FLOOR,
+  exactArtMatch,
   MATCH_FLOOR,
   normalizeTitle,
   parseArtFilename,
   rankArtCandidates,
   resolveArt,
+  stripReleaseVersion,
 } from "./artMatch";
 
 /**
@@ -64,6 +66,51 @@ describe("art filename parsing", () => {
   it("normalizes punctuation, articles and superscripts", () => {
     expect(normalizeTitle("Linda³ Again")).toBe("linda3 again");
     expect(normalizeTitle("Kowloon’s Gate")).toBe("kowloon s gate");
+  });
+});
+
+/**
+ * The seeded exact lookup is now the primary resolution path, so it has to be
+ * held to the fuzzy matcher's result rather than merely being fast.
+ */
+describe("seeded exact cover lookup", () => {
+  it("resolves a seeded No-Intro name straight out of the index", () => {
+    const match = exactArtMatch("Incredible Crisis (USA)", thumbnailIndexSample);
+    expect(match?.file).toBe("Incredible Crisis (USA).png");
+    expect(match?.confidence).toBe("high");
+  });
+
+  it("folds version and revision printings onto the same cover", () => {
+    expect(stripReleaseVersion("Alundra (USA) (v1.1)")).toBe("Alundra (USA)");
+    expect(stripReleaseVersion("Unholy War, The (USA) (Rev 1)")).toBe(
+      "Unholy War, The (USA)",
+    );
+    // A seed naming a printing the index does not carry still finds the cover.
+    expect(
+      exactArtMatch("Devil Dice (USA) (v1.1)", thumbnailIndexSample)?.file,
+    ).toBe("Devil Dice (USA).png");
+  });
+
+  it("declines rather than inventing a cover for unknown or absent names", () => {
+    expect(exactArtMatch(undefined, thumbnailIndexSample)).toBeNull();
+    expect(
+      exactArtMatch("Totally Fictional Game 9000 (USA)", thumbnailIndexSample),
+    ).toBeNull();
+  });
+
+  it("never disagrees with the fuzzy matcher it short-circuits", () => {
+    const conflicts: string[] = [];
+    let checked = 0;
+    for (const game of games) {
+      const exact = exactArtMatch(game.coverName, thumbnailIndexSample);
+      if (!exact) continue;
+      checked += 1;
+      const fuzzy = resolveArt(game.title, game.region, thumbnailIndexSample);
+      if (fuzzy?.file !== exact.file)
+        conflicts.push(`${game.title}: ${exact.file} vs ${fuzzy?.file}`);
+    }
+    expect(checked).toBeGreaterThan(50);
+    expect(conflicts).toEqual([]);
   });
 });
 

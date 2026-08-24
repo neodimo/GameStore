@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.invoke("thegamesdb-art", title),
   getArtIndex: (folder: string, force?: boolean) =>
     ipcRenderer.invoke("art-index-get", folder, force),
+  cacheCover: (url: string) => ipcRenderer.invoke("art-cover-cache", url),
   getLongplays: (force?: boolean) =>
     ipcRenderer.invoke("media-longplays-get", force),
   cacheScreenshots: (gameId: string, urls: string[]) =>

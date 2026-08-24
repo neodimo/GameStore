@@ -14,6 +14,11 @@ interface Window {
       folder: string,
       force?: boolean,
     ): Promise<{ folder: string; files: string[]; fetchedAt: number }>;
+    /**
+     * Local downscaled address for a remote cover, or null when it could not be
+     * cached and the remote original should be used instead.
+     */
+    cacheCover(url: string): Promise<string | null>;
     getLongplays(
       force?: boolean,
     ): Promise<{ identifier: string; title: string }[]>;

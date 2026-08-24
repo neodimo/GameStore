@@ -32,6 +32,7 @@ import {
   removeCollectionManifest,
 } from "./collectionIndex";
 import { getArtIndex } from "./artIndex";
+import { getCachedCover } from "./coverCache";
 import {
   fetchSnap,
   indexSnaps,
@@ -526,6 +527,7 @@ ipcMain.handle(
 ipcMain.handle("art-index-get", async (_e, folder: string, force?: boolean) =>
   getArtIndex(folder, !!force),
 );
+ipcMain.handle("art-cover-cache", (_e, url: string) => getCachedCover(url));
 ipcMain.handle("media-longplays-get", (_e, force?: boolean) =>
   getLongplayIndex(!!force),
 );
