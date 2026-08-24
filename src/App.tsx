@@ -1149,6 +1149,10 @@ function ProviderSettings({
   const loginEmuMovies = async () => {
     setEmuBusy(true);
     setEmuStatus("Connecting to EmuMovies…");
+    // Sign-in scans the member's folder tree, so the main process reports each
+    // stage. Without it a normal multi-stage scan is indistinguishable from a
+    // hang, which is exactly how the single frozen status used to read.
+    const stopProgress = window.gameStore!.onEmuMoviesProgress(setEmuStatus);
     try {
       const probe = await window.gameStore!.loginEmuMovies(emu);
       setEmuStatus(probe.message);
@@ -1167,6 +1171,7 @@ function ProviderSettings({
     } catch (error) {
       setEmuStatus(error instanceof Error ? error.message : String(error));
     } finally {
+      stopProgress();
       setEmuBusy(false);
     }
   };

@@ -63,6 +63,8 @@ interface Window {
     downloadCollectionSelection(sourceUrl: string, paths: string[], title: string): Promise<{ directory: string; files: string[] }>;
     getEmuMoviesSettings(): Promise<EmuMoviesSettings>;
     loginEmuMovies(credentials: { username?: string; password?: string }): Promise<EmuMoviesProbe>;
+    /** Streams sign-in stages; returns an unsubscribe function. */
+    onEmuMoviesProgress(listener: (message: string) => void): () => void;
     indexEmuMovies(): Promise<{ folder: string; quality: string; snaps: number; indexedAt: number }>;
     forgetEmuMovies(): Promise<boolean>;
     getEmuMoviesSnap(title: string, region: string): Promise<EmuMoviesSnap | null>;

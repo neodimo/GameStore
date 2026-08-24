@@ -404,7 +404,7 @@ ipcMain.handle("emumovies-settings-get", async () => {
  */
 ipcMain.handle(
   "emumovies-login",
-  async (_e, incoming: { username?: string; password?: string }) => {
+  async (event, incoming: { username?: string; password?: string }) => {
     const current = (await readSettings()).emumovies;
     const username = String(incoming.username ?? current?.username ?? "").trim();
     const password = String(incoming.password || current?.password || "");
@@ -416,7 +416,12 @@ ipcMain.handle(
         systems: [],
         secure: false,
       };
-    const probe = await probeAccount({ username, password });
+    // Sign-in walks the member's folder tree, which takes long enough that a
+    // single static status reads as a hang. Stages are streamed as they happen.
+    const probe = await probeAccount({ username, password }, (message) => {
+      if (!event.sender.isDestroyed())
+        event.sender.send("emumovies-login-progress", message);
+    });
     if (!probe.ok) return probe;
     const raw = JSON.parse(
       await fs.readFile(settingsFile(), "utf8").catch(() => "{}"),
