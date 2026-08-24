@@ -483,7 +483,7 @@ ipcMain.handle(
     );
     return {
       name: match.name,
-      quality: manifest.quality,
+      quality: match.quality ?? manifest.quality,
       localUrl,
       bytes,
     };

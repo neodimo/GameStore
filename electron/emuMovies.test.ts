@@ -302,4 +302,24 @@ describe("matchSnap", () => {
       { title: "Vagrant Story", region: "USA" },
     ])).toEqual({ catalog: 3, matched: 2, ambiguous: 0, unmatched: 1 });
   });
+
+  it("fills each game from HD, then HQ, then SQ", () => {
+    const tier = (name: string, quality: string): SnapFile => ({
+      ...file(name), quality,
+    });
+    const waterfall = [
+      tier("Silent Hill (USA).mp4", "HD1080"),
+      tier("Silent Hill (Europe).mp4", "HQ480"),
+      tier("Suikoden II (USA).mp4", "HQ480"),
+      tier("Vagrant Story (USA).mp4", "SQ240"),
+    ];
+    expect(matchSnap(waterfall, "Silent Hill", "USA")?.quality).toBe("HD1080");
+    expect(matchSnap(waterfall, "Suikoden II", "USA")?.quality).toBe("HQ480");
+    expect(matchSnap(waterfall, "Vagrant Story", "USA")?.quality).toBe("SQ240");
+    expect(auditSnapCoverage(waterfall, [
+      { title: "Silent Hill", region: "USA" },
+      { title: "Suikoden II", region: "USA" },
+      { title: "Vagrant Story", region: "USA" },
+    ]).matched).toBe(3);
+  });
 });
