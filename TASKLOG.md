@@ -3,9 +3,9 @@
 ## 2026-08-24 — per-game HD → HQ → SQ EmuMovies waterfall
 
 - **What was done:** Corrected v0.13.6's console-wide quality selection after Omid clarified the intended provider policy. The manifest now retains all discovered quality tiers and resolves each catalog game independently: use a safe HD match first, fill remaining titles from HQ, then fill the remaining gaps from SQ. Each selected file carries its own quality, so the preview reports the actual tier used for that game. Saved multi-tier paths refresh directly on later scrapes, and downloads remain lazy. **Evidence:** a regression proves Silent Hill selects HD while Suikoden II falls through to HQ and Vagrant Story falls through to SQ from the same manifest; all 114 tests and TypeScript validation pass before release packaging.
-- **Artifacts:** `electron/emuMovies.ts`, `electron/emuMovies.test.ts`, `electron/main.ts`, `CONTEXT.md`, package version files, and this log. No credentials, provider listings, or video files are included.
-- **State:** Implementation complete locally; PR and v0.13.7 release verification remain.
-- **Next owner + concrete artifact:** Gonzo publishes v0.13.7. Omid reruns the Sony PlayStation video scrape and checks the merged catalog count plus a game sourced from each available tier.
+- **Artifacts:** Merged through PR #33 at `89fa7c0` and released as `v0.13.7`. Modified `electron/emuMovies.ts`, `electron/emuMovies.test.ts`, `electron/main.ts`, `CONTEXT.md`, package version files, and this log. No credentials, provider listings, or video files are included. Public assets: Windows installer 92,547,299 bytes, blockmap 96,536 bytes, AppImage 123,079,936 bytes, Debian package 84,167,986 bytes, plus both updater manifests.
+- **State:** Released at `https://github.com/neodimo/GameStore/releases/tag/v0.13.7` (public, non-draft, non-prerelease). All 114 tests, PR verification, local checks, media-size guards, and Windows/Linux release jobs passed; Linux packaged in 2m28s and Windows completed successfully. Live multi-tier coverage remains the user acceptance gate.
+- **Next owner + concrete artifact:** Omid reruns the Sony PlayStation video scrape and checks the merged catalog count plus a game sourced from each available tier.
 - **Failure mode:** v0.13.6 optimized one quality tier for the console as a whole. That still discarded valid HD media whenever HQ had broader coverage. Quality fallback belongs at the title level: HD → HQ → SQ independently for every game.
 
 ## 2026-08-24 — catalog-coverage EmuMovies scraping and fuzzy video matching
