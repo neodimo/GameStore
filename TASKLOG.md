@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-23 — iOS foundation started
+
+- **What was done:** Added a Capacitor-backed iPhone/iPad target that embeds the shared React catalog, uses the existing GameStore bundle identity, respects device safe areas, and restores mobile access to Discover, Favorites, and Settings through a native-style bottom bar. Added local-network and Bonjour SSH privacy declarations for future MiSTer/SuperStation discovery, Capacitor filesystem/preferences/browser/app primitives, structural verification, macOS simulator CI, and a manual TestFlight archive/upload workflow ready for App Store Connect secrets.
+- **Artifacts:** `ios/`, `capacitor.config.ts`, `docs/IOS.md`, `.github/workflows/ios.yml`, `.github/workflows/ios-testflight.yml`, `scripts/check-ios-foundation.mjs`, shared mobile UI changes, and package/config updates.
+- **State:** Foundation complete and Linux-verifiable: iOS sync, 86 tests, TypeScript, web build, media-light guard, and production dependency audit pass. Native Xcode compilation awaits the macOS GitHub runner. Feature parity remains open for Keychain credentials, background provider downloads/safe extraction, native library/cart persistence, media/index caches, and SSH/SFTP checkout.
+- **Next owner + concrete artifact:** Bert implements the iOS native service bridge against the existing `window.gameStore` contract in capability slices. Omid later adds the four App Store Connect/team secrets listed in `docs/IOS.md`; TestFlight upload remains manual until native parity and device QA are green.
+
 ## 2026-08-23 — EmuMovies FTP credential clarification
 
 - **What was done:** Corrected the EmuMovies account flow to call for the provider's separately generated FTP/file-server username and password, rather than falsely presenting the emumovies.com website login as interchangeable. Authentication rejections now explain that a generated FTP username commonly ends in `@emumovies-fileserver.com` and explicitly do not diagnose membership tier from a 530/430 response. Settings copy and placeholders now make the required credentials clear.

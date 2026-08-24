@@ -1,6 +1,6 @@
 # GameStore
 
-Windows and Linux visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
+Windows, Linux, and in-development iOS visual catalog for discovering English-playable retro games through box art, deep filters, editorial shelves, and expandable inline details.
 
 The PS1 discovery release is in active development. Version 0.9 adds a managed, console-aware local library and persistent MiSTer cart on top of the 100-game media-first catalog, private debrid-backed acquisition, and SuperStation/MiSTer network discovery.
 
@@ -41,6 +41,11 @@ npm run dev
 ```
 
 Build the web/client bundle with `npm run build`. Windows NSIS installers, Linux AppImages, and Debian packages are built by GitHub Actions and attached to tagged releases.
+
+The shared iOS foundation lives under `ios/`. On macOS, run `npm run ios:open`
+to sync the web bundle and open Xcode. `npm run ios:verify` is the cross-platform
+structural gate. Native capability status and future TestFlight secrets are
+documented in `docs/IOS.md`.
 
 Linux users can run the portable AppImage (mark it executable first) or install the `.deb` on Debian/Ubuntu-family systems. Both packages contain the same catalog and features as the Windows build.
 

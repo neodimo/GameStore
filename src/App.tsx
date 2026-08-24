@@ -368,6 +368,23 @@ function Catalog() {
           onFindArt={() => setArtPicker(menu.game)}
         />
       )}
+      <nav className="mobile-nav" aria-label="Primary navigation">
+        <button className={!favoriteOnly ? "active" : ""} onClick={reset}>
+          <Compass />
+          <span>Discover</span>
+        </button>
+        <button
+          className={favoriteOnly ? "active" : ""}
+          onClick={() => setFavoriteOnly(true)}
+        >
+          <Heart />
+          <span>Favorites</span>
+        </button>
+        <button onClick={() => setSettings(true)}>
+          <Settings />
+          <span>Settings</span>
+        </button>
+      </nav>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 {
   "allowedUiAssetPrefixes": [
     "build/",
+    "ios/App/App/Assets.xcassets/",
     "public/app-assets/",
     "src/assets/ui/"
   ],
