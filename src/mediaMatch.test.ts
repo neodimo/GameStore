@@ -106,13 +106,34 @@ describe("screenshots", () => {
     expect(files.every((file) => /\(USA\)/.test(file))).toBe(true);
   });
 
-  /** Multi-disc releases are the same game and must still stack up. */
-  it("keeps every disc of a multi-disc release", () => {
-    const files = resolveScreenshots("Kowloon's Gate", "Japan", indexes).map(
-      (s) => decodeURIComponent(s.url),
+  /** One regional printing, with a single Disc 1 start screen. */
+  it("keeps one retail printing and only one primary title screen", () => {
+    const shots = resolveScreenshots("Kowloon's Gate", "Japan", indexes);
+    const files = shots.map((s) => decodeURIComponent(s.url));
+    expect(files.some((file) => file.includes("Disc 1"))).toBe(true);
+    expect(files.some((file) => file.includes("Disc 4"))).toBe(true);
+    const scopes = new Set(
+      files.map((file) => (file.includes("Japan, Asia") ? "Japan, Asia" : "Japan")),
     );
-    for (const disc of ["Disc 1", "Disc 2", "Disc 3", "Disc 4"])
-      expect(files.some((f) => f.includes(disc))).toBe(true);
+    expect(scopes.size).toBe(1);
+    const titles = shots.filter((shot) => shot.kind === "Title screen");
+    expect(titles).toHaveLength(1);
+    expect(decodeURIComponent(titles[0].url)).toContain("Disc 1");
+  });
+
+  it("excludes demos, betas and prototypes from the retail gallery", () => {
+    const release = [
+      "Retail Test (USA).png",
+      "Retail Test (USA) (Demo).png",
+      "Retail Test (USA) (Beta).png",
+      "Retail Test (USA) (Prototype).png",
+    ];
+    const files = resolveScreenshots("Retail Test", "USA", {
+      Named_Snaps: release,
+      Named_Titles: release,
+    }).map((shot) => decodeURIComponent(shot.url));
+    expect(files).toHaveLength(2);
+    expect(files.every((file) => !/(Demo|Beta|Prototype)/.test(file))).toBe(true);
   });
 });
 

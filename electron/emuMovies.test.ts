@@ -1,10 +1,50 @@
 import { describe, expect, it } from "vitest";
-import { matchSnap, snapKey, type SnapFile } from "./emuMovies";
+import { findSnapFolders, matchSnap, snapKey, type SnapFile } from "./emuMovies";
+import type { FileInfo } from "basic-ftp";
 
 const file = (name: string, bytes = 4_000_000): SnapFile => ({
   name,
   path: `/Sony PlayStation/Video_Snaps_HD/${name}`,
   bytes,
+});
+
+const directory = (name: string) =>
+  ({ name, isDirectory: true, isFile: false, size: 0 }) as FileInfo;
+const video = (name: string) =>
+  ({ name, isDirectory: false, isFile: true, size: 4_000_000 }) as FileInfo;
+const fakeClient = (tree: Record<string, FileInfo[]>) =>
+  ({ list: async (remote = "/") => tree[remote] ?? [] }) as never;
+
+describe("EmuMovies FTP layout discovery", () => {
+  it("finds the current quality-first Official layout", async () => {
+    const root = "/Official/Video Snaps (HQ)/Sony PlayStation";
+    const folders = await findSnapFolders(
+      fakeClient({
+        "/": [directory("Official")],
+        "/Official": [directory("Video Snaps (HQ)")],
+        "/Official/Video Snaps (HQ)": [
+          directory("Sony PlayStation"),
+          directory("Sony PlayStation 2"),
+        ],
+        [root]: [video("Silent Hill (USA).mp4")],
+      }),
+      "PS1",
+    );
+    expect(folders).toEqual([{ path: root, quality: "HQ480" }]);
+  });
+
+  it("also finds a system-first quality layout", async () => {
+    const root = "/Sony PlayStation/Video_Snaps_HD";
+    const folders = await findSnapFolders(
+      fakeClient({
+        "/": [directory("Sony PlayStation")],
+        "/Sony PlayStation": [directory("Video_Snaps_HD")],
+        [root]: [video("Vagrant Story (USA).mp4")],
+      }),
+      "PS1",
+    );
+    expect(folders).toEqual([{ path: root, quality: "HD1080" }]);
+  });
 });
 
 describe("snapKey", () => {

@@ -80,7 +80,7 @@ button {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
 }
-aside {
+.shell > aside {
   height: 100vh;
   position: sticky;
   top: 0;
@@ -1695,14 +1695,14 @@ footer {
   .shell {
     display: block;
   }
-  aside {
+  .shell > aside {
     height: auto;
     position: static;
   }
   .brand {
     height: 62px;
   }
-  aside nav,
+  .shell > aside nav,
   .settings-link {
     display: none;
   }
