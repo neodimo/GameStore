@@ -18,14 +18,14 @@ import { mediaAssetUrl } from "./mediaCache";
  * a file measured in megabytes that can simply be cached and looped.
  *
  * Access is the member's own FTP/file-server login. This is deliberately
- * distinct from the emumovies.com website login: EmuMovies generates an FTP
- * username (commonly ending in `@emumovies-fileserver.com`) for members, and
- * it may have a different password. The published API
+ * Login uses the member's EmuMovies forum username and password against the
+ * published file server (`files.emumovies.com`, port 21). The published API
  * (`api.gamesdbase.com/login.aspx?user=&api=&product=`) additionally requires a
  * registered partner product key, which this application does not have, so the
  * credential a member can actually supply is the FTP one.
  */
 export type EmuMoviesCredentials = { username: string; password: string };
+const EMUMOVIES_HOST = "files.emumovies.com";
 
 export type SnapFile = { path: string; name: string; bytes: number };
 export type SnapManifest = {
@@ -82,11 +82,11 @@ const connect = async (credentials: EmuMoviesCredentials, secure: boolean) => {
   const client = new Client(TIMEOUT);
   client.ftp.verbose = false;
   await client.access({
-    host: "ftp.emumovies.com",
+    host: EMUMOVIES_HOST,
     user: credentials.username,
     password: credentials.password,
     secure,
-    secureOptions: { servername: "ftp.emumovies.com" },
+    secureOptions: { servername: EMUMOVIES_HOST },
   });
   return client;
 };
@@ -115,7 +115,7 @@ const isAuthFailure = (error: unknown) => {
 
 const explain = (error: unknown) => {
   if (isAuthFailure(error))
-    return "EmuMovies rejected the FTP/file-server credentials. These are often different from your emumovies.com website email and password: use the generated FTP username (commonly ending in @emumovies-fileserver.com) and its FTP password. A rejected login cannot determine your membership tier.";
+    return "EmuMovies rejected the login. Use your EmuMovies forum username and password for files.emumovies.com; a rejected login does not determine your membership tier.";
   const message = error instanceof Error ? error.message : String(error);
   return `Could not reach the EmuMovies file server: ${message}`;
 };

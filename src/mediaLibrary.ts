@@ -258,6 +258,10 @@ export const setCachedVideo = (gameId: string, video: VideoPreview) =>
  * as the gallery wants.
  *
  * They are read from the *visible* player rather than a second hidden one.
+ * An EmuMovies snap has an exact release filename and is selected by region;
+ * Archive longplays have free-text upload titles, so their region cannot be
+ * proved. Never turn an unverified Archive recording into screenshots labeled
+ * as a USA (or other primary) release.
  * Opening the recording twice doubled the load on an archive storage node that
  * is intermittently unhealthy, and both elements then failed together: one run
  * streamed cleanly, the next reported "the recording could not be opened" in

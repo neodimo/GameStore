@@ -123,8 +123,9 @@ const sameGame = (a: string, b: string) => {
  * sharing the anchor's region survive, so a USA game shows USA frames. Discs of
  * that same release still stack up, because a four-disc game is one release.
  *
- * Untagged files are kept: an index entry with no region tag is unclassified
- * rather than foreign, and dropping it can empty an otherwise valid gallery.
+ * Untagged files are deliberately excluded. A gallery that claims to be the
+ * USA release cannot prove that claim from an unclassified filename, and a
+ * sparse verified gallery is better than a mislabeled regional mix.
  */
 export const resolveScreenshots = (
   title: string,
@@ -155,8 +156,8 @@ export const resolveScreenshots = (
       if (!sameGame(anchorCore, core)) continue;
       const regions = regionsOf(tags);
       if (
-        anchorRegions.size &&
-        regions.size &&
+        !anchorRegions.size ||
+        !regions.size ||
         ![...regions].some((value) => anchorRegions.has(value))
       )
         continue;
