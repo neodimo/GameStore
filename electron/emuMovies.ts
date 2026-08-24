@@ -261,9 +261,6 @@ export const findSnapFolders = async (
       const childHasSystem = alias.test(name) && !LATER_SONY.test(name);
       const childHasSnaps = SNAP_FOLDER.test(name);
       const relevant =
-        current.depth === 0 ||
-        pathHasSystem ||
-        pathHasSnaps ||
         childHasSystem ||
         childHasSnaps ||
         useful.test(name) ||
@@ -305,33 +302,13 @@ export async function probeAccount(
       "connecting to the EmuMovies file server",
       openSession(credentials),
     );
-    onProgress?.("Signed in. Looking for PlayStation video snaps…");
-    const systems = directories(
-      await deadline.guard(
-        "reading the EmuMovies root folder",
-        Promise.resolve(session.client.list("/")),
-      ),
-    );
-    const scan = await findSnapFolders(session.client, "PS1", deadline, onProgress);
-    const folders = rankFolders(scan.folders);
-    const qualities = [...new Set(folders.map((folder) => folder.quality))];
-    // An unfinished scan that found nothing has not established anything about
-    // the account. Only a scan that actually completed may say the snaps are
-    // not there.
-    const emptyMessage = scan.truncated
-      ? `Signed in, but the folder scan stopped early before finding PlayStation video snaps. Your account is fine; the server tree is large or slow. Try signing in again to resume the search.`
-      : `Signed in, but no PlayStation video snap folder was visible to this account across ${systems.length} systems.`;
+    onProgress?.("Signed in to EmuMovies.");
     return {
       ok: true,
       secure: session.secure,
-      systems,
-      snapFolder: folders[0]?.path,
-      qualities,
-      message: folders.length
-        ? qualities.length
-          ? `Signed in. PlayStation video snaps available in ${qualities.join(", ")}.`
-          : "Signed in, but the PlayStation snap folder exposed no recognised quality tier."
-        : emptyMessage,
+      systems: [],
+      qualities: [],
+      message: "Signed in. Choose a console to index its video snaps.",
     };
   } catch (error) {
     return {
@@ -357,21 +334,38 @@ export async function indexSnaps(
   dir: string,
   credentials: EmuMoviesCredentials,
   system = "PS1",
+  onProgress?: ProbeProgress,
 ): Promise<SnapManifest> {
   let session: { client: Client; secure: boolean } | null = null;
   try {
     session = await openSession(credentials);
-    const scan = await findSnapFolders(session.client, system);
-    const folders = rankFolders(scan.folders);
-    if (!folders.length)
-      throw new Error(
-        scan.truncated
-          ? "The folder scan stopped before finding a video snap folder for this system. This is not a verdict about the account; try again to resume the search."
-          : "No video snap folder for this system is visible to this account.",
-      );
+    const cached = await readSnapManifest(dir, system);
+    let folders: SnapFolder[] = [];
+    let cachedEntries: FileInfo[] | null = null;
+    if (cached?.folder) {
+      onProgress?.(`Refreshing ${system} video snaps from the saved folder…`);
+      try {
+        cachedEntries = await session.client.list(cached.folder);
+        folders = [{ path: cached.folder, quality: cached.quality }];
+      } catch {
+        onProgress?.(`The saved ${system} folder moved; running a targeted rediscovery…`);
+      }
+    }
+    if (!folders.length) {
+      onProgress?.(`Finding ${system} video snaps in console and media folders…`);
+      const scan = await findSnapFolders(session.client, system, undefined, onProgress);
+      folders = rankFolders(scan.folders);
+      if (!folders.length)
+        throw new Error(
+          scan.truncated
+            ? `The targeted ${system} scan stopped before finding video snaps. Try again when the connection is stable.`
+            : `No ${system} video snap folder is visible to this account.`,
+        );
+    }
     const selected = folders[0];
     const folder = selected.path;
-    const entries = await session.client.list(folder);
+    onProgress?.(`Listing ${system} video snaps…`);
+    const entries = cachedEntries ?? await session.client.list(folder);
     const files = videoFiles(entries)
       .map((item) => ({
         path: `${folder}/${item.name}`,

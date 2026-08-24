@@ -51,6 +51,8 @@ Expanded details place a larger cover, description, and facts in a left rail, wh
 
 Media discovery is demand-led: browsing never launches a catalog-wide media crawl. Opening a title resolves its exact-release screenshots and preview while sharing the provider indexes and the same in-flight promise for repeated opens. Screenshot caching begins in parallel with video-provider resolution, so a slow or unavailable provider cannot stall the gallery. Clearing the disposable cache resets the shared indexes without erasing user curation.
 
+EmuMovies authentication and media discovery are separate operations. Sign-in validates and stores the credential without scanning media. A console selector starts a targeted filename index only for that system: first discovery follows media/quality branches and the selected console while skipping siblings, and later refreshes reuse the persisted folder unless it moved. The manifest contains filenames only. Actual video remains lazy and downloads one region-preferred match when its game is opened.
+
 ## Acceptance direction
 
 The original 30 adversarial fixtures remain the hand-verified data-quality core inside the 100-game catalog. Expanded titles have explicit lightweight Libretro cover fallbacks and participate in runtime fuzzy media matching; broader exact-release coverage remains an ongoing data-quality gate.
