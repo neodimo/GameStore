@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-23 — visible Real-Debrid preparation state
+
+- **What was done:** Repaired the misleading collection-download state exposed by Vib-Ribbon. The UI previously showed `Downloading 0%` while the main process was adding the selected torrent, selecting the exact file, and waiting for Real-Debrid to cache it; there are no downloadable bytes during that provider-side work. Downloads now say **Preparing download** and receive live provider status (`added`, selected, then provider state plus elapsed wait) until a direct file link exists. The button only changes to byte-percent download once data is flowing. The existing six-minute bounded provider wait remains in force and returns a retryable error instead of waiting indefinitely.
+- **Artifacts:** `electron/downloadManager.ts`, `src/App.tsx`, `src/vite-env.d.ts`, `CONTEXT.md`, `package.json`, and `package-lock.json`. Pending commit/release at this entry.
+- **State:** Local implementation is done: 87 tests, TypeScript lint, and production web/Electron build passed. Live Real-Debrid collection preparation remains account-gated, but this exact prior state is covered by the new main-process progress contract.
+- **Next owner + concrete artifact:** Gonzo releases v0.10.6. Omid retries Vib-Ribbon and should see the provider preparation message immediately; if Real-Debrid does not reach a direct download, send the exact final provider state text shown beneath the progress rail.
+- **Failure mode:** The renderer initialized collection acquisition as `Fetching <filename>…` / `Downloading 0%`, but the first byte-progress event only arrives after Real-Debrid has completed torrent preparation. That made a normal provider queue/cache phase indistinguishable from a hung client.
+
 ## 2026-08-23 — cached connected-device library badges
 
 - **What was done:** Added a green drive badge on catalog box art when an exact normalized title match exists in the configured MiSTer/SuperStation PSX library. The app performs one shallow SFTP listing of `<games root>/PSX` after a device is configured, persists only the folder-name inventory locally, and maps it to catalog IDs in the renderer. Card painting and scrolling make no network requests. A Settings-level **Refresh device library** action supports a deliberate rescan. The current scope is inventory/visibility only; existing cart checkout remains the add-to-device path and no remote deletion/overwrite behavior was introduced.
