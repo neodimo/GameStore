@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCuratedShelves, games, translationSearchTerm } from './catalog';
+import { createCuratedShelves, games, translationSearchTerm, translationSearchUrl } from './catalog';
 import { ps1Expansion } from './ps1Expansion';
 describe('catalog invariants',()=>{
  it('contains the full USA retail base plus the eligible regional catalog',()=>{expect(games.filter(g=>g.region==='USA').length).toBeGreaterThanOrEqual(1400);expect(new Set(games.map(g=>g.id)).size).toBe(games.length)});
@@ -25,13 +25,20 @@ describe('catalog invariants',()=>{
  });
  it('never sends a platform tag or trailing subtitle as a translation query',()=>{
   for(const g of games.filter(g=>g.translation)){
-   const term=decodeURIComponent(g.translation!.url.split('search=')[1]??'');
+   const url=new URL(g.translation!.url);
+   const term=url.searchParams.get('q')??'';
+   expect(url.origin).toBe('https://www.google.com');
+   expect(url.pathname).toBe('/search');
+   expect(url.searchParams.get('sitesearch')).toBe('www.romhacking.net');
    expect(term).not.toMatch(/\b(PS1|PSX|PlayStation)\b/i);
    expect(term).not.toMatch(/[:—–]|\s-\s/);
    expect(term.length).toBeGreaterThan(0);
    // The term must come from the record's own title, so it cannot drift again.
    expect(translationSearchTerm(g.title)).toBe(term);
   }
+ });
+ it('matches ROMhacking.net current Google site-search flow',()=>{
+  expect(translationSearchUrl('Germs')).toBe('https://www.google.com/search?q=Germs&btnG=Search&sitesearch=www.romhacking.net');
  });
  it('builds replaceable discovery shelves',()=>{const low=createCuratedShelves(()=>0);const high=createCuratedShelves(()=>0.999);expect(low).toHaveLength(4);expect(high).toHaveLength(4);expect(low.map(s=>s.title)).not.toEqual(high.map(s=>s.title));for(const shelf of [...low,...high])expect(shelf.ids.length).toBeGreaterThan(0)});
 });
