@@ -114,11 +114,39 @@ describe("EmuMovies sign-in is bounded and honest about why it stopped", () => {
       (message) => seen.push(message),
     );
     expect(seen.length).toBeGreaterThan(0);
-    expect(seen[0]).toMatch(/scanning/i);
+    expect(seen[0]).toMatch(/finding|scanning/i);
   });
 });
 
 describe("EmuMovies FTP layout discovery", () => {
+  it("prioritizes the requested console's video branch over broad media siblings", async () => {
+    const visited: string[] = [];
+    const root = "/Official/Video Snaps (HQ)/Sony Playstation";
+    const unrelated = Array.from({ length: 60 }, (_, index) =>
+      directory(`Media Downloads ${index}`),
+    );
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Official"), ...unrelated],
+      "/Official": [directory("Manuals"), directory("Video Snaps (HQ)")],
+      "/Official/Video Snaps (HQ)": [
+        directory("Nintendo 64"),
+        directory("Sony PlayStation 2"),
+        directory("Sony Playstation"),
+      ],
+      [root]: [video("Silent Hill (USA).mp4")],
+    };
+    const client = {
+      list: async (remote = "/") => {
+        visited.push(remote);
+        return tree[remote] ?? [];
+      },
+    } as never;
+    expect((await findSnapFolders(client, "PS1")).folders).toEqual([
+      { path: root, quality: "HQ480" },
+    ]);
+    expect(visited.indexOf(root)).toBeLessThan(6);
+  });
+
   it("does not descend into unrelated console groups from the root", async () => {
     const visited: string[] = [];
     const root = "/Official/Video Snaps (HQ)/Sony PlayStation";
