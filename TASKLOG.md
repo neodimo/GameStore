@@ -3,9 +3,9 @@
 ## 2026-08-23 — expanded English-playable PlayStation library
 
 - **What was done:** Opened the catalog beyond the original 100-title preview to a selected 268-game PS1 library. The 168 new records cover official English-language USA/Europe releases across RPGs, action, platformers, horror, fighting, rhythm, racing, shooters, puzzle, light-gun, and strategy games. Existing explicit Japanese English-translation records remain their own documented entries. The expansion intentionally avoids duplicate regional printings and does not masquerade as a full ROM-set listing.
-- **Artifacts:** `src/ps1Expansion.ts`, `src/catalog.ts`, `src/catalog.test.ts`, `package.json`, `package-lock.json`, and `CONTEXT.md`. Local source changes are pending commit/release at this entry.
-- **State:** Local validation passed: 88 tests, TypeScript lint, production web/Electron builds, source/bundle media-light guards, and `git diff --check`. Existing runtime artwork/media matching continues to resolve on demand; it has not been bulk-cached or bundled.
-- **Next owner + concrete artifact:** Gonzo commits, pushes, tags, and verifies the v0.11.0 Windows/Linux release. Omid's acceptance artifact is the v0.11.0 installer and the Discover catalog count of 268 PS1 games.
+- **Artifacts:** Released at commit `f7c494e5284bdfe681412f09a83bc385a7188fc4`, tag `v0.11.0`: `https://github.com/neodimo/GameStore/releases/tag/v0.11.0`. Published assets: `GameStore-Setup-0.11.0-x64.exe`, `.exe.blockmap`, `GameStore-0.11.0-x86_64.AppImage`, `GameStore-0.11.0-amd64.deb`, `latest.yml`, and `latest-linux.yml`.
+- **State:** Released. Local validation passed: 88 tests, TypeScript lint, production web/Electron builds, source/bundle media-light guards, and `git diff --check`. Release CI run `32685842917` passed: Linux in 3m00s and Windows in 3m41s. Existing runtime artwork/media matching continues to resolve on demand; it has not been bulk-cached or bundled.
+- **Next owner + concrete artifact:** Omid installs the v0.11.0 build and checks Discover's 268 PS1 games; Gonzo owns any reported inclusion, artwork, or matching correction against `src/ps1Expansion.ts`.
 
 ## 2026-08-23 — visible Real-Debrid preparation state
 
