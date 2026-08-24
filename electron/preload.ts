@@ -81,6 +81,12 @@ contextBridge.exposeInMainWorld("gameStore", {
   getEmuMoviesSettings: () => ipcRenderer.invoke("emumovies-settings-get"),
   loginEmuMovies: (credentials: { username?: string; password?: string }) =>
     ipcRenderer.invoke("emumovies-login", credentials),
+  /** Streams sign-in stages; returns an unsubscribe function. */
+  onEmuMoviesProgress: (listener: (message: string) => void) => {
+    const handler = (_e: unknown, message: string) => listener(message);
+    ipcRenderer.on("emumovies-login-progress", handler);
+    return () => ipcRenderer.off("emumovies-login-progress", handler);
+  },
   indexEmuMovies: () => ipcRenderer.invoke("emumovies-index"),
   forgetEmuMovies: () => ipcRenderer.invoke("emumovies-forget"),
   getEmuMoviesSnap: (title: string, region: string) =>

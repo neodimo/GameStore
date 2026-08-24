@@ -55,6 +55,53 @@ export type AccountProbe = {
 const TIMEOUT = 25_000;
 const SYSTEM_DEPTH = 5;
 const MAX_LISTINGS = 160;
+/**
+ * Whole-probe ceiling. The listing cap alone does not bound the wall clock:
+ * 160 listings that each time out at 25s is over an hour of a UI that only
+ * says "Connecting". A sign-in has to finish, or say why it did not, in a time
+ * a person is willing to sit through.
+ */
+const PROBE_BUDGET_MS = 75_000;
+/**
+ * Consecutive failed listings that mean the session is gone rather than the
+ * folder being unreadable. Individual directories legitimately refuse access
+ * per entitlement, so one failure proves nothing; several in a row while the
+ * clock burns is a dead control socket being retried.
+ */
+const DEAD_SESSION_STREAK = 4;
+
+export type ProbeProgress = (message: string) => void;
+
+/** Rejects when the budget expires, so no single stage can strand the caller. */
+class ProbeDeadline {
+  private readonly expiresAt: number;
+  constructor(budgetMs: number = PROBE_BUDGET_MS) {
+    this.expiresAt = Date.now() + budgetMs;
+  }
+  get expired() {
+    return Date.now() >= this.expiresAt;
+  }
+  get remainingMs() {
+    return Math.max(0, this.expiresAt - Date.now());
+  }
+  /** Caps a stage at whatever budget is left rather than its own timeout. */
+  async guard<T>(label: string, work: Promise<T>): Promise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      return await Promise.race([
+        work,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`Timed out ${label}.`)),
+            this.remainingMs,
+          );
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+}
 
 /**
  * Quality tiers, best first. The names appear both as directory components
@@ -116,6 +163,8 @@ const isAuthFailure = (error: unknown) => {
 const explain = (error: unknown) => {
   if (isAuthFailure(error))
     return "EmuMovies rejected the login. Use your EmuMovies forum username and password for files.emumovies.com; a rejected login does not determine your membership tier.";
+  if (error instanceof SnapSessionLost)
+    return `${error.message} This is a connection problem, not a verdict about your account or membership tier. Check that port 21 to files.emumovies.com is not blocked by a firewall, VPN or ISP, then try again.`;
   const message = error instanceof Error ? error.message : String(error);
   return `Could not reach the EmuMovies file server: ${message}`;
 };
@@ -140,23 +189,66 @@ export type SnapFolder = { path: string; quality: string };
  * hardcoded path would fail as a wrong password rather than as a moved folder,
  * which is the most expensive possible way to be wrong about someone's account.
  */
+/**
+ * Raised when the crawl stops because the session died, so the caller reports a
+ * connection failure instead of a content verdict. Swallowing listing errors and
+ * running to the end of the queue turns a dropped socket into "no snap folder
+ * was visible to this account", which blames the user's membership for a
+ * network fault.
+ */
+export class SnapSessionLost extends Error {
+  constructor(message = "Lost the EmuMovies connection while scanning folders.") {
+    super(message);
+    this.name = "SnapSessionLost";
+  }
+}
+
+/**
+ * `truncated` means the scan stopped early — budget or listing cap — with more
+ * of the tree unvisited. An empty result then means "not reached", which is a
+ * different statement from "this account has none", and the two must not be
+ * reported with the same sentence.
+ */
+export type SnapScan = { folders: SnapFolder[]; truncated: boolean };
+
 export const findSnapFolders = async (
   client: Pick<Client, "list">,
   system: string,
-): Promise<SnapFolder[]> => {
+  deadline: ProbeDeadline = new ProbeDeadline(),
+  onProgress?: ProbeProgress,
+): Promise<SnapScan> => {
   const alias = SYSTEM_ALIASES[system] ?? new RegExp(system, "i");
   const useful = /official|video|snap|media|download/i;
   const queue = [{ path: "/", depth: 0 }];
   const visited = new Set<string>();
   const found: SnapFolder[] = [];
+  let failureStreak = 0;
+  let failures = 0;
+  let listed = 0;
+  let truncated = false;
   while (queue.length && visited.size < MAX_LISTINGS) {
     const current = queue.shift()!;
     if (visited.has(current.path) || current.depth > SYSTEM_DEPTH) continue;
+    if (deadline.expired) {
+      truncated = true;
+      break;
+    }
     visited.add(current.path);
+    onProgress?.(
+      `Scanning EmuMovies folders (${visited.size} checked, ${found.length} found)…`,
+    );
     let entries: FileInfo[];
     try {
-      entries = await client.list(current.path);
+      entries = await deadline.guard(
+        `listing ${current.path}`,
+        Promise.resolve(client.list(current.path)),
+      );
+      failureStreak = 0;
+      listed += 1;
     } catch {
+      failures += 1;
+      failureStreak += 1;
+      if (failureStreak >= DEAD_SESSION_STREAK) throw new SnapSessionLost();
       continue;
     }
     const pathHasSystem = alias.test(current.path) && !LATER_SONY.test(current.path);
@@ -179,9 +271,16 @@ export const findSnapFolders = async (
       if (relevant) queue.push({ path: child, depth: current.depth + 1 });
     }
   }
-  return found.filter(
-    (folder, index) => found.findIndex((item) => item.path === folder.path) === index,
-  );
+  // Nothing listed at all means the session never worked, not that the account
+  // has no snaps. Reporting an empty crawl as a content result is what turns a
+  // dropped connection into a false claim about the user's membership.
+  if (!listed && failures) throw new SnapSessionLost();
+  return {
+    folders: found.filter(
+      (folder, index) => found.findIndex((item) => item.path === folder.path) === index,
+    ),
+    truncated: truncated || queue.length > 0,
+  };
 };
 
 /**
@@ -196,13 +295,32 @@ const rankFolders = (folders: SnapFolder[]) =>
 
 export async function probeAccount(
   credentials: EmuMoviesCredentials,
+  onProgress?: ProbeProgress,
 ): Promise<AccountProbe> {
   let session: { client: Client; secure: boolean } | null = null;
+  const deadline = new ProbeDeadline();
   try {
-    session = await openSession(credentials);
-    const systems = directories(await session.client.list("/"));
-    const folders = rankFolders(await findSnapFolders(session.client, "PS1"));
+    onProgress?.("Connecting to the EmuMovies file server…");
+    session = await deadline.guard(
+      "connecting to the EmuMovies file server",
+      openSession(credentials),
+    );
+    onProgress?.("Signed in. Looking for PlayStation video snaps…");
+    const systems = directories(
+      await deadline.guard(
+        "reading the EmuMovies root folder",
+        Promise.resolve(session.client.list("/")),
+      ),
+    );
+    const scan = await findSnapFolders(session.client, "PS1", deadline, onProgress);
+    const folders = rankFolders(scan.folders);
     const qualities = [...new Set(folders.map((folder) => folder.quality))];
+    // An unfinished scan that found nothing has not established anything about
+    // the account. Only a scan that actually completed may say the snaps are
+    // not there.
+    const emptyMessage = scan.truncated
+      ? `Signed in, but the folder scan stopped early before finding PlayStation video snaps. Your account is fine; the server tree is large or slow. Try signing in again to resume the search.`
+      : `Signed in, but no PlayStation video snap folder was visible to this account across ${systems.length} systems.`;
     return {
       ok: true,
       secure: session.secure,
@@ -213,7 +331,7 @@ export async function probeAccount(
         ? qualities.length
           ? `Signed in. PlayStation video snaps available in ${qualities.join(", ")}.`
           : "Signed in, but the PlayStation snap folder exposed no recognised quality tier."
-        : `Signed in, but no PlayStation video snap folder was visible to this account across ${systems.length} systems.`,
+        : emptyMessage,
     };
   } catch (error) {
     return {
@@ -243,10 +361,13 @@ export async function indexSnaps(
   let session: { client: Client; secure: boolean } | null = null;
   try {
     session = await openSession(credentials);
-    const folders = rankFolders(await findSnapFolders(session.client, system));
+    const scan = await findSnapFolders(session.client, system);
+    const folders = rankFolders(scan.folders);
     if (!folders.length)
       throw new Error(
-        "No video snap folder for this system is visible to this account.",
+        scan.truncated
+          ? "The folder scan stopped before finding a video snap folder for this system. This is not a verdict about the account; try again to resume the search."
+          : "No video snap folder for this system is visible to this account.",
       );
     const selected = folders[0];
     const folder = selected.path;

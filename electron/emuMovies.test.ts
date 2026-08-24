@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { findSnapFolders, matchSnap, snapKey, type SnapFile } from "./emuMovies";
+import {
+  findSnapFolders,
+  matchSnap,
+  snapKey,
+  SnapSessionLost,
+  type SnapFile,
+} from "./emuMovies";
 import type { FileInfo } from "basic-ftp";
 
 const file = (name: string, bytes = 4_000_000): SnapFile => ({
@@ -14,6 +20,103 @@ const video = (name: string) =>
   ({ name, isDirectory: false, isFile: true, size: 4_000_000 }) as FileInfo;
 const fakeClient = (tree: Record<string, FileInfo[]>) =>
   ({ list: async (remote = "/") => tree[remote] ?? [] }) as never;
+
+/**
+ * A crawl that swallows every listing error runs its whole queue against a dead
+ * socket, then reports the silence as a content verdict — "no snap folder was
+ * visible to this account" — which blames the user's membership for a network
+ * fault, after minutes of a UI that only says "Connecting".
+ */
+describe("EmuMovies sign-in is bounded and honest about why it stopped", () => {
+  const deadClient = () =>
+    ({
+      list: async () => {
+        throw new Error("Timeout (control socket)");
+      },
+    }) as never;
+
+  it("reports a lost session instead of crawling on and blaming the account", async () => {
+    await expect(findSnapFolders(deadClient(), "PS1")).rejects.toBeInstanceOf(
+      SnapSessionLost,
+    );
+  });
+
+  it("gives up after a few consecutive failures, not the whole queue", async () => {
+    let calls = 0;
+    const client = {
+      list: async () => {
+        calls += 1;
+        throw new Error("Timeout (control socket)");
+      },
+    } as never;
+    await expect(findSnapFolders(client, "PS1")).rejects.toBeInstanceOf(
+      SnapSessionLost,
+    );
+    // The listing cap is 160; a dead session must not pay for all of them.
+    expect(calls).toBeLessThanOrEqual(4);
+  });
+
+  it("tolerates an isolated unreadable folder without failing the scan", async () => {
+    const root = "/Official/Video Snaps (HQ)/Sony PlayStation";
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Official"), directory("Locked")],
+      "/Official": [directory("Video Snaps (HQ)")],
+      "/Official/Video Snaps (HQ)": [directory("Sony PlayStation")],
+      [root]: [video("Silent Hill (USA).mp4")],
+    };
+    const client = {
+      list: async (remote = "/") => {
+        // A directory the entitlement does not cover: refused, but the session
+        // is alive, so this is not grounds to abandon the scan.
+        if (remote === "/Locked") throw new Error("550 Permission denied");
+        return tree[remote] ?? [];
+      },
+    } as never;
+    expect((await findSnapFolders(client, "PS1")).folders).toEqual([
+      { path: root, quality: "HQ480" },
+    ]);
+  });
+
+  it("marks a scan that ran out of budget as truncated, not as empty", async () => {
+    // A tree deep enough that a spent budget stops the walk with work left.
+    const tree: Record<string, FileInfo[]> = { "/": [directory("Official")] };
+    for (let i = 0; i < 40; i += 1)
+      tree[`/Official${"/media".repeat(i)}`] = [directory("media")];
+    const expired = {
+      expired: true,
+      remainingMs: 0,
+      guard: <T,>(_label: string, work: Promise<T>) => work,
+    } as never;
+    const scan = await findSnapFolders(fakeClient(tree), "PS1", expired);
+    expect(scan.folders).toEqual([]);
+    // Empty *and* truncated must never be reported as "your account has none".
+    expect(scan.truncated).toBe(true);
+  });
+
+  it("marks a fully walked tree as complete so an empty result is trustworthy", async () => {
+    const scan = await findSnapFolders(
+      fakeClient({ "/": [directory("Official")], "/Official": [] }),
+      "PS1",
+    );
+    expect(scan.folders).toEqual([]);
+    expect(scan.truncated).toBe(false);
+  });
+
+  it("reports progress as it scans so a long crawl cannot read as a hang", async () => {
+    const seen: string[] = [];
+    await findSnapFolders(
+      fakeClient({
+        "/": [directory("Official")],
+        "/Official": [directory("Video Snaps (HQ)")],
+      }),
+      "PS1",
+      undefined,
+      (message) => seen.push(message),
+    );
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen[0]).toMatch(/scanning/i);
+  });
+});
 
 describe("EmuMovies FTP layout discovery", () => {
   it("finds the current quality-first Official layout", async () => {
@@ -30,7 +133,7 @@ describe("EmuMovies FTP layout discovery", () => {
       }),
       "PS1",
     );
-    expect(folders).toEqual([{ path: root, quality: "HQ480" }]);
+    expect(folders.folders).toEqual([{ path: root, quality: "HQ480" }]);
   });
 
   it("also finds a system-first quality layout", async () => {
@@ -43,7 +146,7 @@ describe("EmuMovies FTP layout discovery", () => {
       }),
       "PS1",
     );
-    expect(folders).toEqual([{ path: root, quality: "HD1080" }]);
+    expect(folders.folders).toEqual([{ path: root, quality: "HD1080" }]);
   });
 });
 

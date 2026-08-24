@@ -34,6 +34,27 @@ const lib = (name: string) =>
 const yt = (id: string) => `https://www.youtube.com/embed/${id}`;
 const wiki = (q: string) =>
   `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`;
+/**
+ * Search term for a translation lookup, derived from the catalog title.
+ *
+ * These queries used to be hand-written per record, and drifted: `Baroque`
+ * searched for "Baroque PS1" (a platform tag no database title contains),
+ * `Kowloon’s Gate` searched "Kowloon Gate", `Linda³ Again` searched "Linda Cube
+ * Again". Deriving from the title makes drift impossible.
+ *
+ * The term is reduced to the leading segment because a romhacking entry is
+ * indexed under the short release name: searching the full "Germs: Nerawareta
+ * Machi" returns nothing, while "Germs" finds it. A shorter term over-matches,
+ * which is recoverable by eye; an over-specific one silently returns nothing.
+ */
+export const translationSearchTerm = (title: string) =>
+  title
+    .replace(/[³]/g, "3")
+    .replace(/[²]/g, "2")
+    .replace(/[’‘]/g, "'")
+    .split(/\s*[:—–]\s*|\s+-\s+/)[0]
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .trim();
 const patch = (q: string) =>
   `https://www.romhacking.net/?page=translations&search=${encodeURIComponent(q)}`;
 const retroGameTalk = (q: string) =>
@@ -51,41 +72,48 @@ const g = (
   developer = "Various",
   coverName?: string,
   video?: string,
-  translation?: Game["translation"],
-): Game => ({
-  id,
-  title,
-  year,
-  region,
-  genres,
-  facets,
-  description,
-  curatorNote: note,
-  players,
-  developer,
-  cover: coverName ? lib(coverName) : undefined,
-  coverName,
-  video: video ? yt(video) : undefined,
-  translation,
-  rating: undefined,
-  links: [
-    { label: "Game reference", url: wiki(title), state: "verified" },
-    {
-      label: "Search RetroGameTalk",
-      url: retroGameTalk(title),
-      state: "unverified",
-    },
-    ...(translation
-      ? [
-          {
-            label: "Find translation patch",
-            url: translation.url,
-            state: "unverified" as LinkState,
-          },
-        ]
-      : []),
-  ],
-});
+  // `url` is derived from the title unless a record supplies a verified one.
+  translation?: Omit<NonNullable<Game["translation"]>, "url"> & { url?: string },
+): Game => {
+  const resolvedTranslation: Game["translation"] = translation && {
+    ...translation,
+    url: translation.url ?? patch(translationSearchTerm(title)),
+  };
+  return {
+    id,
+    title,
+    year,
+    region,
+    genres,
+    facets,
+    description,
+    curatorNote: note,
+    players,
+    developer,
+    cover: coverName ? lib(coverName) : undefined,
+    coverName,
+    video: video ? yt(video) : undefined,
+    translation: resolvedTranslation,
+    rating: undefined,
+    links: [
+      { label: "Game reference", url: wiki(title), state: "verified" },
+      {
+        label: "Search RetroGameTalk",
+        url: retroGameTalk(title),
+        state: "unverified",
+      },
+      ...(resolvedTranslation
+        ? [
+            {
+              label: "Find translation patch",
+              url: resolvedTranslation.url,
+              state: "unverified" as LinkState,
+            },
+          ]
+        : []),
+    ],
+  };
+};
 
 const coreGames: Game[] = [
   g(
@@ -274,7 +302,6 @@ const coreGames: Game[] = [
     {
       team: "LIPEMCO! Translations",
       status: "Complete",
-      url: patch("Harmful Park"),
       base: "Japan SLPS-00498",
     },
   ),
@@ -294,7 +321,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      url: patch("Planet Laika"),
       base: "Japan SLPM-86264",
     },
   ),
@@ -314,7 +340,6 @@ const coreGames: Game[] = [
     {
       team: "Hilltop Works",
       status: "Complete",
-      url: patch("Racing Lagoon"),
       base: "Japan SLPS-02038",
     },
   ),
@@ -334,7 +359,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      url: patch("Mizzurna Falls"),
       base: "Japan SLPS-01783",
     },
   ),
@@ -354,7 +378,6 @@ const coreGames: Game[] = [
     {
       team: "Aeon Genesis",
       status: "Complete",
-      url: patch("ParanoiaScape"),
       base: "Japan SLPS-01375",
     },
   ),
@@ -374,7 +397,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      url: patch("Baroque PS1"),
       base: "Japan SLPM-86328",
     },
   ),
@@ -394,7 +416,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      url: patch("Remote Control Dandy"),
       base: "Japan SLPS-02243",
     },
   ),
@@ -414,7 +435,6 @@ const coreGames: Game[] = [
     {
       team: "Infinite Lupine",
       status: "Complete",
-      url: patch("Tobal No. 2"),
       base: "Japan SLPS-01025",
     },
   ),
@@ -434,7 +454,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      url: patch("Germs Nerawareta Machi"),
       base: "Japan SLPS-02107",
     },
   ),
@@ -454,7 +473,6 @@ const coreGames: Game[] = [
     {
       team: "Hilltop / Cargodin / EsperKnight",
       status: "Complete",
-      url: patch("Kowloon Gate"),
       base: "Japan multi-disc release",
     },
   ),
@@ -474,7 +492,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      url: patch("Linda Cube Again"),
       base: "Japan SCPS-45124",
     },
   ),
@@ -494,7 +511,6 @@ const coreGames: Game[] = [
     {
       team: "Hilltop Works",
       status: "Complete",
-      url: patch("Ore no Ryouri"),
       base: "Japan SCPS-10099",
     },
   ),
