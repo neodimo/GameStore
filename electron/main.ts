@@ -437,18 +437,19 @@ ipcMain.handle(
   },
 );
 /** Index one selected console; refreshes reuse its previously discovered folder. */
-ipcMain.handle("emumovies-index", async (event, system = "PS1") => {
+ipcMain.handle("emumovies-index", async (event, system = "PS1", catalog = []) => {
   const credentials = await emuCredentials();
   if (!credentials) throw new Error("Sign in to EmuMovies first.");
   const manifest = await indexSnaps(snapDir(), credentials, String(system), (message) => {
     if (!event.sender.isDestroyed())
       event.sender.send("emumovies-login-progress", message);
-  });
+  }, Array.isArray(catalog) ? catalog : []);
   return {
     folder: manifest.folder,
     quality: manifest.quality,
     snaps: manifest.files.length,
     indexedAt: manifest.indexedAt,
+    coverage: manifest.coverage,
   };
 });
 ipcMain.handle("emumovies-forget", async () => {
@@ -468,12 +469,12 @@ ipcMain.handle("emumovies-forget", async () => {
  */
 ipcMain.handle(
   "emumovies-snap",
-  async (_e, title: string, region: string) => {
+  async (_e, title: string, region: string, coverName?: string) => {
     const credentials = await emuCredentials();
     if (!credentials) return null;
     const manifest = await readSnapManifest(snapDir());
     if (!manifest) return null;
-    const match = matchSnap(manifest.files, title, region);
+    const match = matchSnap(manifest.files, title, region, coverName);
     if (!match) return null;
     const { localUrl, bytes } = await fetchSnap(
       snapCacheDir(),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  auditSnapCoverage,
   findSnapFolders,
   matchSnap,
   snapKey,
@@ -280,5 +281,25 @@ describe("matchSnap", () => {
     expect(matchSnap(odd, "Future Cop: LAPD", "USA")?.name).toBe(
       "Future Cop - L.A.P.D. (USA).mp4",
     );
+  });
+
+  it("uses the canonical catalog release name before fuzzy title fallback", () => {
+    const odd = [file("World Destruction League - Thunder Tanks (USA).mp4")];
+    expect(matchSnap(odd, "WDL: Thunder Tanks", "USA", "World Destruction League - Thunder Tanks (USA)")?.name)
+      .toBe("World Destruction League - Thunder Tanks (USA).mp4");
+  });
+
+  it("fuzzy-matches naming drift while rejecting nearby sequels", () => {
+    expect(matchSnap([file("Kowloon's Gate (Japan).mp4")], "Kowloon Gate", "Japan")?.name)
+      .toBe("Kowloon's Gate (Japan).mp4");
+    expect(matchSnap([file("Tekken 2 (USA).mp4")], "Tekken 3", "USA")).toBeNull();
+  });
+
+  it("reports catalog matches instead of calling raw provider files matched", () => {
+    expect(auditSnapCoverage(library, [
+      { title: "Silent Hill", region: "USA" },
+      { title: "Suikoden II", region: "USA" },
+      { title: "Vagrant Story", region: "USA" },
+    ])).toEqual({ catalog: 3, matched: 2, ambiguous: 0, unmatched: 1 });
   });
 });

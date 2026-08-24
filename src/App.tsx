@@ -1169,9 +1169,15 @@ function ProviderSettings({
     setEmuStatus(`Targeting ${emuSystem} video snaps…`);
     const stopProgress = window.gameStore!.onEmuMoviesProgress(setEmuStatus);
     try {
-      const indexed = await window.gameStore!.indexEmuMovies(emuSystem);
+      const indexed = await window.gameStore!.indexEmuMovies(
+        emuSystem,
+        games.map(({ title, region, coverName }) => ({ title, region, coverName })),
+      );
+      const coverage = indexed.coverage;
       setEmuStatus(
-        `${emuSystem}: ${indexed.snaps.toLocaleString()} ${indexed.quality} video snaps matched. Downloads remain per-game and on demand.`,
+        coverage
+          ? `${emuSystem}: ${coverage.matched.toLocaleString()} of ${coverage.catalog.toLocaleString()} games matched from ${indexed.snaps.toLocaleString()} ${indexed.quality} provider files; ${coverage.ambiguous.toLocaleString()} ambiguous and ${coverage.unmatched.toLocaleString()} unavailable. Downloads remain per-game and on demand.`
+          : `${emuSystem}: ${indexed.snaps.toLocaleString()} ${indexed.quality} provider files indexed. Downloads remain per-game and on demand.`,
       );
       setEmuState(await window.gameStore!.getEmuMoviesSettings());
       setScrapeDialog(false);

@@ -33,6 +33,14 @@ export type SnapManifest = {
   quality: string;
   indexedAt: number;
   files: SnapFile[];
+  coverage?: SnapCoverage;
+};
+export type SnapCatalogGame = { title: string; region: string; coverName?: string };
+export type SnapCoverage = {
+  catalog: number;
+  matched: number;
+  unmatched: number;
+  ambiguous: number;
 };
 
 /**
@@ -244,6 +252,7 @@ export const findSnapFolders = async (
   let failures = 0;
   let listed = 0;
   let truncated = false;
+  let listingsAfterFirstMatch = 0;
   while (queue.length && visited.size < MAX_LISTINGS) {
     queue.sort((a, b) => b.score - a.score || a.depth - b.depth || a.path.localeCompare(b.path));
     const current = queue.shift()!;
@@ -274,10 +283,10 @@ export const findSnapFolders = async (
     const pathHasVideo = VIDEO_FOLDER.test(current.path);
     if (pathHasSystem && pathHasVideo && videoFiles(entries).length) {
       found.push({ path: current.path, quality: qualityOf(current.path) });
-      // The priority queue places the strongest console + video + quality path
-      // first. One readable snap directory is sufficient; walking the remaining
-      // provider tree only adds latency and bandwidth.
-      break;
+      // A provider's highest quality tier can be only a partial set. Keep
+      // checking the nearby console/video candidates so coverage, rather than
+      // folder name, chooses the manifest used by the catalog.
+      listingsAfterFirstMatch += 1;
     }
 
     for (const name of directories(entries)) {
@@ -295,6 +304,12 @@ export const findSnapFolders = async (
         score: discoveryScore(child, alias),
       });
     }
+    if (found.length && (found.some((item) => item.quality === "HD1080") &&
+      found.some((item) => item.quality === "HQ480") &&
+      found.some((item) => item.quality === "SQ240") || listingsAfterFirstMatch >= 12))
+      break;
+    if (found.length)
+      queue.splice(0, queue.length, ...queue.filter((item) => item.score >= 200));
   }
   // Nothing listed at all means the session never worked, not that the account
   // has no snaps. Reporting an empty crawl as a content result is what turns a
@@ -363,6 +378,7 @@ export async function indexSnaps(
   credentials: EmuMoviesCredentials,
   system = "PS1",
   onProgress?: ProbeProgress,
+  catalog: SnapCatalogGame[] = [],
 ): Promise<SnapManifest> {
   let session: { client: Client; secure: boolean } | null = null;
   try {
@@ -379,6 +395,24 @@ export async function indexSnaps(
         onProgress?.(`The saved ${system} folder moved; running a targeted rediscovery…`);
       }
     }
+    if (folders.length && cachedEntries && catalog.length) {
+      const cachedFiles = videoFiles(cachedEntries).map((item) => ({
+        path: `${cached!.folder}/${item.name}`,
+        name: item.name,
+        bytes: item.size,
+      }));
+      const cachedCoverage = auditSnapCoverage(cachedFiles, catalog);
+      if (cachedCoverage.matched / catalog.length < 0.7) {
+        onProgress?.(
+          `The saved ${system} folder covers only ${cachedCoverage.matched.toLocaleString()} of ${catalog.length.toLocaleString()} games; checking adjacent quality tiers…`,
+        );
+        const scan = await findSnapFolders(session.client, system, undefined, onProgress);
+        folders = rankFolders([
+          ...folders,
+          ...scan.folders.filter((candidate) => candidate.path !== cached!.folder),
+        ]);
+      }
+    }
     if (!folders.length) {
       onProgress?.(`Finding ${system} video snaps in console and media folders…`);
       const scan = await findSnapFolders(session.client, system, undefined, onProgress);
@@ -390,16 +424,26 @@ export async function indexSnaps(
             : `No ${system} video snap folder is visible to this account.`,
         );
     }
-    const selected = folders[0];
-    const folder = selected.path;
-    onProgress?.(`Listing ${system} video snaps…`);
-    const entries = cachedEntries ?? await session.client.list(folder);
-    const files = videoFiles(entries)
-      .map((item) => ({
-        path: `${folder}/${item.name}`,
+    onProgress?.(`Comparing ${system} video sets with the catalog…`);
+    const choices = await Promise.all(folders.map(async (candidate) => {
+      const entries = cachedEntries && candidate.path === cached?.folder
+        ? cachedEntries
+        : await session!.client.list(candidate.path);
+      const files = videoFiles(entries).map((item) => ({
+        path: `${candidate.path}/${item.name}`,
         name: item.name,
         bytes: item.size,
       }));
+      const coverage = catalog.length ? auditSnapCoverage(files, catalog) : undefined;
+      return { candidate, files, coverage };
+    }));
+    choices.sort((a, b) =>
+      (b.coverage?.matched ?? b.files.length) - (a.coverage?.matched ?? a.files.length) ||
+      rankFolders([a.candidate, b.candidate]).indexOf(a.candidate) - rankFolders([a.candidate, b.candidate]).indexOf(b.candidate),
+    );
+    const selected = choices[0].candidate;
+    const folder = selected.path;
+    const files = choices[0].files;
     if (!files.length)
       throw new Error(`No video files were listed under ${folder}.`);
     const manifest: SnapManifest = {
@@ -408,6 +452,7 @@ export async function indexSnaps(
       quality: selected.quality,
       indexedAt: Date.now(),
       files,
+      coverage: choices[0].coverage,
     };
     await fsp.mkdir(dir, { recursive: true });
     await fsp.writeFile(
@@ -487,10 +532,94 @@ export const snapKey = (value: string) => {
   return text.replace(/\s+/g, " ").trim();
 };
 
-export type SnapMatch = SnapFile & { exact: boolean; disc: number };
+export type SnapMatch = SnapFile & { exact: boolean; disc: number; confidence: number };
 
 const discNumber = (name: string) =>
   Number(name.match(/\(dis[ck]\s*(\d+)\)/i)?.[1] ?? 0);
+
+const grams = (value: string) => {
+  const compact = ` ${snapKey(value).replace(/\s+/g, " ")} `;
+  const result = new Set<string>();
+  for (let index = 0; index < compact.length - 1; index += 1)
+    result.add(compact.slice(index, index + 2));
+  return result;
+};
+const titleNumbers = (value: string) =>
+  [...new Set((snapKey(value).match(/\b\d+\b/g) ?? []).map(Number))].sort();
+const preparedSnaps = new WeakMap<SnapFile, { key: string; grams: Set<string>; numbers: string }>();
+const prepareSnap = (file: SnapFile) => {
+  let prepared = preparedSnaps.get(file);
+  if (!prepared) {
+    prepared = {
+      key: snapKey(file.name),
+      grams: grams(file.name),
+      numbers: JSON.stringify(titleNumbers(file.name)),
+    };
+    preparedSnaps.set(file, prepared);
+  }
+  return prepared;
+};
+const preparedSimilarity = (left: Set<string>, right: Set<string>) => {
+  if (!left.size || !right.size) return 0;
+  let shared = 0;
+  for (const gram of left) if (right.has(gram)) shared += 1;
+  return (2 * shared) / (left.size + right.size);
+};
+
+export type SnapResolution = {
+  match: SnapMatch | null;
+  ambiguous: boolean;
+  confidence: number;
+};
+
+/** Resolve Redump/provider naming without letting nearby sequels cross-match. */
+export function resolveSnap(
+  files: SnapFile[],
+  title: string,
+  region: string,
+  coverName?: string,
+): SnapResolution {
+  const keys = [coverName, title].filter(Boolean) as string[];
+  if (!keys.length) return { match: null, ambiguous: false, confidence: 0 };
+  const preparedKeys = keys.map((key) => ({
+    key: snapKey(key),
+    grams: grams(key),
+    numbers: JSON.stringify(titleNumbers(key)),
+  }));
+  const ranked = files.map((file) => {
+    const prepared = prepareSnap(file);
+    const exact = preparedKeys.some((key) => key.key === prepared.key);
+    const compatible = preparedKeys.some((key) => key.numbers === prepared.numbers);
+    const confidence = exact ? 1 : compatible
+      ? Math.max(...preparedKeys.map((key) => preparedSimilarity(key.grams, prepared.grams)))
+      : 0;
+    const requestedRegion = new RegExp(`\\(${region}[^)]*\\)`, "i").test(file.name);
+    const english = /\((usa|world|europe)[^)]*\)/i.test(file.name);
+    return { ...file, exact, confidence, disc: discNumber(file.name), requestedRegion, english };
+  }).filter((file) => file.confidence >= 0.78)
+    .sort((a, b) => b.confidence - a.confidence ||
+      Number(b.requestedRegion) - Number(a.requestedRegion) ||
+      Number(b.english) - Number(a.english) || a.disc - b.disc ||
+      a.name.localeCompare(b.name));
+  if (!ranked.length) return { match: null, ambiguous: false, confidence: 0 };
+  const best = ranked[0];
+  const runnerUp = ranked.find((candidate) => snapKey(candidate.name) !== snapKey(best.name));
+  const ambiguous = !best.exact && !!runnerUp && best.confidence - runnerUp.confidence < 0.06;
+  if (ambiguous) return { match: null, ambiguous: true, confidence: best.confidence };
+  const { requestedRegion: _requested, english: _english, ...match } = best;
+  return { match, ambiguous: false, confidence: best.confidence };
+}
+
+export function auditSnapCoverage(files: SnapFile[], catalog: SnapCatalogGame[]): SnapCoverage {
+  let matched = 0;
+  let ambiguous = 0;
+  for (const game of catalog) {
+    const result = resolveSnap(files, game.title, game.region, game.coverName);
+    if (result.match) matched += 1;
+    else if (result.ambiguous) ambiguous += 1;
+  }
+  return { catalog: catalog.length, matched, ambiguous, unmatched: catalog.length - matched - ambiguous };
+}
 
 /**
  * The snap for one catalog game.
@@ -505,25 +634,9 @@ export function matchSnap(
   files: SnapFile[],
   title: string,
   region: string,
+  coverName?: string,
 ): SnapMatch | null {
-  const key = snapKey(title);
-  if (!key) return null;
-  const candidates = files
-    .map((file) => ({
-      ...file,
-      exact: snapKey(file.name) === key,
-      disc: discNumber(file.name),
-    }))
-    .filter((file) => file.exact);
-  if (!candidates.length) return null;
-  const regional = candidates.filter((file) =>
-    new RegExp(`\\(${region}[^)]*\\)`, "i").test(file.name),
-  );
-  const english = candidates.filter((file) =>
-    /\((usa|world|europe)[^)]*\)/i.test(file.name),
-  );
-  const pool = regional.length ? regional : english.length ? english : candidates;
-  return [...pool].sort((a, b) => a.disc - b.disc || a.name.localeCompare(b.name))[0];
+  return resolveSnap(files, title, region, coverName).match;
 }
 
 /**

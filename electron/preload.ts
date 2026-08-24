@@ -87,10 +87,11 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.on("emumovies-login-progress", handler);
     return () => ipcRenderer.off("emumovies-login-progress", handler);
   },
-  indexEmuMovies: (system = "PS1") => ipcRenderer.invoke("emumovies-index", system),
+  indexEmuMovies: (system = "PS1", catalog: unknown[] = []) =>
+    ipcRenderer.invoke("emumovies-index", system, catalog),
   forgetEmuMovies: () => ipcRenderer.invoke("emumovies-forget"),
-  getEmuMoviesSnap: (title: string, region: string) =>
-    ipcRenderer.invoke("emumovies-snap", title, region),
+  getEmuMoviesSnap: (title: string, region: string, coverName?: string) =>
+    ipcRenderer.invoke("emumovies-snap", title, region, coverName),
   getUpdateStatus: () => ipcRenderer.invoke("update-status-get"),
   checkForUpdates: () => ipcRenderer.invoke("update-check"),
   downloadUpdate: () => ipcRenderer.invoke("update-download"),
