@@ -1681,6 +1681,105 @@ footer {
   border: 1px solid #414649;
   border-radius: 6px;
 }
+.settings-modal select,
+.scrape-dialog select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  padding: 11px;
+  background: #0e1011;
+  color: white;
+  border: 1px solid #414649;
+  border-radius: 6px;
+}
+.scrape-checkbox {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #34393b;
+  background: #101214;
+  border-radius: 7px;
+}
+.scrape-checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--amber);
+}
+.scrape-checkbox span { flex: 1; }
+.scrape-checkbox small { font-weight: 400; }
+.scrape-types {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.scrape-types > div,
+.scrape-summary {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid #34393b;
+  background: #101214;
+  border-radius: 7px;
+}
+.scrape-types svg,
+.scrape-summary svg { width: 21px; color: #777e81; }
+.scrape-types span,
+.scrape-summary span { min-width: 0; }
+.scrape-types b,
+.scrape-summary b { display: block; font-size: 12px; }
+.scrape-types small,
+.scrape-summary small { margin-top: 3px; }
+.scrape-types em {
+  color: #73797c;
+  font-size: 10px;
+  font-style: normal;
+}
+.scrape-types .available { border-color: #3e686e; }
+.scrape-types .available > svg { color: var(--cyan); }
+.scrape-types button,
+.scrape-dialog footer button {
+  border: 1px solid #44494c;
+  background: #202427;
+  color: inherit;
+  border-radius: 6px;
+  padding: 9px 13px;
+  cursor: pointer;
+}
+.scrape-types button:disabled { cursor: default; opacity: .45; }
+.scrape-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  background: #000b;
+}
+.scrape-dialog {
+  width: min(500px, calc(100vw - 40px));
+  padding: 22px;
+  border: 1px solid #4a5053;
+  border-radius: 10px;
+  background: #171a1c;
+  box-shadow: 0 30px 100px #000;
+}
+.scrape-dialog header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.scrape-dialog header small { color: var(--cyan); font-size: 9px; }
+.scrape-dialog h3 { margin: 3px 0 0; font: 600 25px "Space Grotesk"; }
+.scrape-dialog header button { border: 0; background: transparent; cursor: pointer; }
+.scrape-dialog header svg { width: 18px; }
+.scrape-dialog > p { color: #9ca1a4; line-height: 1.5; }
+.scrape-dialog label { display: block; margin-top: 18px; font-size: 11px; font-weight: 700; }
+.scrape-summary { grid-template-columns: 32px 1fr; margin-top: 14px; }
+.scrape-dialog footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.scrape-dialog footer .primary { background: var(--amber); border-color: var(--amber); color: #111; font-weight: 700; }
 .settings-modal small {
   display: block;
   color: #73797c;

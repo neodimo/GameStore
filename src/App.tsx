@@ -1085,6 +1085,10 @@ function ProviderSettings({
   const [emuStatus, setEmuStatus] = useState("");
   const [emuBusy, setEmuBusy] = useState(false);
   const [emuSystem, setEmuSystem] = useState("PS1");
+  const [scrapeDialog, setScrapeDialog] = useState(false);
+  const [skipExistingMedia, setSkipExistingMedia] = useState(() =>
+    localStorage.getItem("gamestore:scraping:skip-existing") !== "false",
+  );
   const [debridState, setDebridState] = useState<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>({ hasRealDebrid: false, hasTorBox: false, collections: [] });
   const [collection, setCollection] = useState({ name: "PS1 collection", url: "", platform: "PS1" });
   const [indexing, setIndexing] = useState("");
@@ -1167,9 +1171,10 @@ function ProviderSettings({
     try {
       const indexed = await window.gameStore!.indexEmuMovies(emuSystem);
       setEmuStatus(
-        `${emuSystem}: ${indexed.snaps.toLocaleString()} ${indexed.quality} video snaps indexed. Downloads remain per-game and on demand.`,
+        `${emuSystem}: ${indexed.snaps.toLocaleString()} ${indexed.quality} video snaps matched. Downloads remain per-game and on demand.`,
       );
       setEmuState(await window.gameStore!.getEmuMoviesSettings());
+      setScrapeDialog(false);
     } catch (error) {
       setEmuStatus(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1329,34 +1334,11 @@ function ProviderSettings({
           encrypted with the operating system keychain and never written to
           exports, logs, or catalog data.
         </small>
-        {emuState?.hasPassword && (
-          <label>
-            Media console
-            <select value={emuSystem} onChange={(e) => setEmuSystem(e.target.value)}>
-              <option value="PS1">Sony PlayStation</option>
-            </select>
-            <small>
-              Indexing follows only this console's media branches and stores one
-              filename manifest. Clips download later, one selected game at a time.
-            </small>
-          </label>
-        )}
-        {emuState?.indexed && (
-          <p className="index-status">
-            {emuState.snaps.toLocaleString()} {emuState.quality} snaps indexed ·
-            reindex any time to pick up new releases
-          </p>
-        )}
         {emuStatus && <p className="index-status">{emuStatus}</p>}
         <div className="settings-actions split-actions">
           <button disabled={emuBusy} onClick={loginEmuMovies}>
             {emuBusy ? "Working…" : "Sign in to EmuMovies"}
           </button>
-          {emuState?.hasPassword && (
-            <button disabled={emuBusy} onClick={indexEmuMovies}>
-              {emuState.indexed ? `Refresh ${emuSystem} index` : `Index ${emuSystem} media`}
-            </button>
-          )}
           {emuState?.hasPassword && (
             <button disabled={emuBusy} onClick={forgetEmuMovies}>
               Forget account
@@ -1364,13 +1346,62 @@ function ProviderSettings({
           )}
         </div>
         <hr />
+        <h2><Sparkles /> Scraping</h2>
+        <p>
+          Choose a media type first, then target one console. Scrapes only inspect
+          that console's provider folders; opening an unscraped game can still fetch
+          its media on demand.
+        </p>
+        <label className="scrape-checkbox">
+          <input
+            type="checkbox"
+            checked={skipExistingMedia}
+            onChange={(event) => {
+              setSkipExistingMedia(event.target.checked);
+              localStorage.setItem(
+                "gamestore:scraping:skip-existing",
+                String(event.target.checked),
+              );
+            }}
+          />
+          <span>
+            Skip titles already containing the desired media type
+            <small>Preserves existing local media and avoids unnecessary provider traffic.</small>
+          </span>
+        </label>
+        <div className="scrape-types">
+          <div>
+            <Image />
+            <span><b>Artwork</b><small>Libretro and your selected artwork are already managed automatically.</small></span>
+            <em>Automatic</em>
+          </div>
+          <div>
+            <Image />
+            <span><b>Screenshots</b><small>Resolved per game from the shared Libretro index.</small></span>
+            <em>On demand</em>
+          </div>
+          <div className="available">
+            <Film />
+            <span>
+              <b>Video</b>
+              <small>{emuState?.indexed
+                ? `${emuState.snaps.toLocaleString()} ${emuState.quality} EmuMovies snaps available for Sony PlayStation.`
+                : "EmuMovies video snaps, matched by console and preferred region."}</small>
+            </span>
+            <button disabled={!emuState?.hasPassword || emuBusy} onClick={() => setScrapeDialog(true)}>
+              {emuState?.indexed ? "Scrape again" : "Scrape"}
+            </button>
+          </div>
+        </div>
+        {!emuState?.hasPassword && <small>Sign in to EmuMovies above to scrape video.</small>}
+        <hr />
         <h2>
           <Database /> Local media cache
         </h2>
         <p>
           GameStore resolves media only when you open a game, so browsing never
           competes with a catalog-wide background download. EmuMovies snaps
-          cache locally after their console is indexed; otherwise, matched Internet Archive
+          cache locally after their console is scraped; otherwise, matched Internet Archive
           longplays stream a short loop without silently downloading the full
           recording.
         </p>
@@ -1478,6 +1509,40 @@ function ProviderSettings({
         </div>
         {test && <p className="test-result">{test}</p>}
       </section>
+      {scrapeDialog && (
+        <div className="scrape-dialog-backdrop" onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !emuBusy) setScrapeDialog(false);
+        }}>
+          <section className="scrape-dialog" role="dialog" aria-modal="true" aria-labelledby="video-scrape-title">
+            <header>
+              <div><small>VIDEO SCRAPE</small><h3 id="video-scrape-title">Choose a console</h3></div>
+              <button disabled={emuBusy} aria-label="Close video scrape" onClick={() => setScrapeDialog(false)}><X /></button>
+            </header>
+            <p>
+              GameStore will inspect only the selected console's EmuMovies video
+              folders and build its matching manifest. Clips are downloaded lazily,
+              one preferred-region video when a game needs it.
+            </p>
+            <label>
+              Console
+              <select value={emuSystem} onChange={(event) => setEmuSystem(event.target.value)}>
+                <option value="PS1">Sony PlayStation</option>
+              </select>
+            </label>
+            <div className="scrape-summary">
+              <Film />
+              <span><b>EmuMovies video snaps</b><small>One region-preferred, Disc-1-first match per catalog title. Demos and other consoles are excluded.</small></span>
+            </div>
+            {emuStatus && <p className="index-status">{emuStatus}</p>}
+            <footer>
+              <button disabled={emuBusy} onClick={() => setScrapeDialog(false)}>Cancel</button>
+              <button className="primary" disabled={emuBusy} onClick={indexEmuMovies}>
+                {emuBusy ? "Scraping Sony PlayStation…" : "Scrape Sony PlayStation video"}
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
