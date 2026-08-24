@@ -308,7 +308,7 @@ export async function probeAccount(
       secure: session.secure,
       systems: [],
       qualities: [],
-      message: "Signed in. Choose a console to index its video snaps.",
+      message: "Signed in. Use Settings → Scraping when you want to match video for a console.",
     };
   } catch (error) {
     return {
