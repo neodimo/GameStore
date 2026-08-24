@@ -26,7 +26,7 @@ import { mediaAssetUrl } from "./mediaCache";
 export type EmuMoviesCredentials = { username: string; password: string };
 const EMUMOVIES_HOST = "files.emumovies.com";
 
-export type SnapFile = { path: string; name: string; bytes: number };
+export type SnapFile = { path: string; name: string; bytes: number; quality?: string };
 export type SnapManifest = {
   system: string;
   folder: string;
@@ -34,6 +34,7 @@ export type SnapManifest = {
   indexedAt: number;
   files: SnapFile[];
   coverage?: SnapCoverage;
+  folders?: SnapFolder[];
 };
 export type SnapCatalogGame = { title: string; region: string; coverName?: string };
 export type SnapCoverage = {
@@ -386,7 +387,10 @@ export async function indexSnaps(
     const cached = await readSnapManifest(dir, system);
     let folders: SnapFolder[] = [];
     let cachedEntries: FileInfo[] | null = null;
-    if (cached?.folder) {
+    if (cached?.folders?.length) {
+      onProgress?.(`Refreshing ${system} video snaps from ${cached.folders.length} saved quality tiers…`);
+      folders = cached.folders;
+    } else if (cached?.folder) {
       onProgress?.(`Refreshing ${system} video snaps from the saved folder…`);
       try {
         cachedEntries = await session.client.list(cached.folder);
@@ -433,26 +437,29 @@ export async function indexSnaps(
         path: `${candidate.path}/${item.name}`,
         name: item.name,
         bytes: item.size,
+        quality: candidate.quality,
       }));
       const coverage = catalog.length ? auditSnapCoverage(files, catalog) : undefined;
       return { candidate, files, coverage };
     }));
-    choices.sort((a, b) =>
-      (b.coverage?.matched ?? b.files.length) - (a.coverage?.matched ?? a.files.length) ||
-      rankFolders([a.candidate, b.candidate]).indexOf(a.candidate) - rankFolders([a.candidate, b.candidate]).indexOf(b.candidate),
-    );
+    choices.sort((a, b) => rankFolders([a.candidate, b.candidate]).indexOf(a.candidate) -
+      rankFolders([a.candidate, b.candidate]).indexOf(b.candidate));
     const selected = choices[0].candidate;
     const folder = selected.path;
-    const files = choices[0].files;
+    // Keep every discovered tier. Resolution applies HD → HQ → SQ per title,
+    // so a sparse HD set can coexist with HQ/SQ files that fill its gaps.
+    const files = choices.flatMap((choice) => choice.files);
     if (!files.length)
       throw new Error(`No video files were listed under ${folder}.`);
     const manifest: SnapManifest = {
       system,
       folder,
-      quality: selected.quality,
+      quality: choices.map((choice) => choice.candidate.quality)
+        .filter((quality, index, all) => all.indexOf(quality) === index).join(" / "),
       indexedAt: Date.now(),
       files,
-      coverage: choices[0].coverage,
+      coverage: catalog.length ? auditSnapCoverage(files, catalog) : undefined,
+      folders: choices.map((choice) => choice.candidate),
     };
     await fsp.mkdir(dir, { recursive: true });
     await fsp.writeFile(
@@ -614,7 +621,7 @@ export function auditSnapCoverage(files: SnapFile[], catalog: SnapCatalogGame[])
   let matched = 0;
   let ambiguous = 0;
   for (const game of catalog) {
-    const result = resolveSnap(files, game.title, game.region, game.coverName);
+    const result = resolveSnapByQuality(files, game.title, game.region, game.coverName);
     if (result.match) matched += 1;
     else if (result.ambiguous) ambiguous += 1;
   }
@@ -636,7 +643,28 @@ export function matchSnap(
   region: string,
   coverName?: string,
 ): SnapMatch | null {
-  return resolveSnap(files, title, region, coverName).match;
+  return resolveSnapByQuality(files, title, region, coverName).match;
+}
+
+/** Fill each game's preview from the best tier that safely matches it. */
+export function resolveSnapByQuality(
+  files: SnapFile[],
+  title: string,
+  region: string,
+  coverName?: string,
+): SnapResolution {
+  let ambiguous = false;
+  let confidence = 0;
+  const tiers = ["HD1080", "HQ480", "SQ240", "Unknown"];
+  for (const tier of tiers) {
+    const pool = files.filter((file) => (file.quality ?? "Unknown") === tier);
+    if (!pool.length) continue;
+    const result = resolveSnap(pool, title, region, coverName);
+    if (result.match) return result;
+    ambiguous ||= result.ambiguous;
+    confidence = Math.max(confidence, result.confidence);
+  }
+  return { match: null, ambiguous, confidence };
 }
 
 /**
