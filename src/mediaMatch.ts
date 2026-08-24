@@ -50,6 +50,25 @@ const regionsOf = (tags: string[]) => {
   );
 };
 
+const NON_RETAIL = /\b(demo|beta|proto(?:type)?|sample|preview|kiosk|trial)\b/i;
+const DISC_TAG = /\bdis[ck]\s*(\d+)\b/i;
+const REGION_SCOPE = /^(?:usa|europe|japan|world|asia)(?:\s*,\s*(?:usa|europe|japan|world|asia))*$/i;
+const PRINTING_TAG = /\b(rev(?:ision)?|version|edition|greatest hits|alt)\b/i;
+const isRetail = (tags: string[]) => !tags.some((tag) => NON_RETAIL.test(tag));
+const discOf = (tags: string[]) =>
+  Number(tags.map((tag) => tag.match(DISC_TAG)?.[1]).find(Boolean) ?? 0);
+const variantOf = (tags: string[]) =>
+  tags
+    .filter(
+      (tag) =>
+        !DISC_TAG.test(tag) &&
+        (REGION_SCOPE.test(tag) || PRINTING_TAG.test(tag)),
+    )
+    .map((tag) => normalizeTitle(tag))
+    .filter(Boolean)
+    .sort()
+    .join("|");
+
 export type LongplayMatch = {
   identifier: string;
   title: string;
@@ -120,8 +139,9 @@ const sameGame = (a: string, b: string) => {
  * the gallery a region grab-bag: the USA release, the PAL release and the
  * Japanese release each contributed a frame of a different menu in a different
  * language, presented as if they were one game's screenshots. Only releases
- * sharing the anchor's region survive, so a USA game shows USA frames. Discs of
- * that same release still stack up, because a four-disc game is one release.
+ * sharing the anchor's exact regional printing survive, so a USA game shows
+ * USA frames and a Japan-only printing does not mix with a Japan/Asia one.
+ * Discs of that same release can still contribute gameplay.
  *
  * Untagged files are deliberately excluded. A gallery that claims to be the
  * USA release cannot prove that claim from an unclassified filename, and a
@@ -137,7 +157,10 @@ export const resolveScreenshots = (
     rankArtCandidates(
       title,
       region,
-      indexes[folder] ?? [],
+      (indexes[folder] ?? []).filter((file) => {
+        const tags = parseArtFilename(file).tags;
+        return isRetail(tags) && regionsOf(tags).has(region.toLowerCase() as "usa" | "europe" | "japan" | "world");
+      }),
       folder,
       1,
       SCREENSHOT_FLOOR,
@@ -146,14 +169,17 @@ export const resolveScreenshots = (
   if (!anchor) return [];
   const anchorCore = parseArtFilename(anchor.file).core;
   const anchorRegions = regionsOf(anchor.tags);
+  const anchorVariant = variantOf(anchor.tags);
 
-  const shots: Screenshot[] = [];
+  const gameplay: Screenshot[] = [];
+  const titles: Screenshot[] = [];
   for (const folder of SCREENSHOT_FOLDERS) {
     const files = indexes[folder];
     if (!files?.length) continue;
     for (const file of files) {
       const { core, tags } = parseArtFilename(file);
       if (!sameGame(anchorCore, core)) continue;
+      if (!isRetail(tags) || variantOf(tags) !== anchorVariant) continue;
       const regions = regionsOf(tags);
       if (
         !anchorRegions.size ||
@@ -161,18 +187,25 @@ export const resolveScreenshots = (
         ![...regions].some((value) => anchorRegions.has(value))
       )
         continue;
-      shots.push({
+      const shot: Screenshot = {
         url: libretroArtUrl(folder, file),
         kind: KIND[folder],
         label: tags.join(" · ") || core,
         tags,
         score: scoreArtCandidate(title, region, file),
-      });
+      };
+      (folder === "Named_Titles" ? titles : gameplay).push(shot);
     }
   }
-  const rank = (shot: Screenshot) => (shot.kind === "Screenshot" ? 0 : 1);
-  shots.sort((a, b) => rank(a) - rank(b) || b.score - a.score);
-  return shots.slice(0, limit);
+  gameplay.sort((a, b) => discOf(a.tags) - discOf(b.tags) || b.score - a.score);
+  titles.sort((a, b) => {
+    const aDisc = discOf(a.tags);
+    const bDisc = discOf(b.tags);
+    const aPrimary = aDisc === 1 ? 0 : aDisc === 0 ? 1 : 2;
+    const bPrimary = bDisc === 1 ? 0 : bDisc === 0 ? 1 : 2;
+    return aPrimary - bPrimary || aDisc - bDisc || b.score - a.score;
+  });
+  return [...gameplay, ...titles.slice(0, 1)].slice(0, limit);
 };
 
 /**

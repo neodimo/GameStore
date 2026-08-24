@@ -17,8 +17,7 @@ import { mediaAssetUrl } from "./mediaCache";
  * problem into a filename lookup, and turns the preview from a 2 GB stream into
  * a file measured in megabytes that can simply be cached and looped.
  *
- * Access is the member's own FTP/file-server login. This is deliberately
- * Login uses the member's EmuMovies forum username and password against the
+ * Access uses the member's EmuMovies forum username and password against the
  * published file server (`files.emumovies.com`, port 21). The published API
  * (`api.gamesdbase.com/login.aspx?user=&api=&product=`) additionally requires a
  * registered partner product key, which this application does not have, so the
@@ -41,8 +40,8 @@ export type SnapManifest = {
  *
  * The available directories disclose video quality once the file-server
  * account is authenticated. A failed FTP login does *not* disclose membership
- * tier: it can equally mean the member entered their website login instead of
- * their separately generated FTP credentials.
+ * tier. Authentication and locating content within the member's visible FTP
+ * tree are reported separately.
  */
 export type AccountProbe = {
   ok: boolean;
@@ -54,7 +53,8 @@ export type AccountProbe = {
 };
 
 const TIMEOUT = 25_000;
-const SYSTEM_DEPTH = 3;
+const SYSTEM_DEPTH = 5;
+const MAX_LISTINGS = 160;
 
 /**
  * Quality tiers, best first. The names appear both as directory components
@@ -62,9 +62,9 @@ const SYSTEM_DEPTH = 3;
  * pattern rather than by literal equality.
  */
 const QUALITIES: [RegExp, string][] = [
-  [/\bhd\b|1080/i, "HD1080"],
-  [/\bhq\b|480/i, "HQ480"],
-  [/\bsq\b|240/i, "SQ240"],
+  [/(?:^|[^a-z])hd(?:1080)?(?:[^a-z]|$)|1080/i, "HD1080"],
+  [/(?:^|[^a-z])hq(?:480)?(?:[^a-z]|$)|480/i, "HQ480"],
+  [/(?:^|[^a-z])sq(?:240)?(?:[^a-z]|$)|240/i, "SQ240"],
 ];
 const SNAP_FOLDER = /video[\s_-]*snaps?/i;
 /**
@@ -123,6 +123,15 @@ const explain = (error: unknown) => {
 const directories = (list: FileInfo[]) =>
   list.filter((item) => item.isDirectory).map((item) => item.name);
 
+const qualityOf = (value: string) =>
+  QUALITIES.find(([pattern]) => pattern.test(value))?.[1] ?? "Unknown";
+const joinRemote = (base: string, name: string) =>
+  `${base === "/" ? "" : base}/${name}`.replace(/\/{2,}/g, "/");
+const videoFiles = (entries: FileInfo[]) =>
+  entries.filter((item) => item.isFile && /\.(mp4|webm|avi)$/i.test(item.name));
+
+export type SnapFolder = { path: string; quality: string };
+
 /**
  * Walks down from the account root looking for a system's snap directory.
  *
@@ -131,44 +140,58 @@ const directories = (list: FileInfo[]) =>
  * hardcoded path would fail as a wrong password rather than as a moved folder,
  * which is the most expensive possible way to be wrong about someone's account.
  */
-const findSnapFolder = async (client: Client, system: string) => {
+export const findSnapFolders = async (
+  client: Pick<Client, "list">,
+  system: string,
+): Promise<SnapFolder[]> => {
   const alias = SYSTEM_ALIASES[system] ?? new RegExp(system, "i");
-  const root = directories(await client.list("/"));
-  const candidates = root.filter(
-    (name) => alias.test(name) && !LATER_SONY.test(name),
-  );
-  for (const candidate of candidates) {
-    const queue = [`/${candidate}`];
-    for (let depth = 0; depth < SYSTEM_DEPTH && queue.length; depth += 1) {
-      const next: string[] = [];
-      for (const dir of queue) {
-        let entries: FileInfo[];
-        try {
-          entries = await client.list(dir);
-        } catch {
-          continue;
-        }
-        const snaps = directories(entries).filter((name) =>
-          SNAP_FOLDER.test(name),
-        );
-        if (snaps.length) return { base: dir, snaps };
-        next.push(...directories(entries).map((name) => `${dir}/${name}`));
-      }
-      queue.length = 0;
-      queue.push(...next);
+  const useful = /official|video|snap|media|download/i;
+  const queue = [{ path: "/", depth: 0 }];
+  const visited = new Set<string>();
+  const found: SnapFolder[] = [];
+  while (queue.length && visited.size < MAX_LISTINGS) {
+    const current = queue.shift()!;
+    if (visited.has(current.path) || current.depth > SYSTEM_DEPTH) continue;
+    visited.add(current.path);
+    let entries: FileInfo[];
+    try {
+      entries = await client.list(current.path);
+    } catch {
+      continue;
+    }
+    const pathHasSystem = alias.test(current.path) && !LATER_SONY.test(current.path);
+    const pathHasSnaps = SNAP_FOLDER.test(current.path);
+    if (pathHasSystem && pathHasSnaps && videoFiles(entries).length)
+      found.push({ path: current.path, quality: qualityOf(current.path) });
+
+    for (const name of directories(entries)) {
+      const child = joinRemote(current.path, name);
+      const childHasSystem = alias.test(name) && !LATER_SONY.test(name);
+      const childHasSnaps = SNAP_FOLDER.test(name);
+      const relevant =
+        current.depth === 0 ||
+        pathHasSystem ||
+        pathHasSnaps ||
+        childHasSystem ||
+        childHasSnaps ||
+        useful.test(name) ||
+        qualityOf(name) !== "Unknown";
+      if (relevant) queue.push({ path: child, depth: current.depth + 1 });
     }
   }
-  return null;
+  return found.filter(
+    (folder, index) => found.findIndex((item) => item.path === folder.path) === index,
+  );
 };
 
 /**
  * Ranks the snap directories a folder offers by quality, best entitlement
  * first. A directory the account cannot read is not a quality it has.
  */
-const rankQualities = (names: string[]) =>
-  QUALITIES.flatMap(([pattern, label]) => {
-    const match = names.find((name) => pattern.test(name));
-    return match ? [{ label, name: match }] : [];
+const rankFolders = (folders: SnapFolder[]) =>
+  [...folders].sort((a, b) => {
+    const order = ["HD1080", "HQ480", "SQ240", "Unknown"];
+    return order.indexOf(a.quality) - order.indexOf(b.quality) || a.path.localeCompare(b.path);
   });
 
 export async function probeAccount(
@@ -178,17 +201,17 @@ export async function probeAccount(
   try {
     session = await openSession(credentials);
     const systems = directories(await session.client.list("/"));
-    const found = await findSnapFolder(session.client, "PS1");
-    const qualities = found ? rankQualities(found.snaps) : [];
+    const folders = rankFolders(await findSnapFolders(session.client, "PS1"));
+    const qualities = [...new Set(folders.map((folder) => folder.quality))];
     return {
       ok: true,
       secure: session.secure,
       systems,
-      snapFolder: found ? `${found.base}/${qualities[0]?.name ?? found.snaps[0]}` : undefined,
-      qualities: qualities.map((item) => item.label),
-      message: found
+      snapFolder: folders[0]?.path,
+      qualities,
+      message: folders.length
         ? qualities.length
-          ? `Signed in. PlayStation video snaps available in ${qualities.map((item) => item.label).join(", ")}.`
+          ? `Signed in. PlayStation video snaps available in ${qualities.join(", ")}.`
           : "Signed in, but the PlayStation snap folder exposed no recognised quality tier."
         : `Signed in, but no PlayStation video snap folder was visible to this account across ${systems.length} systems.`,
     };
@@ -220,17 +243,15 @@ export async function indexSnaps(
   let session: { client: Client; secure: boolean } | null = null;
   try {
     session = await openSession(credentials);
-    const found = await findSnapFolder(session.client, system);
-    if (!found)
+    const folders = rankFolders(await findSnapFolders(session.client, system));
+    if (!folders.length)
       throw new Error(
         "No video snap folder for this system is visible to this account.",
       );
-    const ranked = rankQualities(found.snaps);
-    const chosen = ranked[0]?.name ?? found.snaps[0];
-    const folder = `${found.base}/${chosen}`;
+    const selected = folders[0];
+    const folder = selected.path;
     const entries = await session.client.list(folder);
-    const files = entries
-      .filter((item) => item.isFile && /\.(mp4|webm|avi)$/i.test(item.name))
+    const files = videoFiles(entries)
       .map((item) => ({
         path: `${folder}/${item.name}`,
         name: item.name,
@@ -241,7 +262,7 @@ export async function indexSnaps(
     const manifest: SnapManifest = {
       system,
       folder,
-      quality: ranked[0]?.label ?? "Unknown",
+      quality: selected.quality,
       indexedAt: Date.now(),
       files,
     };

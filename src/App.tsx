@@ -368,7 +368,7 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.11.1</b>
+          <b>GameStore 0.11.2</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -1054,7 +1054,7 @@ function ProviderSettings({
    * A successful file-server login exposes the quality directories this
    * account can see, then indexes the listing once the way a collection source
    * is indexed once. A failed FTP login must not be treated as a membership
-   * verdict — EmuMovies website and generated FTP credentials may differ.
+   * verdict — authentication and content discovery are separate checks.
    */
   const loginEmuMovies = async () => {
     setEmuBusy(true);
@@ -1064,6 +1064,10 @@ function ProviderSettings({
       setEmuStatus(probe.message);
       if (!probe.ok) return;
       setEmu((current) => ({ ...current, password: "" }));
+      if (!probe.snapFolder) {
+        setEmuState(await window.gameStore!.getEmuMoviesSettings());
+        return;
+      }
       setEmuStatus(`${probe.message} Indexing video snaps…`);
       const indexed = await window.gameStore!.indexEmuMovies();
       setEmuStatus(
