@@ -27,6 +27,7 @@ const expected: Record<string, string | string[]> = {
   "devil-dice": "Devil Dice (USA).png",
   // Two PAL language printings of the same release; either cover is correct.
   "team-buddies": [
+    "Team Buddies (USA).png",
     "Team Buddies (Europe) (En,Fr,De).png",
     "Team Buddies (Europe) (En,Es,It).png",
   ],

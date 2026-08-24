@@ -12,7 +12,7 @@ The PS1 discovery release is in active development. Version 0.9 adds a managed, 
 
 ## Current planning direction
 
-- Begin with PS1, retaining 30 adversarial fixtures inside a broader 100-game catalog.
+- Begin with PS1: the complete English-language USA retail catalog, Europe-only English releases where no USA version exists, and Japan-exclusive games with verified English translations. Thirty adversarial fixtures remain the hand-verified media-matching core.
 - Model catalog data as `Game → Release → Revision/media set`.
 - Prefer USA releases, then Europe/UK where no USA release exists, then Japan-exclusive games with verified English translations.
 - Use local SQLite with JSON shelf export/import.

@@ -728,6 +728,22 @@ main {
   color: #d8dadb;
   margin-top: 0;
 }
+.description.unavailable {
+  color: #858b8e;
+  font-style: italic;
+}
+.description-source {
+  width: fit-content;
+  margin: -4px 0 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cyan);
+  font-size: 10px;
+}
+.description-source svg {
+  width: 12px;
+}
 .detail-side blockquote {
   font: 500 16px/1.4 "Space Grotesk";
   margin: 15px 0;

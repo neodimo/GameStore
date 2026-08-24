@@ -7,7 +7,8 @@ export type Game = {
   genres: string[];
   facets: string[];
   description: string;
-  curatorNote: string;
+  curatorNote?: string;
+  descriptionSource?: { label: string; url: string };
   cover?: string;
   screenshots?: string[];
   video?: string;
@@ -640,14 +641,75 @@ const expandedEnglishGames = ps1Expansion
     g(id, title, year, region, genres, [], description, "A strong reason to keep exploring the PlayStation library.", "1", "Various", cover),
   );
 
-export const games: Game[] = [...coreGames, ...broaderGames, ...expandedEnglishGames];
+const legacyGames = [...coreGames, ...broaderGames, ...expandedEnglishGames];
+const titleKey = (title: string) =>
+  title.toLowerCase().replace(/\s*\(disc\s*\d+\)\s*$/i, "").replace(/^the\s+/, "").replace(/[^a-z0-9]+/g, "");
+const legacyUsByTitle = new Map(
+  legacyGames.filter((game) => game.region === "USA").map((game) => [titleKey(game.title), game]),
+);
 
-export const curatedShelves = [
-  { title: "Beautifully Weird", subtitle: "Surreal worlds, bad ideas, and brilliant accidents.", ids: ["tail-sun", "incredible-crisis", "rising-zan", "mr-domino", "cho-aniki", "internal-section"] },
-  { title: "Midnight Dread", subtitle: "Fog, body horror, and games best played after everyone sleeps.", ids: ["silent-hill", "resident-evil-2", "parasite-eve", "baroque", "fear-effect", "germs"] },
-  { title: "One More Run", subtitle: "Arcade precision, score chasing, and immediate restarts.", ids: ["einhander", "r-type-delta", "g-darius", "strider-2", "ridge-racer-type-4", "tony-hawk-2"] },
-  { title: "Lose a Weekend", subtitle: "Big journeys, deep systems, and dangerous save files.", ids: ["suikoden-2", "xenogears", "final-fantasy-tactics", "vagrant-story", "chrono-cross", "grandia"] },
+const sourcedUsGames = usCatalog.map((seed) => {
+  const existing = legacyUsByTitle.get(titleKey(seed.title));
+  const game = g(
+    existing?.id ?? seed.id,
+    existing?.title ?? seed.title,
+    seed.year || existing?.year || 0,
+    "USA",
+    seed.genres.length ? seed.genres : existing?.genres ?? [],
+    existing?.facets ?? [],
+    seed.description ?? "",
+    "",
+    existing?.players ?? "Unknown",
+    seed.developer ?? existing?.developer ?? "Unknown",
+    seed.coverName,
+  );
+  game.curatorNote = undefined;
+  if (seed.descriptionSource) {
+    game.descriptionSource = { label: "Catalog description source", url: seed.descriptionSource };
+    game.links.unshift({ label: "Description source", url: seed.descriptionSource, state: "verified" });
+  }
+  return game;
+});
+const sourcedUsTitles = new Set(sourcedUsGames.map((game) => titleKey(game.title)));
+
+// OpenVGDB supplies the complete English-language USA retail base. The prior
+// hand-verified Europe-only and translated Japan records remain eligible under
+// the project's existing regional rules. Missing source copy stays empty.
+export const games: Game[] = [
+  ...sourcedUsGames,
+  ...legacyGames
+    .filter((game) => game.region !== "USA" && !sourcedUsTitles.has(titleKey(game.title)))
+    .map((game) => ({ ...game, curatorNote: undefined })),
 ];
+
+type ShelfRecipe = { title: string; subtitle: string; matches: (game: Game) => boolean };
+const shelfRecipes: ShelfRecipe[] = [
+  { title: "Beautifully Weird", subtitle: "Surreal worlds, odd controls, and singular ideas.", matches: (game) => game.facets.some((facet) => ["Surreal", "Bizarre premise", "Experimental controls", "Outsider art"].includes(facet)) },
+  { title: "Midnight Dread", subtitle: "Horror for after everyone else goes to sleep.", matches: (game) => game.genres.includes("Horror") || game.facets.includes("Body horror") },
+  { title: "Arcade Reflexes", subtitle: "Immediate starts, quick decisions, and score chasing.", matches: (game) => game.genres.some((genre) => ["Arcade", "Shooter", "Light gun"].includes(genre)) },
+  { title: "Lose a Weekend", subtitle: "Big journeys, deep systems, and dangerous save files.", matches: (game) => game.genres.includes("RPG") || game.genres.includes("Strategy") },
+  { title: "Puzzle Cabinet", subtitle: "Mechanical ideas worth turning over in your head.", matches: (game) => game.genres.includes("Puzzle") },
+  { title: "Head to Head", subtitle: "Fighters, grapplers, and competitive grudges.", matches: (game) => game.genres.includes("Fighting") || game.genres.includes("Wrestling") },
+  { title: "Road Fever", subtitle: "Racing, wrecking, and going much too fast.", matches: (game) => game.genres.includes("Racing") || game.genres.includes("Driving") },
+  { title: "Adventure Calls", subtitle: "Places to explore and stories to get lost inside.", matches: (game) => game.genres.includes("Adventure") || game.genres.includes("Platformer") },
+  { title: "Sports Night", subtitle: "Arcade spectacle and full-season obsession.", matches: (game) => game.genres.includes("Sports") },
+];
+
+const shuffled = <T,>(values: T[], random: () => number) => {
+  const result = [...values];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(random() * (index + 1));
+    [result[index], result[swap]] = [result[swap], result[index]];
+  }
+  return result;
+};
+
+export const createCuratedShelves = (random: () => number = Math.random) =>
+  shuffled(shelfRecipes, random).slice(0, 4).map((recipe) => ({
+    title: recipe.title,
+    subtitle: recipe.subtitle,
+    ids: shuffled(games.filter(recipe.matches), random).slice(0, 6).map((game) => game.id),
+  })).filter((shelf) => shelf.ids.length > 0);
 
 export const facetOrder = [
   "Surreal",
@@ -663,3 +725,4 @@ export const facetOrder = [
   "Minimalist",
 ];
 import { ps1Expansion } from "./ps1Expansion";
+import { usCatalog } from "./ps1UsCatalog";

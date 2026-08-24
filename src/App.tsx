@@ -25,7 +25,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { curatedShelves, facetOrder, games, Game } from "./catalog";
+import { createCuratedShelves, facetOrder, games, Game } from "./catalog";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
@@ -56,6 +56,7 @@ export function App() {
 }
 
 function Catalog() {
+  const [curatedShelves] = useState(() => createCuratedShelves());
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("All regions");
   const [genre, setGenre] = useState("All genres");
@@ -716,8 +717,18 @@ const Detail = forwardRef<
           <div className="detail-art">
             <CoverImage game={game} />
           </div>
-          <p className="description">{game.description}</p>
-          <blockquote>“{game.curatorNote}”</blockquote>
+          {game.description ? (
+            <>
+              <p className="description">{game.description}</p>
+              {game.descriptionSource && (
+                <button className="description-source" onClick={() => open(game.descriptionSource!.url)}>
+                  <ExternalLink /> {game.descriptionSource.label}
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="description unavailable">No source-backed description is available yet.</p>
+          )}
           <dl>
             <div>
               <dt>Developer</dt>
