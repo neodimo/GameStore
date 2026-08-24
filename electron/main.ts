@@ -397,10 +397,8 @@ ipcMain.handle("emumovies-settings-get", async () => {
   };
 });
 /**
- * Saving credentials and signing in are one action, because a saved credential
- * that has never been tried tells the member nothing. The probe reports the
- * directories this FTP/file-server account can actually see. Authentication
- * failure alone says nothing about the website membership tier.
+ * Sign-in validates and stores credentials only. Media discovery is a separate,
+ * console-targeted action so authentication never crawls the provider tree.
  */
 ipcMain.handle(
   "emumovies-login",
@@ -416,8 +414,6 @@ ipcMain.handle(
         systems: [],
         secure: false,
       };
-    // Sign-in walks the member's folder tree, which takes long enough that a
-    // single static status reads as a hang. Stages are streamed as they happen.
     const probe = await probeAccount({ username, password }, (message) => {
       if (!event.sender.isDestroyed())
         event.sender.send("emumovies-login-progress", message);
@@ -440,11 +436,14 @@ ipcMain.handle(
     return probe;
   },
 );
-/** Index the snap listing once, the way a collection source is indexed once. */
-ipcMain.handle("emumovies-index", async () => {
+/** Index one selected console; refreshes reuse its previously discovered folder. */
+ipcMain.handle("emumovies-index", async (event, system = "PS1") => {
   const credentials = await emuCredentials();
   if (!credentials) throw new Error("Sign in to EmuMovies first.");
-  const manifest = await indexSnaps(snapDir(), credentials);
+  const manifest = await indexSnaps(snapDir(), credentials, String(system), (message) => {
+    if (!event.sender.isDestroyed())
+      event.sender.send("emumovies-login-progress", message);
+  });
   return {
     folder: manifest.folder,
     quality: manifest.quality,

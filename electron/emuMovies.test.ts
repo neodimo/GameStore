@@ -119,6 +119,30 @@ describe("EmuMovies sign-in is bounded and honest about why it stopped", () => {
 });
 
 describe("EmuMovies FTP layout discovery", () => {
+  it("does not descend into unrelated console groups from the root", async () => {
+    const visited: string[] = [];
+    const root = "/Official/Video Snaps (HQ)/Sony PlayStation";
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Official"), directory("Nintendo"), directory("Sega")],
+      "/Official": [directory("Video Snaps (HQ)")],
+      "/Official/Video Snaps (HQ)": [directory("Sony PlayStation")],
+      [root]: [video("Silent Hill (USA).mp4")],
+      "/Nintendo": [directory("Nintendo 64")],
+      "/Sega": [directory("Dreamcast")],
+    };
+    const client = {
+      list: async (remote = "/") => {
+        visited.push(remote);
+        return tree[remote] ?? [];
+      },
+    } as never;
+    expect((await findSnapFolders(client, "PS1")).folders).toEqual([
+      { path: root, quality: "HQ480" },
+    ]);
+    expect(visited).not.toContain("/Nintendo");
+    expect(visited).not.toContain("/Sega");
+  });
+
   it("finds the current quality-first Official layout", async () => {
     const root = "/Official/Video Snaps (HQ)/Sony PlayStation";
     const folders = await findSnapFolders(

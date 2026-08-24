@@ -1084,6 +1084,7 @@ function ProviderSettings({
   const [emuState, setEmuState] = useState<EmuMoviesSettings | null>(null);
   const [emuStatus, setEmuStatus] = useState("");
   const [emuBusy, setEmuBusy] = useState(false);
+  const [emuSystem, setEmuSystem] = useState("PS1");
   const [debridState, setDebridState] = useState<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>({ hasRealDebrid: false, hasTorBox: false, collections: [] });
   const [collection, setCollection] = useState({ name: "PS1 collection", url: "", platform: "PS1" });
   const [indexing, setIndexing] = useState("");
@@ -1138,14 +1139,7 @@ function ProviderSettings({
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
   };
-  /**
-   * Signing in and indexing are one button.
-   *
-   * A successful file-server login exposes the quality directories this
-   * account can see, then indexes the listing once the way a collection source
-   * is indexed once. A failed FTP login must not be treated as a membership
-   * verdict — authentication and content discovery are separate checks.
-   */
+  /** Authentication is intentionally separate from console media discovery. */
   const loginEmuMovies = async () => {
     setEmuBusy(true);
     setEmuStatus("Connecting to EmuMovies…");
@@ -1158,14 +1152,22 @@ function ProviderSettings({
       setEmuStatus(probe.message);
       if (!probe.ok) return;
       setEmu((current) => ({ ...current, password: "" }));
-      if (!probe.snapFolder) {
-        setEmuState(await window.gameStore!.getEmuMoviesSettings());
-        return;
-      }
-      setEmuStatus(`${probe.message} Indexing video snaps…`);
-      const indexed = await window.gameStore!.indexEmuMovies();
+      setEmuState(await window.gameStore!.getEmuMoviesSettings());
+    } catch (error) {
+      setEmuStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      stopProgress();
+      setEmuBusy(false);
+    }
+  };
+  const indexEmuMovies = async () => {
+    setEmuBusy(true);
+    setEmuStatus(`Targeting ${emuSystem} video snaps…`);
+    const stopProgress = window.gameStore!.onEmuMoviesProgress(setEmuStatus);
+    try {
+      const indexed = await window.gameStore!.indexEmuMovies(emuSystem);
       setEmuStatus(
-        `Signed in. ${indexed.snaps.toLocaleString()} ${indexed.quality} video snaps indexed.`,
+        `${emuSystem}: ${indexed.snaps.toLocaleString()} ${indexed.quality} video snaps indexed. Downloads remain per-game and on demand.`,
       );
       setEmuState(await window.gameStore!.getEmuMoviesSettings());
     } catch (error) {
@@ -1327,6 +1329,18 @@ function ProviderSettings({
           encrypted with the operating system keychain and never written to
           exports, logs, or catalog data.
         </small>
+        {emuState?.hasPassword && (
+          <label>
+            Media console
+            <select value={emuSystem} onChange={(e) => setEmuSystem(e.target.value)}>
+              <option value="PS1">Sony PlayStation</option>
+            </select>
+            <small>
+              Indexing follows only this console's media branches and stores one
+              filename manifest. Clips download later, one selected game at a time.
+            </small>
+          </label>
+        )}
         {emuState?.indexed && (
           <p className="index-status">
             {emuState.snaps.toLocaleString()} {emuState.quality} snaps indexed ·
@@ -1336,12 +1350,13 @@ function ProviderSettings({
         {emuStatus && <p className="index-status">{emuStatus}</p>}
         <div className="settings-actions split-actions">
           <button disabled={emuBusy} onClick={loginEmuMovies}>
-            {emuBusy
-              ? "Signing in…"
-              : emuState?.indexed
-                ? "Sign in and reindex"
-                : "Sign in to EmuMovies"}
+            {emuBusy ? "Working…" : "Sign in to EmuMovies"}
           </button>
+          {emuState?.hasPassword && (
+            <button disabled={emuBusy} onClick={indexEmuMovies}>
+              {emuState.indexed ? `Refresh ${emuSystem} index` : `Index ${emuSystem} media`}
+            </button>
+          )}
           {emuState?.hasPassword && (
             <button disabled={emuBusy} onClick={forgetEmuMovies}>
               Forget account
@@ -1355,7 +1370,7 @@ function ProviderSettings({
         <p>
           GameStore resolves media only when you open a game, so browsing never
           competes with a catalog-wide background download. EmuMovies snaps
-          cache locally after sign-in; otherwise, matched Internet Archive
+          cache locally after their console is indexed; otherwise, matched Internet Archive
           longplays stream a short loop without silently downloading the full
           recording.
         </p>
