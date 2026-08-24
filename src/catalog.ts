@@ -630,7 +630,17 @@ const broaderGames = broaderSeeds.map(([id, title, year, region, genres, descrip
   g(id, title, year, region, genres, [], description, "A strong reason to keep exploring the PlayStation library.", "1", "Various", cover),
 );
 
-export const games: Game[] = [...coreGames, ...broaderGames];
+// Japanese records require a separately verified patch/provenance record. The
+// core catalog owns those hand-curated translations; this wider pass adds the
+// substantial English-language PS1 library without pretending every Japanese
+// fan patch has been independently verified here.
+const expandedEnglishGames = ps1Expansion
+  .filter(([, , , region]) => region !== "Japan")
+  .map(([id, title, year, region, genres, description, cover]) =>
+    g(id, title, year, region, genres, [], description, "A strong reason to keep exploring the PlayStation library.", "1", "Various", cover),
+  );
+
+export const games: Game[] = [...coreGames, ...broaderGames, ...expandedEnglishGames];
 
 export const curatedShelves = [
   { title: "Beautifully Weird", subtitle: "Surreal worlds, bad ideas, and brilliant accidents.", ids: ["tail-sun", "incredible-crisis", "rising-zan", "mr-domino", "cho-aniki", "internal-section"] },
@@ -652,3 +662,4 @@ export const facetOrder = [
   "Body horror",
   "Minimalist",
 ];
+import { ps1Expansion } from "./ps1Expansion";

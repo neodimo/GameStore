@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-23 — expanded English-playable PlayStation library
+
+- **What was done:** Opened the catalog beyond the original 100-title preview to a selected 268-game PS1 library. The 168 new records cover official English-language USA/Europe releases across RPGs, action, platformers, horror, fighting, rhythm, racing, shooters, puzzle, light-gun, and strategy games. Existing explicit Japanese English-translation records remain their own documented entries. The expansion intentionally avoids duplicate regional printings and does not masquerade as a full ROM-set listing.
+- **Artifacts:** `src/ps1Expansion.ts`, `src/catalog.ts`, `src/catalog.test.ts`, `package.json`, `package-lock.json`, and `CONTEXT.md`. Local source changes are pending commit/release at this entry.
+- **State:** Local validation passed: 88 tests, TypeScript lint, production web/Electron builds, source/bundle media-light guards, and `git diff --check`. Existing runtime artwork/media matching continues to resolve on demand; it has not been bulk-cached or bundled.
+- **Next owner + concrete artifact:** Gonzo commits, pushes, tags, and verifies the v0.11.0 Windows/Linux release. Omid's acceptance artifact is the v0.11.0 installer and the Discover catalog count of 268 PS1 games.
+
 ## 2026-08-23 — visible Real-Debrid preparation state
 
 - **What was done:** Repaired the misleading collection-download state exposed by Vib-Ribbon. The UI previously showed `Downloading 0%` while the main process was adding the selected torrent, selecting the exact file, and waiting for Real-Debrid to cache it; there are no downloadable bytes during that provider-side work. Downloads now say **Preparing download** and receive live provider status (`added`, selected, then provider state plus elapsed wait) until a direct file link exists. The button only changes to byte-percent download once data is flowing. The existing six-minute bounded provider wait remains in force and returns a retryable error instead of waiting indefinitely.
