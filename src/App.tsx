@@ -777,7 +777,7 @@ function Acquisition({ game }: { game: Game }) {
   const [openPanel, setOpenPanel] = useState(false);
   const [provider, setProvider] = useState<"realdebrid" | "torbox">("realdebrid");
   const [link, setLink] = useState("");
-  const [state, setState] = useState<{ status: "idle" | "downloading" | "done" | "error"; percent?: number; message?: string }>({ status: "idle" });
+  const [state, setState] = useState<{ status: "idle" | "downloading" | "done" | "error"; percent?: number; message?: string; stage?: "preparing" | "downloading" }>({ status: "idle" });
   const [sending, setSending] = useState(false);
   const [candidates, setCandidates] = useState<CollectionCandidate[]>([]);
   const [searching, setSearching] = useState(false);
@@ -785,7 +785,12 @@ function Acquisition({ game }: { game: Game }) {
     () =>
       window.gameStore?.onGameDownloadProgress((progress) => {
         if (progress.gameTitle === game.title)
-          setState({ status: "downloading", percent: progress.percent, message: `${progress.filename} · ${formatBytes(progress.bytes)}${progress.total ? ` / ${formatBytes(progress.total)}` : ""}` });
+          setState({
+            status: "downloading",
+            percent: progress.percent,
+            stage: progress.stage,
+            message: progress.message || `${progress.filename} · ${formatBytes(progress.bytes)}${progress.total ? ` / ${formatBytes(progress.total)}` : ""}`,
+          });
       }),
     [game.title],
   );
@@ -830,7 +835,7 @@ function Acquisition({ game }: { game: Game }) {
   };
   const take = async (candidate: CollectionCandidate) => {
     setCandidates([]);
-    setState({ status: "downloading", percent: 0, message: `Fetching ${candidate.path.split("/").pop()}…` });
+    setState({ status: "downloading", stage: "preparing", percent: 0, message: `Preparing ${candidate.path.split("/").pop()}…` });
     try {
       const result = await window.gameStore!.downloadCollectionSelection(
         candidate.sourceUrl,
@@ -855,7 +860,9 @@ function Acquisition({ game }: { game: Game }) {
           {searching
             ? "Finding releases…"
             : state.status === "downloading"
-              ? `Downloading ${state.percent ?? 0}%`
+              ? state.stage === "preparing"
+                ? "Preparing download…"
+                : `Downloading ${state.percent ?? 0}%`
               : state.status === "done"
                 ? "In cart · add again"
                 : "Add to cart"}
@@ -892,7 +899,7 @@ function Acquisition({ game }: { game: Game }) {
         </select>
         <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a supported host link or magnet" />
         <button disabled={!link.trim() || state.status === "downloading"} onClick={download}>
-          {state.status === "downloading" ? `Downloading ${state.percent ?? 0}%` : "Resolve & download"}
+          {state.status === "downloading" ? state.stage === "preparing" ? "Preparing download…" : `Downloading ${state.percent ?? 0}%` : "Resolve & download"}
         </button>
       </div>}
       {state.status !== "idle" && <div className={`transfer-status ${state.status}`}>

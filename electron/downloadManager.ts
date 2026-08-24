@@ -29,6 +29,18 @@ export async function testDebrid(provider: DebridProvider, token: string) {
 }
 
 type ResolvedFile = { url: string; filename: string; bytes: number };
+type DownloadStage = "preparing" | "downloading";
+type DownloadProgress = {
+  gameTitle: string;
+  filename: string;
+  bytes: number;
+  total: number;
+  percent: number;
+  stage: DownloadStage;
+  message?: string;
+};
+const report = (window: BrowserWindow | null, progress: DownloadProgress) =>
+  window?.webContents.send("game-download-progress", progress);
 const realDebridUnrestrict = async (token: string, link: string): Promise<ResolvedFile> => {
   const body = new URLSearchParams({ link });
   const response = await fetch("https://api.real-debrid.com/rest/1.0/unrestrict/link", {
@@ -85,10 +97,16 @@ async function resolveLink(provider: DebridProvider, token: string, link: string
   return [{ url: direct as string, filename: payload.data?.name || "download.bin", bytes: 0 }];
 }
 
-export async function resolveRealDebridTorrentSelection(token: string, torrent: Buffer, wantedPaths: string[]) {
+export async function resolveRealDebridTorrentSelection(
+  token: string,
+  torrent: Buffer,
+  wantedPaths: string[],
+  onStatus?: (message: string) => void,
+) {
   // Real-Debrid requires raw .torrent bytes here; multipart/form-data causes
   // `torrent_file_invalid` (error 30).
   const id = await addTorrent(token, new Uint8Array(torrent));
+  onStatus?.("Added to Real-Debrid; selecting the requested release…");
   let info: any;
   for (let attempt = 0; attempt < 30; attempt++) {
     const response = await fetch(`https://api.real-debrid.com/rest/1.0/torrents/info/${id}`, { headers: auth(token) });
@@ -104,6 +122,7 @@ export async function resolveRealDebridTorrentSelection(token: string, torrent: 
     method: "POST", headers: { ...auth(token), "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ files: ids.join(",") }),
   });
   if (!selected.ok && selected.status !== 204) await apiError(selected);
+  let lastStatus = "";
   for (let attempt = 0; attempt < 240; attempt++) {
     const response = await fetch(`https://api.real-debrid.com/rest/1.0/torrents/info/${id}`, { headers: auth(token) });
     if (!response.ok) await apiError(response);
@@ -111,6 +130,12 @@ export async function resolveRealDebridTorrentSelection(token: string, torrent: 
     if (info.status === "downloaded" && info.links?.length)
       return Promise.all((info.links as string[]).map((item) => realDebridUnrestrict(token, item)));
     if (["error", "magnet_error", "virus", "dead"].includes(info.status)) throw new Error(`Real-Debrid torrent failed: ${info.status}`);
+    const status = String(info.status || "queued").replace(/_/g, " ");
+    const message = `Real-Debrid is ${status} (${Math.floor(attempt * 1.5 / 60)}m ${Math.floor((attempt * 1.5) % 60)}s). Your download will begin automatically when it is ready.`;
+    if (message !== lastStatus) {
+      onStatus?.(message);
+      lastStatus = message;
+    }
     await delay(1500);
   }
   throw new Error("Real-Debrid is still preparing the selected file. It remains in your account; retry shortly.");
@@ -149,7 +174,7 @@ export async function downloadResolvedLink(args: {
     let bytes = 0;
     const counter = new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) {
       bytes += chunk.byteLength;
-      args.window?.webContents.send("game-download-progress", { gameTitle: args.gameTitle, filename, bytes, total, percent: total ? Math.min(100, Math.round((bytes / total) * 100)) : 0 });
+      report(args.window, { gameTitle: args.gameTitle, filename, bytes, total, percent: total ? Math.min(100, Math.round((bytes / total) * 100)) : 0, stage: "downloading" });
       controller.enqueue(chunk);
     }});
     await pipeline(Readable.fromWeb(responseBody.pipeThrough(counter) as any), await fs.open(temp, "w").then((handle) => handle.createWriteStream()));
@@ -163,7 +188,10 @@ export async function downloadResolvedLink(args: {
 }
 
 export async function downloadCollectionFiles(args: { token: string; torrent: Buffer; wantedPaths: string[]; gameTitle: string; platform?: string; window: BrowserWindow | null }) {
-  const resolvedFiles = await resolveRealDebridTorrentSelection(args.token, args.torrent, args.wantedPaths);
+  report(args.window, { gameTitle: args.gameTitle, filename: "", bytes: 0, total: 0, percent: 0, stage: "preparing", message: "Adding the selected release to Real-Debrid…" });
+  const resolvedFiles = await resolveRealDebridTorrentSelection(args.token, args.torrent, args.wantedPaths, (message) =>
+    report(args.window, { gameTitle: args.gameTitle, filename: "", bytes: 0, total: 0, percent: 0, stage: "preparing", message }),
+  );
   const dir = path.join(libraryRoot(), ".incoming", `${cleanName(args.gameTitle)}-${Date.now()}`);
   await fs.mkdir(dir, { recursive: true });
   const targets: string[] = [];
@@ -175,7 +203,7 @@ export async function downloadCollectionFiles(args: { token: string; torrent: Bu
     const filename = cleanName(resolved.filename);
     const target = path.join(dir, filename); const temp = `${target}.part`;
     const total = Number(response.headers.get("content-length") || resolved.bytes || 0); let bytes = 0;
-    const counter = new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) { bytes += chunk.byteLength; args.window?.webContents.send("game-download-progress", { gameTitle: args.gameTitle, filename, bytes, total, percent: total ? Math.min(100, Math.round(bytes / total * 100)) : 0 }); controller.enqueue(chunk); } });
+    const counter = new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) { bytes += chunk.byteLength; report(args.window, { gameTitle: args.gameTitle, filename, bytes, total, percent: total ? Math.min(100, Math.round(bytes / total * 100)) : 0, stage: "downloading" }); controller.enqueue(chunk); } });
     const body = response.body;
     await pipeline(Readable.fromWeb(body.pipeThrough(counter) as any), await fs.open(temp, "w").then((handle) => handle.createWriteStream()));
     await fs.rename(temp, target); targets.push(target); combinedBytes += bytes;

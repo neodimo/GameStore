@@ -89,6 +89,8 @@ type GameDownloadProgress = {
   bytes: number;
   total: number;
   percent: number;
+  stage?: "preparing" | "downloading";
+  message?: string;
 };
 type CollectionSource = { name: string; url: string; platform: string };
 type LibraryItem = { id: string; title: string; platform: string; directory: string; files: string[]; queuedAt: string };
