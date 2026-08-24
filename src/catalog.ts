@@ -55,8 +55,14 @@ export const translationSearchTerm = (title: string) =>
     .split(/\s*[:—–]\s*|\s+-\s+/)[0]
     .replace(/\s*\([^)]*\)\s*$/, "")
     .trim();
-const patch = (q: string) =>
-  `https://www.romhacking.net/?page=translations&search=${encodeURIComponent(q)}`;
+/**
+ * ROMhacking.net currently delegates site search to Google. Keep this URL in
+ * the same shape as the site's own search form so a catalog lookup follows the
+ * path users already know works instead of relying on the retired internal
+ * `?page=translations&search=` endpoint.
+ */
+export const translationSearchUrl = (q: string) =>
+  `https://www.google.com/search?q=${encodeURIComponent(q)}&btnG=Search&sitesearch=www.romhacking.net`;
 const retroGameTalk = (q: string) =>
   `https://retrogametalk.com/repo/?s=${encodeURIComponent(q)}`;
 const g = (
@@ -77,7 +83,7 @@ const g = (
 ): Game => {
   const resolvedTranslation: Game["translation"] = translation && {
     ...translation,
-    url: translation.url ?? patch(translationSearchTerm(title)),
+    url: translation.url ?? translationSearchUrl(translationSearchTerm(title)),
   };
   return {
     id,
