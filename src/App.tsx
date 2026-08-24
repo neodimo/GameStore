@@ -116,13 +116,27 @@ function Catalog() {
       return next;
     });
   useEffect(() => {
-    if (selected)
-      requestAnimationFrame(() =>
-        detailsRef.current?.scrollIntoView({
+    if (!selected) return;
+    // `scrollIntoView()` measures a sticky header as ordinary flow content in
+    // Chromium. On a tall detail pane that leaves the title and the top of the
+    // cover beneath the global search bar. Measure the live header instead so
+    // the expanded pane always starts in the visible workspace.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const detail = detailsRef.current;
+        const header = document.querySelector("header");
+        if (!detail) return;
+        const headerHeight = header?.getBoundingClientRect().height ?? 0;
+        window.scrollTo({
+          top: Math.max(
+            0,
+            window.scrollY + detail.getBoundingClientRect().top - headerHeight - 18,
+          ),
           behavior: "smooth",
-          block: "start",
-        }),
-      );
+        });
+      });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [selected]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -214,8 +228,8 @@ function Catalog() {
               </button>
             )}
           </div>
-          <LibraryCart />
           <UpdaterButton />
+          <LibraryCart />
         </header>
         <main>
           <div className="platforms">
@@ -354,7 +368,7 @@ function Catalog() {
           </div>
         </main>
         <footer>
-          <b>GameStore 0.10.5</b>
+          <b>GameStore 0.11.1</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -1186,34 +1200,33 @@ function ProviderSettings({
           back to streaming Internet Archive longplays.
         </p>
         <label>
-          EmuMovies FTP username
+          EmuMovies forum username
           <input
             value={emu.username}
             autoComplete="off"
             onChange={(e) => setEmu({ ...emu, username: e.target.value })}
-            placeholder="Generated FTP username (often …@emumovies-fileserver.com)"
+            placeholder="Your EmuMovies forum username"
           />
         </label>
         <label>
-          EmuMovies FTP password {emuState?.hasPassword && <small>· saved</small>}
+          EmuMovies forum password {emuState?.hasPassword && <small>· saved</small>}
           <input
             type="password"
             value={emu.password}
             autoComplete="off"
             onChange={(e) => setEmu({ ...emu, password: e.target.value })}
-            placeholder={emuState?.hasPassword ? "Blank keeps saved FTP password" : "Generated FTP password"}
+            placeholder={emuState?.hasPassword ? "Blank keeps saved forum password" : "Your EmuMovies forum password"}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !emuBusy) void loginEmuMovies();
             }}
           />
         </label>
         <small>
-          These are the separately generated EmuMovies FTP/file-server
-          credentials — often different from your website email/password.
-          Stored encrypted with the operating system keychain, used only to
-          reach the file server, and never written to exports, logs, or catalog
-          data. Successful sign-in reports which quality tiers the FTP account
-          can see.
+          GameStore signs in to files.emumovies.com on port 21 using your
+          EmuMovies forum username and password. It tries TLS first and safely
+          retries Plain FTP only when TLS cannot connect. Credentials are
+          encrypted with the operating system keychain and never written to
+          exports, logs, or catalog data.
         </small>
         {emuState?.indexed && (
           <p className="index-status">

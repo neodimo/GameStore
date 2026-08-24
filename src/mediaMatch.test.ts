@@ -96,6 +96,16 @@ describe("screenshots", () => {
     expect(files.every((f) => /\(Europe\)/.test(f))).toBe(true);
   });
 
+  it("does not claim an untagged frame belongs to the primary region", () => {
+    const release = ["Strict Test (USA).png", "Strict Test.png"];
+    const files = resolveScreenshots("Strict Test", "USA", {
+      Named_Snaps: release,
+      Named_Titles: release,
+    }).map((shot) => decodeURIComponent(shot.url));
+    expect(files).toHaveLength(2);
+    expect(files.every((file) => /\(USA\)/.test(file))).toBe(true);
+  });
+
   /** Multi-disc releases are the same game and must still stack up. */
   it("keeps every disc of a multi-disc release", () => {
     const files = resolveScreenshots("Kowloon's Gate", "Japan", indexes).map(

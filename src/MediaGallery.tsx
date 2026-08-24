@@ -110,9 +110,10 @@ export function MediaGallery({ game }: { game: Game }) {
    * The captured frames are the bulk of the gallery; the Libretro pair is the
    * verified, exactly-named release imagery and reads as its provenance.
    */
+  const verifiedFrames = video?.source === "emumovies" ? frames : [];
   const items = useMemo<GalleryItem[]>(
     () => [
-      ...frames.map((frame) => ({
+      ...verifiedFrames.map((frame) => ({
         url: frame.localUrl,
         kind: "Gameplay",
         label: clock(frame.at),
@@ -123,7 +124,7 @@ export function MediaGallery({ game }: { game: Game }) {
         label: shot.label,
       })),
     ],
-    [frames, shots],
+    [verifiedFrames, shots],
   );
 
   const stills = items.map((item) => item.url);
@@ -136,7 +137,11 @@ export function MediaGallery({ game }: { game: Game }) {
         video={video}
         videoState={videoState}
         stills={stills}
-        needsFrames={frameState !== "ready" && frames.length < frameTarget}
+        needsFrames={
+          video?.source === "emumovies" &&
+          frameState !== "ready" &&
+          frames.length < frameTarget
+        }
       />
       <div className="screenshot-browser">
         <div className="media-heading">
