@@ -65,9 +65,9 @@ interface Window {
     loginEmuMovies(credentials: { username?: string; password?: string }): Promise<EmuMoviesProbe>;
     /** Streams sign-in stages; returns an unsubscribe function. */
     onEmuMoviesProgress(listener: (message: string) => void): () => void;
-    indexEmuMovies(system?: string): Promise<{ folder: string; quality: string; snaps: number; indexedAt: number }>;
+    indexEmuMovies(system?: string, catalog?: { title: string; region: string; coverName?: string }[]): Promise<{ folder: string; quality: string; snaps: number; indexedAt: number; coverage?: { catalog: number; matched: number; unmatched: number; ambiguous: number } }>;
     forgetEmuMovies(): Promise<boolean>;
-    getEmuMoviesSnap(title: string, region: string): Promise<EmuMoviesSnap | null>;
+    getEmuMoviesSnap(title: string, region: string, coverName?: string): Promise<EmuMoviesSnap | null>;
     getUpdateStatus(): Promise<UpdateStatus>;
     checkForUpdates(): Promise<void>;
     downloadUpdate(): Promise<void>;

@@ -71,7 +71,7 @@ const errorText = (error: unknown) =>
  */
 const snapPreview = async (game: Game): Promise<VideoPreview | null> => {
   try {
-    const snap = await window.gameStore?.getEmuMoviesSnap(game.title, game.region);
+    const snap = await window.gameStore?.getEmuMoviesSnap(game.title, game.region, game.coverName);
     if (!snap) return null;
     return {
       identifier: snap.name,
