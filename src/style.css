@@ -793,6 +793,91 @@ main {
   border-color: #3e8690;
   color: var(--cyan);
 }
+/*
+ * The translation panel leads with the disc the patch expects rather than with
+ * its buttons, because applying a patch to a near-miss dump produces a broken
+ * game and no error message. The target line is the load-bearing content here.
+ */
+.translation-panel {
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid #2c3033;
+}
+.translation-panel h4 {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b9296;
+}
+.translation-team {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+.translation-target {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b9c0c4;
+}
+.translation-target.unverified,
+.translation-warning {
+  color: #d8a441;
+}
+.translation-warning,
+.translation-note,
+.translation-error,
+.translation-done {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.translation-note {
+  color: #8b9296;
+}
+.translation-error {
+  color: #e2705f;
+}
+.translation-done {
+  color: var(--cyan);
+}
+.translation-files {
+  display: grid;
+  gap: 6px;
+  margin-top: 9px;
+}
+.translation-files button {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px dashed #42474a;
+  background: #1b1f21;
+  border-radius: 6px;
+  color: inherit;
+  font-size: 12px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.translation-override {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #d8a441;
+  cursor: pointer;
+}
+.patch-button.primary {
+  border-color: #3e8690;
+  color: var(--cyan);
+}
+.patch-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
 .transfer-button:disabled {
   opacity: 0.65;
 }

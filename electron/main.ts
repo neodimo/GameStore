@@ -22,6 +22,7 @@ import {
   libraryRoot,
 } from "./downloadManager";
 import { checkoutCart, getCart, removeFromCart } from "./libraryManager";
+import { applyTranslation, readProvenance, type TranslationTarget } from "./translationManager";
 import { matchRemoteTitles, type InventoryCatalogGame } from "./fpgaInventory";
 import {
   ensureCollectionManifest,
@@ -776,6 +777,42 @@ const transferFilesToFpga = async (gameTitle: string, filePaths: string[]) => {
     await client.end();
   }
 };
+/**
+ * Translation patching. The renderer owns the curated manifest and resolves a
+ * game's expected Redump target from it, then hands that target here; the main
+ * process owns every filesystem decision, so a renderer cannot choose where a
+ * patched image is written.
+ */
+ipcMain.handle("translation-pick-file", async (_e, kind: "image" | "patch", title: string) => {
+  const picked = await dialog.showOpenDialog(win!, {
+    title: kind === "image" ? `Select the original ${title} disc image` : `Select the ${title} translation patch`,
+    properties: ["openFile"],
+    filters: kind === "image"
+      ? [{ name: "PlayStation disc images", extensions: ["bin", "img", "iso"] }]
+      : [{ name: "Translation patches", extensions: ["ppf", "ips", "bps", "ups"] }],
+  });
+  return picked.canceled || !picked.filePaths.length ? null : picked.filePaths[0];
+});
+ipcMain.handle("translation-apply", async (_e, request: {
+  gameId: string;
+  title: string;
+  sourcePath: string;
+  patchPath: string;
+  outputName: string;
+  target?: TranslationTarget;
+  expectedPatchSha256?: string;
+  team?: string;
+  allowUnverifiedSource?: boolean;
+}) => {
+  const folder = `${request.title.replace(/[\\/:*?"<>|]/g, "-").trim()} (English)`;
+  const entry = await applyTranslation(libraryRoot(), {
+    ...request,
+    destinationDirectory: path.join(libraryRoot(), "Games", "PSX", folder),
+  });
+  win?.webContents.send("library-changed");
+  return entry;
+});
+ipcMain.handle("translation-list", () => readProvenance(libraryRoot()));
 ipcMain.handle("library-cart-get", () => getCart(libraryRoot()));
 ipcMain.handle("library-cart-remove", async (_e, id: string) => {
   const cart = await removeFromCart(libraryRoot(), id);

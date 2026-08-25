@@ -20,6 +20,8 @@ export type Game = {
   video?: string;
   players: string;
   developer: string;
+  publisher?: string;
+  esrb?: string;
   rating?: { source: string; score: number; count?: number };
   translation?: { team: string; status: string; url: string; base: string };
   links: { label: string; url: string; state: LinkState }[];
@@ -65,6 +67,21 @@ export const translationSearchUrl = (q: string) =>
   `https://www.google.com/search?q=${encodeURIComponent(q)}&btnG=Search&sitesearch=www.romhacking.net`;
 const retroGameTalk = (q: string) =>
   `https://retrogametalk.com/repo/?s=${encodeURIComponent(q)}`;
+/**
+ * Which disc a fan patch applies to, taken from the translation manifest.
+ *
+ * These serials used to be hand-written beside each record and were wrong in
+ * ways nothing could catch: `Tobal No. 2` claimed SLPS-01025, which Redump
+ * lists as *Dare Devil Derby 3D*, and `Linda³ Again` claimed SCPS-45124, which
+ * Redump does not list at all. The manifest's serials are checked against the
+ * Redump DAT by `scripts/import-redump-targets.py`, so deriving the value from
+ * there makes that class of drift impossible — the same reason the search term
+ * above is derived from the title rather than typed out per record.
+ */
+const translationBase = (gameId: string) => {
+  const record = translationManifest.find((entry) => entry.gameId === gameId);
+  return record ? `${record.target.release} (${record.target.serial})` : "Release not yet identified";
+};
 const g = (
   id: string,
   title: string,
@@ -78,12 +95,14 @@ const g = (
   developer = "Various",
   coverName?: string,
   video?: string,
-  // `url` is derived from the title unless a record supplies a verified one.
-  translation?: Omit<NonNullable<Game["translation"]>, "url"> & { url?: string },
+  // `url` is derived from the title unless a record supplies a verified one;
+  // `base` is derived from the translation manifest, never written here.
+  translation?: Omit<NonNullable<Game["translation"]>, "url" | "base"> & { url?: string },
 ): Game => {
   const resolvedTranslation: Game["translation"] = translation && {
     ...translation,
     url: translation.url ?? translationSearchUrl(translationSearchTerm(title)),
+    base: translationBase(id),
   };
   return {
     id,
@@ -308,7 +327,6 @@ const coreGames: Game[] = [
     {
       team: "LIPEMCO! Translations",
       status: "Complete",
-      base: "Japan SLPS-00498",
     },
   ),
   g(
@@ -327,7 +345,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      base: "Japan SLPM-86264",
     },
   ),
   g(
@@ -346,7 +363,6 @@ const coreGames: Game[] = [
     {
       team: "Hilltop Works",
       status: "Complete",
-      base: "Japan SLPS-02038",
     },
   ),
   g(
@@ -365,7 +381,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      base: "Japan SLPS-01783",
     },
   ),
   g(
@@ -384,7 +399,6 @@ const coreGames: Game[] = [
     {
       team: "Aeon Genesis",
       status: "Complete",
-      base: "Japan SLPS-01375",
     },
   ),
   g(
@@ -403,7 +417,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      base: "Japan SLPM-86328",
     },
   ),
   g(
@@ -422,7 +435,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      base: "Japan SLPS-02243",
     },
   ),
   g(
@@ -441,7 +453,6 @@ const coreGames: Game[] = [
     {
       team: "Infinite Lupine",
       status: "Complete",
-      base: "Japan SLPS-01025",
     },
   ),
   g(
@@ -460,7 +471,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      base: "Japan SLPS-02107",
     },
   ),
   g(
@@ -479,7 +489,6 @@ const coreGames: Game[] = [
     {
       team: "Hilltop / Cargodin / EsperKnight",
       status: "Complete",
-      base: "Japan multi-disc release",
     },
   ),
   g(
@@ -498,7 +507,6 @@ const coreGames: Game[] = [
     {
       team: "Fan translation",
       status: "Complete",
-      base: "Japan SCPS-45124",
     },
   ),
   g(
@@ -517,7 +525,6 @@ const coreGames: Game[] = [
     {
       team: "Hilltop Works",
       status: "Complete",
-      base: "Japan SCPS-10099",
     },
   ),
   g(
@@ -677,6 +684,25 @@ const legacyUsByTitle = new Map(
   legacyGames.filter((game) => game.region === "USA").map((game) => [titleKey(game.title), game]),
 );
 
+/**
+ * Card subtitle. This used to be `{year} · {genres}` unconditionally, so a
+ * record the provider had no data for rendered the literal string "0 · " —
+ * a missing field presented as a year of zero. Only the parts that exist are
+ * joined, so a gap now reads as absent instead of as data.
+ */
+export const metaLine = (game: Game) =>
+  [game.year ? String(game.year) : null, game.genres.join(" / ") || null]
+    .filter(Boolean)
+    .join(" · ");
+
+/**
+ * LaunchBox publishes a maximum player count, not the range the detail view
+ * shows. One player is stated exactly; anything higher is the top of a range
+ * that necessarily starts at one.
+ */
+const playerRange = (maxPlayers: string | null) =>
+  !maxPlayers || maxPlayers === "0" ? undefined : maxPlayers === "1" ? "1" : `1-${maxPlayers}`;
+
 const sourcedUsGames = usCatalog.map((seed) => {
   const existing = legacyUsByTitle.get(titleKey(seed.title));
   const game = g(
@@ -686,13 +712,20 @@ const sourcedUsGames = usCatalog.map((seed) => {
     "USA",
     seed.genres.length ? seed.genres : existing?.genres ?? [],
     existing?.facets ?? [],
-    seed.description ?? "",
+    // A curated description used to be discarded whenever the imported record
+    // had none, so hand-written copy lost to an empty provider field.
+    seed.description ?? existing?.description ?? "",
     "",
-    existing?.players ?? "Unknown",
+    playerRange(seed.players) ?? existing?.players ?? "Unknown",
     seed.developer ?? existing?.developer ?? "Unknown",
     seed.coverName,
   );
   game.curatorNote = undefined;
+  game.publisher = seed.publisher ?? undefined;
+  game.esrb = seed.esrb ?? undefined;
+  game.rating = seed.rating
+    ? { source: "LaunchBox community", score: seed.rating.score, count: seed.rating.count }
+    : undefined;
   if (seed.descriptionSource) {
     game.descriptionSource = { label: "Catalog description source", url: seed.descriptionSource };
     game.links.unshift({ label: "Description source", url: seed.descriptionSource, state: "verified" });
@@ -755,3 +788,4 @@ export const facetOrder = [
 ];
 import { ps1Expansion } from "./ps1Expansion";
 import { usCatalog } from "./ps1UsCatalog";
+import { translationManifest } from "./translationManifest";
