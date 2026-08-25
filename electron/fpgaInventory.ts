@@ -7,7 +7,7 @@ export const normalizeRemoteTitle = (value: string) =>
     .trim()
     .replace(/\s+/g, " ");
 
-export type InventoryCatalogGame = { id: string; title: string };
+export type InventoryCatalogGame = { id: string; title: string; platform?: "PSX" | "N64" };
 
 export const matchRemoteTitles = (
   remoteTitles: string[],

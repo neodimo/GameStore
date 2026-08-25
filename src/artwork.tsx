@@ -161,6 +161,10 @@ export function ArtworkProvider({
     const seeded: Record<string, ArtMatch | null> = {};
     const pending: Game[] = [];
     for (const game of games) {
+      // The live index currently belongs to the PlayStation thumbnail pack.
+      // N64 records carry their own Nintendo 64 seed URL until its parallel
+      // index is introduced, so a title collision can never pick PSX art.
+      if (game.platform !== "PS1") continue;
       const hit = exactArtMatch(game.coverName, index.files, folder);
       if (hit) seeded[game.id] = hit;
       else pending.push(game);
@@ -218,6 +222,8 @@ export function ArtworkProvider({
           variant: manual.label,
           manual: true,
         };
+      if (game.platform !== "PS1" && game.cover)
+        return { url: game.cover, source: "Catalog seed", manual: false };
       const match = auto[game.id];
       if (match)
         return {
@@ -242,7 +248,7 @@ export function ArtworkProvider({
     },
     hasOverride: (game) => !!overrides[game.id],
     refreshIndex: () => load(true),
-    unmatched: games.filter((g) => !overrides[g.id] && !auto[g.id]).length,
+    unmatched: games.filter((g) => g.platform === "PS1" && !overrides[g.id] && !auto[g.id]).length,
   }), [index, resolving, auto, overrides, games, persist, load]);
   return (
     <ArtworkContext.Provider value={api}>{children}</ArtworkContext.Provider>

@@ -80,6 +80,16 @@ button {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
 }
+.shell.sidebar-collapsed { grid-template-columns: 72px minmax(0, 1fr); }
+.sidebar-toggle { margin-left: auto; border: 0; background: transparent; color: #909699; cursor: pointer; display: grid; place-items: center; padding: 6px; }
+.sidebar-toggle svg { width: 18px; }
+.sidebar-collapsed .brand { padding: 0; justify-content: center; }
+.sidebar-collapsed .brand b, .sidebar-collapsed nav button:not(.sidebar-toggle)::after, .sidebar-collapsed nav button, .sidebar-collapsed .settings-link { font-size: 0; }
+.sidebar-collapsed .brand b { display: none; }
+.sidebar-collapsed .sidebar-toggle { position: absolute; top: 25px; right: -9px; background: #202427; border: 1px solid #42474a; border-radius: 50%; z-index: 2; }
+.sidebar-collapsed nav, .sidebar-collapsed .settings-link { margin-left: 8px; margin-right: 8px; padding-left: 10px; padding-right: 10px; }
+.sidebar-collapsed nav button, .sidebar-collapsed .settings-link { justify-content: center; gap: 0; }
+.sidebar-collapsed nav svg, .sidebar-collapsed .settings-link svg { width: 20px; }
 .shell > aside {
   height: 100vh;
   position: sticky;
@@ -267,6 +277,32 @@ header {
 main {
   padding: 20px 20px 0;
 }
+.mister-manager { max-width: 1120px; margin: 10px auto 40px; }
+.mister-heading { display: flex; align-items: start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #2b2e30; padding: 10px 0 20px; }
+.mister-heading h1 { margin: 0; font: 600 32px "Space Grotesk"; }
+.mister-heading p:not(.eyebrow) { margin: 7px 0 0; color: #8c9295; font-size: 13px; }
+.device-status { color: #8c9295; font-size: 12px; margin: 14px 0; }
+.bios-grid, .device-library-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.bios-grid { margin: 20px 0; }
+.bios-card, .device-console, .device-empty { border: 1px solid #3b4042; border-radius: 8px; background: #15181a; padding: 17px; }
+.bios-card.ready { border-color: #527c42; }
+.bios-card > div, .device-console > div { display: flex; justify-content: space-between; gap: 12px; }
+.bios-card b, .device-console h2 { font: 600 17px "Space Grotesk"; margin: 0; }
+.bios-card span { color: #ffb74b; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.bios-card.ready span { color: #8dd36e; }
+.bios-card p, .device-console > p { color: #858b8e; font-size: 11px; }
+.bios-card button, .device-empty button { border: 1px solid #b47817; border-radius: 6px; padding: 8px 10px; color: #111; background: var(--amber); cursor: pointer; font-weight: 700; font-size: 11px; }
+.device-console > div > span { color: #868d90; font-size: 11px; }
+.device-console ul { list-style: none; margin: 13px 0 0; padding: 0; max-height: 360px; overflow: auto; }
+.device-console li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 3px; border-top: 1px solid #292d2f; color: #d5d7d8; font-size: 12px; }
+.device-console li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.device-console li button { border: 0; background: transparent; color: #9ca1a3; cursor: pointer; }
+.device-console li button:hover { color: #ff8069; }
+.device-console li svg { width: 15px; }
+.device-empty { margin: 35px auto; max-width: 520px; text-align: center; color: #92989b; }
+.device-empty svg { width: 32px; color: var(--amber); }
+.device-empty h2 { color: #eee; font: 600 21px "Space Grotesk"; }
+@media (max-width: 760px) { .bios-grid, .device-library-grid { grid-template-columns: 1fr; } .mister-heading { align-items: stretch; flex-direction: column; } }
 .platforms {
   display: flex;
   align-items: center;
@@ -315,6 +351,15 @@ main {
   border-radius: 6px;
   padding: 8px 10px;
 }
+.genre-exclusions { position: relative; }
+.genre-button { border: 1px solid #3b3f42; border-radius: 6px; padding: 8px 10px; background: #191c1e; color: #d1d3d4; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.genre-button.active { border-color: #af7a21; color: var(--amber); }
+.genre-button svg { width: 14px; }
+.genre-popover { position: absolute; top: calc(100% + 7px); left: 0; z-index: 60; width: 230px; max-height: 360px; overflow: auto; padding: 11px; border: 1px solid #4a4f52; border-radius: 8px; background: #171a1c; box-shadow: 0 18px 48px #000c; }
+.genre-popover > div { display: flex; justify-content: space-between; align-items: center; margin: 2px 2px 8px; font-size: 11px; }
+.genre-popover > div button { border: 0; padding: 3px; background: transparent; color: var(--amber); font-size: 10px; cursor: pointer; }
+.genre-popover label { display: block; padding: 6px 4px; font-size: 12px; color: #c5c9cb; cursor: pointer; }
+.genre-popover input { accent-color: var(--amber); }
 .check {
   display: flex;
   align-items: center;

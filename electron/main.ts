@@ -249,7 +249,7 @@ type ProviderSettings = {
   fpgaInventory?: {
     fingerprint: string;
     scannedAt: number;
-    psxFolders: string[];
+    folders: Record<"PSX" | "N64", string[]>;
     error?: string;
   };
 };
@@ -512,10 +512,10 @@ ipcMain.handle(
     };
   },
 );
-ipcMain.handle("collection-search", async (_e, title: string, region: string) => {
+ipcMain.handle("collection-search", async (_e, title: string, region: string, platform = "PS1") => {
   const collections = (await readSettings()).collections ?? [];
   const results: any[] = [];
-  for (const collection of collections.filter((item) => item.platform === "PS1")) {
+  for (const collection of collections.filter((item) => item.platform === platform)) {
     const manifest = await ensureCollectionManifest(collectionDir(), collection);
     results.push(
       ...matchCollectionFiles(manifest.files, title, region).map((file) => ({
@@ -527,13 +527,13 @@ ipcMain.handle("collection-search", async (_e, title: string, region: string) =>
   }
   return results.sort((a, b) => b.score - a.score).slice(0, 8);
 });
-ipcMain.handle("collection-download", async (_e, sourceUrl: string, paths: string[], gameTitle: string) => {
+ipcMain.handle("collection-download", async (_e, sourceUrl: string, paths: string[], gameTitle: string, platform = "PS1") => {
   const settings = await readSettings();
   const allowed = (settings.collections ?? []).some((item) => item.url === sourceUrl);
   if (!allowed) throw new Error("This collection source is not configured in Settings.");
   const token = settings.debrid?.realdebrid;
   if (!token) throw new Error("Add a Real-Debrid API token in Settings first.");
-  const result = await downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, platform: "PSX", window: win });
+  const result = await downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, platform: platform === "N64" ? "N64" : "PSX", window: win });
   win?.webContents.send("library-changed");
   return result;
 });
@@ -544,10 +544,10 @@ ipcMain.handle("debrid-test", async (_e, provider: DebridProvider) => {
 });
 ipcMain.handle(
   "game-download",
-  async (_e, provider: DebridProvider, link: string, gameTitle: string) => {
+  async (_e, provider: DebridProvider, link: string, gameTitle: string, platform = "PS1") => {
     const token = (await readSettings()).debrid?.[provider];
     if (!token) throw new Error("Configure this provider in Settings first.");
-    const result = await downloadResolvedLink({ provider, token, link, gameTitle, platform: "PSX", window: win });
+    const result = await downloadResolvedLink({ provider, token, link, gameTitle, platform: platform === "N64" ? "N64" : "PSX", window: win });
     win?.webContents.send("library-changed");
     return result;
   },
@@ -646,27 +646,39 @@ const publicFpga = async () => {
 };
 const fpgaFingerprint = (f: NonNullable<ProviderSettings["fpga"]>) =>
   `${f.host}:${f.port || 22}:${f.username || "root"}:${f.root}`;
-let inventoryRefresh: Promise<string[]> | undefined;
+const devicePlatforms = ["PSX", "N64"] as const;
+type DevicePlatform = (typeof devicePlatforms)[number];
+const BIOS: Record<DevicePlatform, { files: { name: string; url: string; md5: string }[] }> = {
+  PSX: { files: [
+    { name: "boot.rom", url: "https://archive.org/download/mister_bios_db/PSX.zip/SCPH7001.BIN", md5: "1e68c231d0896b7eadcad1d7d8e76129" },
+    { name: "boot1.rom", url: "https://archive.org/download/mister_bios_db/PSX.zip/SCPH7000.BIN", md5: "8e4c14f567745eff2f0408c8129f72a6" },
+    { name: "boot2.rom", url: "https://archive.org/download/mister_bios_db/PSX.zip/SCPH7002.BIN", md5: "b9d9a0286c33dc6b7237bb13cd46fdee" },
+  ] },
+  N64: { files: [
+    { name: "boot.rom", url: "https://archive.org/download/mister_bios_db/N64.zip/boot.rom", md5: "5c124e7948ada85da603a522782940d0" },
+    { name: "boot1.rom", url: "https://archive.org/download/mister_bios_db/N64.zip/boot1.rom", md5: "d4232dc935cad0650ac2664d52281f3a" },
+    { name: "boot3.rom", url: "https://archive.org/download/mister_bios_db/N64.zip/boot3.rom", md5: "8d3d9f294b6e174bc7b1d2fd1c727530" },
+    { name: "boot4.rom", url: "https://archive.org/download/mister_bios_db/N64.zip/boot4.rom", md5: "aad37b1492886b892f1821f37fd3ae34" },
+    { name: "boot5.rom", url: "https://archive.org/download/mister_bios_db/N64.zip/boot5.rom", md5: "37c36e4286d36892a9fc70eafe4104be" },
+  ] },
+};
+let inventoryRefresh: Promise<Record<DevicePlatform, string[]>> | undefined;
 const refreshFpgaInventory = async () => {
   if (inventoryRefresh) return inventoryRefresh;
   inventoryRefresh = (async () => {
     const { client, f } = await connectFpga();
     try {
-      // Catalog cards never touch the network. One shallow listing is enough for
-      // GameStore-managed PSX installs: /games/PSX/<game folder>.
-      const remoteDir = `${f.root}/PSX`;
-      const entries = await client.list(remoteDir).catch(() => []);
-      const psxFolders = entries
-        .filter((entry) => entry.type === "d")
-        .map((entry) => entry.name)
-        .filter((name) => name !== "." && name !== "..");
+      const folders = Object.fromEntries(await Promise.all(devicePlatforms.map(async (platform) => {
+        const entries = await client.list(`${f.root}/${platform}`).catch(() => []);
+        return [platform, entries.filter((entry) => entry.type === "d").map((entry) => entry.name).filter((name) => name !== "." && name !== "..")];
+      }))) as Record<DevicePlatform, string[]>;
       const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
       await writeSettings({
         ...raw,
-        fpgaInventory: { fingerprint: fpgaFingerprint(f), scannedAt: Date.now(), psxFolders },
+        fpgaInventory: { fingerprint: fpgaFingerprint(f), scannedAt: Date.now(), folders },
       });
       win?.webContents.send("fpga-inventory-changed");
-      return psxFolders;
+      return folders;
     } finally {
       await client.end();
       inventoryRefresh = undefined;
@@ -675,21 +687,70 @@ const refreshFpgaInventory = async () => {
   return inventoryRefresh;
 };
 ipcMain.handle("fpga-settings-get", publicFpga);
-ipcMain.handle("fpga-inventory-get", async (_e, catalog: InventoryCatalogGame[]) => {
+ipcMain.handle("fpga-inventory-get", async (_e, catalog: (InventoryCatalogGame & { platform?: DevicePlatform })[]) => {
   const settings = await readSettings();
   const f = settings.fpga;
   if (!f) return { status: "unconfigured" as const, gameIds: [] };
   const cached = settings.fpgaInventory;
-  if (cached?.fingerprint === fpgaFingerprint(f))
-    return { status: "ready" as const, gameIds: matchRemoteTitles(cached.psxFolders, catalog), scannedAt: cached.scannedAt };
+  if (cached?.fingerprint === fpgaFingerprint(f)) {
+    const folders = cached.folders ?? { PSX: (cached as any).psxFolders ?? [], N64: [] };
+    return { status: "ready" as const, gameIds: devicePlatforms.flatMap((platform) => matchRemoteTitles(folders[platform], catalog.filter((game) => (game.platform ?? "PSX") === platform))), scannedAt: cached.scannedAt };
+  }
   // Fire this exactly once per device configuration; the initial paint and all
   // scrolling remain local while SFTP answers in the background.
   void refreshFpgaInventory().catch(() => win?.webContents.send("fpga-inventory-changed"));
   return { status: "scanning" as const, gameIds: [] };
 });
 ipcMain.handle("fpga-inventory-refresh", async () => {
-  const titles = await refreshFpgaInventory();
-  return { folders: titles.length };
+  const folders = await refreshFpgaInventory();
+  return { folders: Object.values(folders).reduce((sum, entries) => sum + entries.length, 0) };
+});
+const biosStatus = async (client: SftpClient, root: string, platform: DevicePlatform) => {
+  const expected = BIOS[platform].files;
+  const present = await Promise.all(expected.map(async (file) => ({
+    name: file.name,
+    present: await client.exists(`${root}/${platform}/${file.name}`).then(Boolean).catch(() => false),
+  })));
+  return { platform, ready: present.every((file) => file.present), files: present };
+};
+ipcMain.handle("fpga-device-library", async () => {
+  const { client, f } = await connectFpga();
+  try {
+    const folders = Object.fromEntries(await Promise.all(devicePlatforms.map(async (platform) => {
+      const entries = await client.list(`${f.root}/${platform}`).catch(() => []);
+      return [platform, entries.filter((entry) => entry.type === "d").map((entry) => entry.name).filter((name) => name !== "." && name !== "..")];
+    }))) as Record<DevicePlatform, string[]>;
+    return { host: f.host, folders, bios: await Promise.all(devicePlatforms.map((platform) => biosStatus(client, f.root, platform))) };
+  } finally { await client.end(); }
+});
+ipcMain.handle("fpga-bios-install", async (_e, platform: DevicePlatform) => {
+  if (!devicePlatforms.includes(platform)) throw new Error("Unsupported MiSTer platform.");
+  const { client, f } = await connectFpga();
+  try {
+    const destination = `${f.root}/${platform}`;
+    await client.mkdir(destination, true);
+    for (const file of BIOS[platform].files) {
+      const response = await fetch(file.url, { headers: { "User-Agent": `GameStore/${app.getVersion()}` } });
+      if (!response.ok) throw new Error(`Update All BIOS source returned ${response.status} for ${file.name}.`);
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (createHash("md5").update(bytes).digest("hex") !== file.md5)
+        throw new Error(`Update All BIOS checksum failed for ${file.name}; no file was installed.`);
+      await client.put(bytes, `${destination}/${file.name}`);
+    }
+    return biosStatus(client, f.root, platform);
+  } finally { await client.end(); }
+});
+ipcMain.handle("fpga-device-delete", async (_e, platform: DevicePlatform, folder: string) => {
+  if (!devicePlatforms.includes(platform) || !/^[^\\/:*?"<>|.][^\\/:*?"<>|]*$/.test(folder))
+    throw new Error("Unsafe device folder refused.");
+  const { client, f } = await connectFpga();
+  try {
+    const target = `${f.root}/${platform}/${folder}`;
+    if ((await client.exists(target)) !== "d") throw new Error("That game folder is no longer on the device.");
+    await client.rmdir(target, true);
+    await refreshFpgaInventory().catch(() => undefined);
+    return { deleted: folder };
+  } finally { await client.end(); }
 });
 ipcMain.handle("fpga-discover", async () =>
   discoverFpgaDevices((done, total) =>
@@ -872,17 +933,18 @@ ipcMain.handle("fpga-test", async () => {
     await client.end();
   }
 });
-const transferFilesToFpga = async (gameTitle: string, filePaths: string[]) => {
+const transferFilesToFpga = async (gameTitle: string, filePaths: string[], platform: DevicePlatform = "PSX") => {
   const extensions = filePaths.map((file) =>
     path.extname(file).toLowerCase(),
   );
-  if (extensions.some((ext) => ![".chd", ".cue", ".bin"].includes(ext)))
-    throw new Error("PSX transfers accept CHD or BIN/CUE files.");
+  const accepted = platform === "N64" ? [".z64", ".n64", ".v64"] : [".chd", ".cue", ".bin"];
+  if (extensions.some((ext) => !accepted.includes(ext)))
+    throw new Error(platform === "N64" ? "N64 transfers accept Z64, N64, or V64 files." : "PSX transfers accept CHD or BIN/CUE files.");
   if (extensions.includes(".cue") && !extensions.includes(".bin"))
     throw new Error("Select the CUE and every referenced BIN file together.");
   const { client, f } = await connectFpga();
   const safeName = gameTitle.replace(/[\\/:*?"<>|]/g, "-").trim();
-  const remoteDir = `${f.root}/PSX/${safeName}`;
+  const remoteDir = `${f.root}/${platform}/${safeName}`;
   const total = (
     await Promise.all(filePaths.map((file) => fs.stat(file)))
   ).reduce((n, s) => n + s.size, 0);
@@ -973,8 +1035,9 @@ ipcMain.handle("library-cart-remove", async (_e, id: string) => {
 ipcMain.handle("library-cart-checkout", async () => {
   if (!(await getCart(libraryRoot())).length) throw new Error("The MiSTer cart is empty.");
   const completed = await checkoutCart(libraryRoot(), async (item) => {
-    if (item.platform !== "PSX") throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
-    await transferFilesToFpga(item.title, item.files);
+    const platform = item.platform === "N64" ? "N64" : item.platform === "PSX" ? "PSX" : undefined;
+    if (!platform) throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
+    await transferFilesToFpga(item.title, item.files, platform);
   }, () => win?.webContents.send("library-changed"));
   return { items: completed.length, files: completed.reduce((sum, item) => sum + item.files.length, 0) };
 });

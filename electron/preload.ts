@@ -33,6 +33,9 @@ contextBridge.exposeInMainWorld("gameStore", {
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
   getFpgaInventory: (catalog: { id: string; title: string }[]) => ipcRenderer.invoke("fpga-inventory-get", catalog),
   refreshFpgaInventory: () => ipcRenderer.invoke("fpga-inventory-refresh"),
+  getFpgaDeviceLibrary: () => ipcRenderer.invoke("fpga-device-library"),
+  installFpgaBios: (platform: "PSX" | "N64") => ipcRenderer.invoke("fpga-bios-install", platform),
+  deleteFpgaDeviceGame: (platform: "PSX" | "N64", folder: string) => ipcRenderer.invoke("fpga-device-delete", platform, folder),
   onFpgaInventoryChanged: (listener: () => void) => {
     const wrapped = () => listener();
     ipcRenderer.on("fpga-inventory-changed", wrapped);
@@ -77,18 +80,18 @@ contextBridge.exposeInMainWorld("gameStore", {
   getDebridSettings: () => ipcRenderer.invoke("debrid-settings-get"),
   setDebridSettings: (settings: unknown) => ipcRenderer.invoke("debrid-settings-set", settings),
   testDebrid: (provider: string) => ipcRenderer.invoke("debrid-test", provider),
-  downloadGame: (provider: string, link: string, title: string) =>
-    ipcRenderer.invoke("game-download", provider, link, title),
+  downloadGame: (provider: string, link: string, title: string, platform = "PS1") =>
+    ipcRenderer.invoke("game-download", provider, link, title, platform),
   onGameDownloadProgress: (listener: (progress: unknown) => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);
     ipcRenderer.on("game-download-progress", wrapped);
     return () => ipcRenderer.removeListener("game-download-progress", wrapped);
   },
-  searchCollections: (title: string, region: string) => ipcRenderer.invoke("collection-search", title, region),
+  searchCollections: (title: string, region: string, platform = "PS1") => ipcRenderer.invoke("collection-search", title, region, platform),
   indexCollection: (source: { name: string; url: string; platform: string }) =>
     ipcRenderer.invoke("collection-index", source),
   getCollectionStatus: () => ipcRenderer.invoke("collection-status"),
-  downloadCollectionSelection: (sourceUrl: string, paths: string[], title: string) => ipcRenderer.invoke("collection-download", sourceUrl, paths, title),
+  downloadCollectionSelection: (sourceUrl: string, paths: string[], title: string, platform = "PS1") => ipcRenderer.invoke("collection-download", sourceUrl, paths, title, platform),
   getEmuMoviesSettings: () => ipcRenderer.invoke("emumovies-settings-get"),
   loginEmuMovies: (credentials: { username?: string; password?: string }) =>
     ipcRenderer.invoke("emumovies-login", credentials),
