@@ -518,6 +518,32 @@ main {
   background: var(--cyan);
   border-color: var(--cyan);
 }
+/*
+ * "A translation exists for this game" and "you have already patched a copy"
+ * are different facts and used to wear the same badge. Applied work reads as
+ * finished: amber, the colour this UI uses for a completed state elsewhere.
+ */
+.translated.done {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.cart-patched {
+  margin-left: 6px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--amber);
+  color: #111;
+  font-size: 8px;
+  font-style: normal;
+  letter-spacing: 1px;
+  vertical-align: middle;
+}
+.translation-done p {
+  margin: 0 0 5px;
+}
+.translation-provenance {
+  color: #8b9296;
+}
 .cover > i {
   position: absolute;
   bottom: 8px;

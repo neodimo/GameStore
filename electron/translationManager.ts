@@ -55,7 +55,7 @@ export type TranslationProvenance = {
   unverifiedSourceAccepted: boolean;
   patch: { file: string; sha256: string };
   source: { file: string; size: number; crc32: string; sha1: string };
-  output: { file: string; size: number; sha1: string };
+  output: { file: string; directory: string; size: number; sha1: string };
   target?: TranslationTarget;
 };
 
@@ -228,7 +228,15 @@ export async function applyTranslation(
       crc32: hex32(crc32of(source)),
       sha1: sha1of(source),
     },
-    output: { file: path.basename(outputPath), size: applied.output.length, sha1: outputSha1 },
+    // The directory is recorded because the file name is deliberately the
+    // original release name, so the folder is the only thing that tells a
+    // patched copy apart from the untouched dump beside it.
+    output: {
+      file: path.basename(outputPath),
+      directory: path.dirname(outputPath),
+      size: applied.output.length,
+      sha1: outputSha1,
+    },
     target: request.target,
   };
   await writeProvenance(libraryRoot, entry);

@@ -29,7 +29,7 @@ import {
   type DebridProvider,
   libraryRoot,
 } from "./downloadManager";
-import { checkoutCart, findCartDiscImage, getCart, removeFromCart } from "./libraryManager";
+import { addToCart, checkoutCart, findCartDiscImage, getCart, removeFromCart } from "./libraryManager";
 import { openTranslationBrowser } from "./translationDownloads";
 import { applyTranslation, readProvenance, type TranslationTarget } from "./translationManager";
 import { matchRemoteTitles, type InventoryCatalogGame } from "./fpgaInventory";
@@ -944,9 +944,21 @@ ipcMain.handle("translation-apply", async (_e, request: {
   allowUnverifiedSource?: boolean;
 }) => {
   const folder = `${request.title.replace(/[\\/:*?"<>|]/g, "-").trim()} (English)`;
-  const entry = await applyTranslation(libraryRoot(), {
-    ...request,
-    destinationDirectory: path.join(libraryRoot(), "Games", "PSX", folder),
+  const destinationDirectory = path.join(libraryRoot(), "Games", "PSX", folder);
+  const entry = await applyTranslation(libraryRoot(), { ...request, destinationDirectory });
+
+  // A patched copy that only exists on disk is not much use: queue it the way a
+  // completed download is queued, so it can actually be sent to the device. The
+  // cart entry carries its own translated marker because the copy keeps the
+  // original release filename and cannot be identified by name alone.
+  const produced = await fs.readdir(destinationDirectory).catch(() => [] as string[]);
+  await addToCart(libraryRoot(), {
+    id: `PSX:${folder.toLowerCase()}`,
+    title: `${request.title} (English patch)`,
+    platform: "PSX",
+    directory: destinationDirectory,
+    files: produced.map((file) => path.join(destinationDirectory, file)),
+    translated: { team: request.team, appliedAt: entry.appliedAt },
   });
   win?.webContents.send("library-changed");
   return entry;

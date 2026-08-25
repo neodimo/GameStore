@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkoutCart, finalizeDownload, findCartDiscImage, getCart } from "./libraryManager";
+import { addToCart, checkoutCart, finalizeDownload, findCartDiscImage, getCart } from "./libraryManager";
 
 const roots: string[] = [];
 const root = async () => {
@@ -54,6 +54,27 @@ describe("managed library", () => {
     await fs.writeFile(source, "rom");
     const item = await finalizeDownload({ root: dir, title: "Advance Wars", platform: "GBA", downloadedFiles: [source] });
     expect(item.files).toEqual([path.join(dir, "Games", "GBA", "Advance Wars (USA).gba")]);
+  });
+
+  it("keeps a patched copy visibly marked when it is queued for transfer", async () => {
+    const dir = await root();
+    const file = path.join(dir, "Games", "PSX", "Mizzurna Falls (English)", "Mizzurna Falls (Japan).bin");
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, "patched image");
+
+    await addToCart(dir, {
+      id: "PSX:mizzurna falls (english)",
+      title: "Mizzurna Falls (English patch)",
+      platform: "PSX",
+      directory: path.dirname(file),
+      files: [file],
+      translated: { team: "Project Mizzurna", appliedAt: "2026-08-25T05:00:00.000Z" },
+    });
+
+    expect(await getCart(dir)).toMatchObject([{
+      title: "Mizzurna Falls (English patch)",
+      translated: { team: "Project Mizzurna", appliedAt: "2026-08-25T05:00:00.000Z" },
+    }]);
   });
 
   it("removes completed checkout items while retaining the failed item for retry", async () => {
