@@ -1,5 +1,19 @@
 # GameStore task log
 
+## 2026-08-24 — v0.15.1 transparent cartridge application icon
+
+- **What was done:** Promoted Omid's selected cartridge-only artwork to the GameStore application icon. The 1254 px RGBA concept was resized into the 1024 px Electron Builder source with transparency preserved and no enclosing badge. **Evidence:** the resulting icon was rendered and inspected at 16, 20, 24, 32, 48, and 64 px on both light and dark taskbar backgrounds; the neon play/sunset focal mark remains readable and the cartridge silhouette emerges progressively from 24 px upward.
+- **Artifacts:** `build/icon.png` is the committed packaged icon source. The full-resolution artwork and matte intermediate are deliberate local scratch at `/tmp/gamestore-icon-source-v0151/` and are excluded from the repository/package. Package metadata is versioned `0.15.1`. Release URL and CI evidence will be added after publication.
+- **State:** Implementation complete; automated verification and Windows/Linux release publication pending.
+- **Next owner + concrete artifact:** Gonzo runs the full checks, publishes tag `v0.15.1`, verifies both platform artifacts and updater manifests, then updates this entry with the exact release evidence. Omid installs the Windows build and checks the icon on his actual taskbar.
+
+## 2026-08-24 — transparent cartridge-only icon candidate
+
+- **What was done:** Generated a revised GameStore icon candidate containing only the front-facing cartridge, with the prior black badge/background and external glow removed. Converted the flat chroma-key render to a true alpha PNG and verified transparent corners plus a valid RGBA channel.
+- **Artifacts:** The final 1254×1254 transparent preview and its chroma-key intermediate were moved to deliberate scratch at `/tmp/gamestore-icon-source-v0151/` after `build/icon.png` was derived; neither is bundled with the application.
+- **State:** Done as a concept option; taskbar-scale legibility and final Windows `.ico` size variants remain unverified until Omid selects the direction.
+- **Next owner + concrete artifact:** Omid reviews `artifacts/icon-concepts/cartridge-transparent-v002.png` in Discord. If selected, Gonzo should derive and inspect hand-tuned 16/20/24/32/48/256 px variants before replacing `build/icon.png`.
+
 ## 2026-08-24 — v0.15.0 translation workflow release verified
 
 - **What was done:** Merged PR #36 and completed the full v0.15.0 release path for the in-app patch browser, automatic Add-to-cart source resolution and Mizzurna Falls xdelta support. **Evidence:** exact merged commit `475a1558acbd4020c5ad8fe75b26829e1d8b287e` passed core verification; Linux packaging completed in 2m37s and Windows in 3m36s. The public non-draft/non-prerelease release exposes all six artifacts required by the application and updater.
