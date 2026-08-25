@@ -53,10 +53,9 @@ describe('catalog invariants',()=>{
  it('never sends a platform tag or trailing subtitle as a translation query',()=>{
   for(const g of games.filter(g=>g.translation)){
    const url=new URL(g.translation!.url);
-   const term=url.searchParams.get('q')??'';
-   expect(url.origin).toBe('https://www.google.com');
-   expect(url.pathname).toBe('/search');
-   expect(url.searchParams.get('sitesearch')).toBe('www.romhacking.net');
+   const term=url.searchParams.get('queryString')??'';
+   expect(url.origin).toBe('https://romhack.ing');
+   expect(url.pathname).toBe('/search/translation');
    expect(term).not.toMatch(/\b(PS1|PSX|PlayStation)\b/i);
    expect(term).not.toMatch(/[:—–]|\s-\s/);
    expect(term.length).toBeGreaterThan(0);
@@ -64,8 +63,8 @@ describe('catalog invariants',()=>{
    expect(translationSearchTerm(g.title)).toBe(term);
   }
  });
- it('matches ROMhacking.net current Google site-search flow',()=>{
-  expect(translationSearchUrl('Germs')).toBe('https://www.google.com/search?q=Germs&btnG=Search&sitesearch=www.romhacking.net');
+ it('uses romhack.ing’s own translation search rather than the closed ROMhacking.net site search',()=>{
+  expect(translationSearchUrl('Germs')).toBe('https://romhack.ing/search/translation?queryString=Germs');
  });
  /**
   * OpenVGDB alone supplied a year for 202 of 1,462 USA records and a developer

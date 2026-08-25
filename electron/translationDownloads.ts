@@ -14,6 +14,12 @@ type BrowseRequest = {
   container: string;
 };
 
+// A persistent *app-owned* session keeps romhack.ing's challenge/login state
+// between patch pages. It remains separate from the user's normal browser,
+// but a new anonymous session per click forces the site's slider challenge on
+// every attempt and makes the intended handoff look broken.
+const translationPartition = "persist:translation-downloads";
+
 const cleanName = (value: string) => value.replace(/[\\/:*?"<>|]/g, "-").trim();
 
 const extractZip = (archive: string, destination: string) => new Promise<string[]>((resolve, reject) => {
@@ -100,7 +106,7 @@ export const openTranslationBrowser = async (
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      partition: `translation-${randomUUID()}`,
+      partition: translationPartition,
     },
   });
   browser.webContents.setWindowOpenHandler(({ url }) => {
