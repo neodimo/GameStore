@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { applyPatch, crc32of, detectPatchFormat, PatchError, PatchVerification } from "./patchFormats";
-import { init as initXdelta, xd3_decode_memory } from "xdelta3-wasm";
+import { decodeSync as decodeXdelta } from "@chainsafe/xdelta3-node";
 
 /**
  * Applies a translation patch to a disc image under the project's standing
@@ -164,13 +164,18 @@ export async function applyTranslation(
   let applied;
   try {
     if (container === "xdelta") {
-      await initXdelta();
-      // PlayStation translation patches normally preserve the disc image size.
-      // Keep a small margin for patches that add data while avoiding an
-      // unbounded WASM allocation from an untrusted download.
-      const decoded = xd3_decode_memory(patch, source, Math.ceil(source.length * 1.1));
-      if (decoded.ret !== 0) throw new PatchError(`xdelta refused the patch (${decoded.str}).`);
-      applied = { output: Buffer.from(decoded.output), verification: "none" as const };
+      // The previous WASM wrapper copied the source, patch and maximum output
+      // into one fixed heap. Real CD images exhausted that heap and could turn
+      // the resulting ENOMEM into a bogus typed-array length. The native N-API
+      // decoder supports large PlayStation images and returns a normal owned
+      // byte array; the source remains untouched either way.
+      try {
+        applied = { output: Buffer.from(decodeXdelta(source, patch)), verification: "none" as const };
+      } catch (error) {
+        throw new PatchError(
+          `xdelta refused the patch (${error instanceof Error ? error.message : String(error)}).`,
+        );
+      }
     } else {
       applied = applyPatch(source, patch);
     }

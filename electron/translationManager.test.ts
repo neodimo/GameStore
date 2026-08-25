@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { crc32of } from "./patchFormats";
-import { init as initXdelta, xd3_encode_memory, xd3_smatch_cfg } from "xdelta3-wasm";
+import { encodeSync as encodeXdelta } from "@chainsafe/xdelta3-node";
 import {
   applyTranslation,
   readProvenance,
@@ -165,10 +165,7 @@ describe("translation manager", () => {
   it("applies xdelta and proves the publisher's expected output hash", async () => {
     const source = image();
     const translated = Buffer.from("TARGET IMAGE CONTENT, TRANSLATED ENGLISH TEXT", "ascii");
-    await initXdelta();
-    const encoded = xd3_encode_memory(translated, source, source.length * 4, xd3_smatch_cfg.DEFAULT);
-    expect(encoded.ret).toBe(0);
-    await fs.writeFile(patchPath, encoded.output);
+    await fs.writeFile(patchPath, encodeXdelta(source, translated));
     const entry = await applyTranslation(root, request({
       target: targetFor(source),
       expectedOutputSha1: sha1(translated),
@@ -179,14 +176,30 @@ describe("translation manager", () => {
 
   it("refuses an xdelta result that misses its published output hash", async () => {
     const source = image();
-    await initXdelta();
-    const encoded = xd3_encode_memory(Buffer.from(source).fill(0x45), source, source.length * 4, xd3_smatch_cfg.DEFAULT);
-    await fs.writeFile(patchPath, encoded.output);
+    await fs.writeFile(patchPath, encodeXdelta(source, Buffer.from(source).fill(0x45)));
     await expect(applyTranslation(root, request({
       target: targetFor(source),
       expectedOutputSha1: "0".repeat(40),
     }))).rejects.toThrow(/failed its expected output check/i);
     await expect(fs.readdir(destination)).rejects.toThrow();
+  });
+
+  it("decodes xdelta images larger than the former fixed WASM heap", async () => {
+    // High-entropy input keeps the encoder fixture cheap while still proving
+    // the decoder is no longer bounded by the former WebAssembly heap.
+    const source = randomBytes(8 * 1024 * 1024);
+    const translated = Buffer.from(source);
+    translated.fill(0x45, translated.length - 4096);
+    await fs.writeFile(sourcePath, source);
+    await fs.writeFile(patchPath, encodeXdelta(source, translated));
+
+    const entry = await applyTranslation(root, request({
+      target: targetFor(source),
+      expectedOutputSha1: sha1(translated),
+    }));
+
+    expect(entry.output.size).toBe(translated.length);
+    expect(await fs.readFile(path.join(destination, CANONICAL))).toEqual(translated);
   });
 
   it("marks an explicitly overridden verification in the permanent record", async () => {

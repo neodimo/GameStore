@@ -64,8 +64,10 @@ export const chooseDownloadedPatch = (files: string[], request: Pick<BrowseReque
 };
 
 const finishDownload = async (item: DownloadItem, destination: string, request: BrowseRequest) => {
-  await fs.mkdir(destination, { recursive: true });
   const downloaded = path.join(destination, cleanName(item.getFilename()));
+  // Electron decides whether to show its Save As dialog as soon as the
+  // will-download listener returns. This must therefore happen before the
+  // first await in this call; the destination is prepared before navigation.
   item.setSavePath(downloaded);
   return new Promise<string>((resolve, reject) => item.once("done", async (_event, state) => {
     if (state !== "completed") return reject(new Error(`Patch download ended with ${state}.`));
@@ -106,9 +108,10 @@ export const openTranslationBrowser = async (
     return { action: "deny" };
   });
   const browserSession = browser.webContents.session;
+  const destination = path.join(libraryRoot, "Patches", cleanName(request.title), randomUUID());
+  await fs.mkdir(destination, { recursive: true });
   const onDownload = (_event: Electron.Event, item: DownloadItem) => {
     browserSession.removeListener("will-download", onDownload);
-    const destination = path.join(libraryRoot, "Patches", cleanName(request.title), randomUUID());
     void finishDownload(item, destination, request)
       .then((patchPath) => {
         parent.webContents.send("translation-patch-ready", { gameId: request.gameId, path: patchPath });
