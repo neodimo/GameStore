@@ -102,4 +102,8 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.on("update-status", wrapped);
     return () => ipcRenderer.removeListener("update-status", wrapped);
   },
+  pickTranslationFile: (kind: "image" | "patch", title: string) =>
+    ipcRenderer.invoke("translation-pick-file", kind, title),
+  applyTranslation: (request: unknown) => ipcRenderer.invoke("translation-apply", request),
+  listTranslations: () => ipcRenderer.invoke("translation-list"),
 });

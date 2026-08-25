@@ -25,7 +25,8 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { createCuratedShelves, facetOrder, games, Game } from "./catalog";
+import { createCuratedShelves, facetOrder, games, metaLine, Game } from "./catalog";
+import { translationFor } from "./translationManifest";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
@@ -606,6 +607,132 @@ function CoverImage({ game, full = false }: { game: Game; full?: boolean }) {
     </div>
   );
 }
+/**
+ * Applying a fan translation, end to end, inside the app.
+ *
+ * The two halves are deliberately asymmetric. Finding the patch stays a manual
+ * step with a real link, because ROMhacking.net closed and the communities that
+ * replaced it publish no API and ask not to be crawled. Everything after the
+ * download is automatic: identify the disc, prove it is the one the patch was
+ * built for, write a separate copy, and record what happened.
+ *
+ * The panel leads with which disc is expected rather than with a button. A
+ * translation patch applied to a near-miss dump produces a broken game and no
+ * error, so the release the patch wants is the most useful thing on screen.
+ */
+function TranslationPanel({ game }: { game: Game }) {
+  const entry = translationFor(game.id);
+  const [sourcePath, setSourcePath] = useState<string | null>(null);
+  const [patchPath, setPatchPath] = useState<string | null>(null);
+  const [override, setOverride] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [applied, setApplied] = useState<TranslationProvenance | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const desktop = Boolean(window.gameStore?.applyTranslation);
+  const target = entry?.target ?? undefined;
+  const fileName = (value: string) => value.split(/[\\/]/).pop() ?? value;
+
+  const pick = async (kind: "image" | "patch") => {
+    const picked = await window.gameStore?.pickTranslationFile(kind, game.title);
+    if (!picked) return;
+    setError(null);
+    (kind === "image" ? setSourcePath : setPatchPath)(picked);
+  };
+
+  const apply = async () => {
+    if (!sourcePath || !patchPath || !target) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setApplied(await window.gameStore!.applyTranslation({
+        gameId: game.id,
+        title: game.title,
+        sourcePath,
+        patchPath,
+        // The translated copy keeps the original release filename so the
+        // artwork scraper and the MiSTer export both still recognise it.
+        outputName: target.track,
+        target,
+        expectedPatchSha256: entry?.record.patch.sha256,
+        team: entry?.record.team,
+        allowUnverifiedSource: override,
+      }));
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message.replace(/^Error invoking remote method '.*?': /, "") : String(failure));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="translation-panel">
+      <h4>English translation</h4>
+      <p className="translation-team">
+        {game.translation!.team} · {game.translation!.status}
+      </p>
+      {entry ? (
+        <p className="translation-target">
+          Applies to <b>{entry.record.target.release}</b> ({entry.record.target.serial})
+          {target ? ` · ${target.size.toLocaleString()} bytes · SHA-1 ${target.sha1.slice(0, 12)}…` : ""}
+        </p>
+      ) : (
+        <p className="translation-target unverified">
+          No verified release is recorded for this patch yet, so the disc image cannot be checked.
+        </p>
+      )}
+      {entry && !entry.record.target.targetVerified && (
+        <p className="translation-warning">
+          Which release this patch expects has not been confirmed. GameStore will still refuse any
+          image that is not the one named above.
+        </p>
+      )}
+      {entry?.record.notes && <p className="translation-note">{entry.record.notes}</p>}
+      <button className="patch-button" onClick={() => open(entry?.record.page ?? game.translation!.url)}>
+        Find the patch <ExternalLink />
+      </button>
+      {desktop ? (
+        <>
+          <div className="translation-files">
+            <button onClick={() => void pick("image")}>
+              {sourcePath ? fileName(sourcePath) : "Choose the original disc image…"}
+            </button>
+            <button onClick={() => void pick("patch")}>
+              {patchPath ? fileName(patchPath) : "Choose the downloaded patch…"}
+            </button>
+          </div>
+          {error && (
+            <>
+              <p className="translation-error">{error}</p>
+              {/^A (PPF|IPS) patch carries no checksum/.test(error) && (
+                <label className="translation-override">
+                  <input type="checkbox" checked={override} onChange={(e) => setOverride(e.target.checked)} />
+                  Apply anyway and record that this image was never verified
+                </label>
+              )}
+            </>
+          )}
+          {applied ? (
+            <p className="translation-done">
+              Wrote {applied.output.file} · verified by {applied.verification}
+              {applied.unverifiedSourceAccepted ? " · source unverified" : ""}. Your original image is
+              untouched.
+            </p>
+          ) : (
+            <button
+              className="patch-button primary"
+              disabled={!sourcePath || !patchPath || !target || busy}
+              onClick={() => void apply()}
+            >
+              {busy ? "Applying…" : "Apply patch to a copy"}
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="translation-note">Patching runs in the desktop app.</p>
+      )}
+    </section>
+  );
+}
 function MiniCover({ game, onClick }: { game: Game; onClick: () => void }) {
   return (
     <button className="mini-cover" onClick={onClick}>
@@ -670,9 +797,7 @@ function GameCard({
       <div className="card-title">
         <div>
           <h3>{game.title}</h3>
-          <p>
-            {game.year} · {game.genres.join(" / ")}
-          </p>
+          <p>{metaLine(game)}</p>
         </div>
         <button
           aria-label={favorite ? `Remove ${game.title} from favorites` : `Add ${game.title} to favorites`}
@@ -744,7 +869,7 @@ const Detail = forwardRef<
       <div className="detail-top">
         <div>
           <p className="eyebrow">
-            {game.region} · PLAYSTATION · {game.year}
+            {[game.region, "PLAYSTATION", game.year || null].filter(Boolean).join(" · ")}
           </p>
           <h2>{game.title}</h2>
           <div className="tags">
@@ -813,10 +938,31 @@ const Detail = forwardRef<
               <dt>Developer</dt>
               <dd>{game.developer}</dd>
             </div>
+            {game.publisher && (
+              <div>
+                <dt>Publisher</dt>
+                <dd>{game.publisher}</dd>
+              </div>
+            )}
             <div>
               <dt>Players</dt>
               <dd>{game.players}</dd>
             </div>
+            {game.rating && (
+              <div>
+                <dt>Rating</dt>
+                <dd>
+                  {game.rating.score.toFixed(1)} / 5
+                  {game.rating.count ? ` · ${game.rating.count} votes` : ""}
+                </dd>
+              </div>
+            )}
+            {game.esrb && (
+              <div>
+                <dt>ESRB</dt>
+                <dd>{game.esrb}</dd>
+              </div>
+            )}
             <div>
               <dt>Language</dt>
               <dd>
@@ -825,19 +971,10 @@ const Detail = forwardRef<
             </div>
             <div>
               <dt>Release</dt>
-              <dd>
-                {game.region} · {game.year}
-              </dd>
+              <dd>{[game.region, game.year || null].filter(Boolean).join(" · ")}</dd>
             </div>
           </dl>
-          {game.translation && (
-            <button
-              className="patch-button"
-              onClick={() => open(game.translation!.url)}
-            >
-              Get English patch <ExternalLink />
-            </button>
-          )}
+          {game.translation && <TranslationPanel game={game} />}
           <details className="side-more">
             <summary>Artwork and sources</summary>
             <button onClick={onFindArt}>

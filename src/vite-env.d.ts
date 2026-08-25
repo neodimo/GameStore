@@ -73,8 +73,34 @@ interface Window {
     downloadUpdate(): Promise<void>;
     restartToUpdate(): Promise<void>;
     onUpdateStatus(listener: (status: UpdateStatus) => void): () => void;
+    pickTranslationFile(kind: "image" | "patch", title: string): Promise<string | null>;
+    applyTranslation(request: TranslationApplyRequest): Promise<TranslationProvenance>;
+    listTranslations(): Promise<TranslationProvenance[]>;
   };
 }
+type TranslationApplyRequest = {
+  gameId: string;
+  title: string;
+  sourcePath: string;
+  patchPath: string;
+  /** Canonical original release filename the patched copy must keep. */
+  outputName: string;
+  target?: { release: string; serial: string; size: number; crc32: string; sha1: string };
+  expectedPatchSha256?: string;
+  team?: string;
+  allowUnverifiedSource?: boolean;
+};
+type TranslationProvenance = {
+  gameId: string;
+  appliedAt: string;
+  team?: string;
+  container: string;
+  verification: string;
+  unverifiedSourceAccepted: boolean;
+  patch: { file: string; sha256: string };
+  source: { file: string; size: number; crc32: string; sha1: string };
+  output: { file: string; size: number; sha1: string };
+};
 type FpgaSettings = {
   host: string;
   port: number;
