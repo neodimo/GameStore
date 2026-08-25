@@ -96,3 +96,8 @@ The original 30 adversarial fixtures remain the hand-verified data-quality core 
 ## Release workflow
 
 For GameStore, wrapping up an approved change means carrying it through the complete release path by default: merge the green PR, tag the version, wait for Windows and Linux release jobs, and verify the published installers plus updater metadata. Stop at a draft/release candidate only when Omid explicitly asks for review before release or a real acceptance gate prevents safe publication.
+# Icon direction (2026-08-24)
+
+- The shipped icon is a cartridge-only silhouette on transparency, with the neon sunset/play artwork retained and no enclosing badge/background.
+- Packaged application source: `build/icon.png`; the full-resolution generation source is deliberate local scratch outside the shipped repository.
+- The 1024 px application source was inspected at 16, 20, 24, 32, 48, and 64 px against light and dark taskbar backgrounds before release.
