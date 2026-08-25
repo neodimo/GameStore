@@ -1683,7 +1683,12 @@ footer {
 }
 .device-fields {
   display: grid;
-  grid-template-columns: 2fr 0.7fr 1fr 1.4fr;
+  /* Device name, address, port, username, password. The name leads because it
+     is the field that keeps working when the address does not. */
+  grid-template-columns: 1.5fr 1.5fr 0.6fr 1fr 1.5fr;
+  /* Bottom-aligned so the one label carrying a hint line does not drop its
+     input below the rest of the row. */
+  align-items: end;
   gap: 9px;
 }
 .settings-actions {
@@ -2076,4 +2081,22 @@ footer {
   .export {
     display: none;
   }
+}
+
+/*
+ * The device section leads with the name rather than the address, because the
+ * address is the thing that keeps changing and the name is the thing that does
+ * not. The address field stays editable for a device with no mDNS name.
+ */
+.device-hint {
+  color: #8b9296;
+}
+/* A block hint keeps the label from competing with its input for column
+   width, which pushed the address field onto its own squashed row. */
+.device-fields label small {
+  display: block;
+  color: #6f7679;
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
 }

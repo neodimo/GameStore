@@ -13,7 +13,15 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import SftpClient from "ssh2-sftp-client";
 import { configureUpdater } from "./updater";
-import { discoverFpgaDevices } from "./networkDiscovery";
+import {
+  DEFAULT_DEVICE_NAME,
+  discoverFpgaDevices,
+  isIpv4,
+  isReachable,
+  locateDevice,
+  resolveAddress,
+} from "./networkDiscovery";
+import { createHash } from "node:crypto";
 import {
   downloadResolvedLink,
   downloadCollectionFiles,
@@ -218,7 +226,20 @@ type ProviderSettings = {
     encrypted?: boolean;
   };
   fpga?: {
+    /** Last address that worked. Treated as a cache, not as the identity. */
     host: string;
+    /**
+     * The device's network name, which survives a DHCP lease change where the
+     * address does not. A MiSTer answers to `MiSTer.local` out of the box.
+     */
+    deviceName?: string;
+    /**
+     * SHA-256 of the SSH host key seen on the first successful connection. This
+     * is what lets GameStore adopt a new address on its own: it proves the box
+     * that just answered is the same one, rather than some other machine on the
+     * network that happens to accept the password.
+     */
+    hostKey?: string;
     port: number;
     username: string;
     password?: string;
@@ -613,10 +634,13 @@ const publicFpga = async () => {
   return f
     ? {
         host: f.host,
+        deviceName: f.deviceName || DEFAULT_DEVICE_NAME,
         port: f.port,
         username: f.username,
         root: f.root,
         hasPassword: !!f.password,
+        /** Whether GameStore can re-find this device on its own after a move. */
+        recognized: !!f.hostKey,
       }
     : null;
 };
@@ -678,6 +702,7 @@ ipcMain.handle(
     _e,
     incoming: {
       host: string;
+      deviceName?: string;
       port?: number;
       username?: string;
       password?: string;
@@ -693,10 +718,19 @@ ipcMain.handle(
     const storedPassword = encrypted
       ? safeStorage.encryptString(password).toString("base64")
       : password;
+    const host = String(incoming.host || DEFAULT_DEVICE_NAME).trim();
+    // A name the user typed is worth keeping as the durable identity; an
+    // address is only ever this week's lease.
+    const deviceName = String(
+      incoming.deviceName || (isIpv4(host) ? previous?.deviceName || DEFAULT_DEVICE_NAME : host),
+    ).trim();
     await writeSettings({
       ...existing,
       fpga: {
-        host: String(incoming.host || "MiSTer").trim(),
+        host,
+        deviceName,
+        // A different box means the recorded identity no longer describes it.
+        hostKey: host === previous?.host ? previous?.hostKey : undefined,
         port: Number(incoming.port) || 22,
         username: String(incoming.username || "root").trim(),
         password: storedPassword,
@@ -708,33 +742,130 @@ ipcMain.handle(
     return publicFpga();
   },
 );
+type FpgaSettingsShape = NonNullable<ProviderSettings["fpga"]>;
+
+/**
+ * One SSH/SFTP connection, capturing the host key on the way in.
+ *
+ * `expectKey` turns the handshake into an identity check: `hostVerifier`
+ * returning false aborts before authentication, so a rediscovered address that
+ * is not the configured device never sees the password.
+ */
+const openSftp = async (host: string, f: FpgaSettingsShape, expectKey?: string, readyTimeout = 12000) => {
+  let hostKey = "";
+  const client = new SftpClient();
+  await client.connect({
+    host,
+    port: f.port || 22,
+    username: f.username || "root",
+    password: f.password,
+    readyTimeout,
+    hostVerifier: (key: Buffer) => {
+      hostKey = createHash("sha256").update(key).digest("base64");
+      return !expectKey || hostKey === expectKey;
+    },
+  });
+  return { client, hostKey };
+};
+
+/** Records the address that worked, plus the identity proving it was the device. */
+const rememberDevice = async (host: string, hostKey: string, previous: FpgaSettingsShape) => {
+  if (previous.host === host && previous.hostKey === hostKey) return;
+  const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+  await writeSettings({
+    ...raw,
+    fpga: { ...raw.fpga, host, hostKey: hostKey || raw.fpga?.hostKey },
+    // The cached PSX listing is keyed on the address, so a move invalidates it.
+    ...(previous.host === host ? {} : { fpgaInventory: undefined }),
+  });
+  if (previous.host !== host) win?.webContents.send("fpga-address-changed", { host });
+};
+
+/**
+ * Connects to the configured device, finding it again if it moved.
+ *
+ * The stored address is a cache. When DHCP hands the MiSTer a new lease every
+ * saved address goes stale at once, which is what made this feel unreliable, so
+ * a failure here is treated as "look again" rather than as an error to report.
+ */
 const connectFpga = async () => {
   const f = (await readSettings()).fpga;
   if (!f?.host)
     throw new Error(
       "Configure a SuperStation One or MiSTer in Settings first.",
     );
-  const client = new SftpClient();
-  await client.connect({
-    host: f.host,
+
+  let firstFailure: unknown;
+  for (const address of await resolveAddress(f.host)) {
+    // Probe before handshaking: a stale address would otherwise sit in SSH's
+    // connect for over a minute, which is what made a moved device feel hung
+    // rather than merely moved.
+    if (!(await isReachable(address, f.port || 22))) continue;
+    try {
+      const { client, hostKey } = await openSftp(address, f);
+      await rememberDevice(address, hostKey, f);
+      return { client, f: { ...f, host: address } };
+    } catch (error) {
+      firstFailure ??= error;
+    }
+  }
+
+  win?.webContents.send("fpga-locating", { stage: "Looking for your device…" });
+  const located = await locateDevice({
+    configuredHost: f.host,
+    deviceName: f.deviceName || DEFAULT_DEVICE_NAME,
     port: f.port || 22,
-    username: f.username || "root",
-    password: f.password,
-    readyTimeout: 12000,
+    onStage: (stage) => win?.webContents.send("fpga-locating", { stage }),
+    scan: () =>
+      discoverFpgaDevices((done, total) =>
+        win?.webContents.send("fpga-discovery-progress", { done, total }),
+      ),
+    // Reachability is not identity. Require the recorded host key when there is
+    // one, and otherwise require the device to actually look like a MiSTer, so
+    // a NAS that accepts the same password is never adopted silently.
+    accept: async (host) => {
+      try {
+        // A short handshake budget: this is a probe of a machine that is
+        // probably not the device, not the working connection.
+        const { client } = await openSftp(host, f, f.hostKey, 4000);
+        try {
+          return f.hostKey ? true : await client.exists("/media/fat") !== false;
+        } finally {
+          await client.end();
+        }
+      } catch {
+        return false;
+      }
+    },
   });
-  return { client, f };
+
+  if (!located) {
+    win?.webContents.send("fpga-locating", { stage: "" });
+    throw new Error(
+      `Could not reach your device. GameStore tried ${f.host}, asked the network for ` +
+        `${f.deviceName || DEFAULT_DEVICE_NAME}, and scanned for it. Check that it is powered on ` +
+        "and on this network, then use Scan network in Settings.",
+    );
+  }
+
+  const { client, hostKey } = await openSftp(located.host, f, f.hostKey);
+  await rememberDevice(located.host, hostKey, f);
+  win?.webContents.send("fpga-locating", { stage: "" });
+  return { client, f: { ...f, host: located.host } };
 };
 ipcMain.handle("fpga-test", async () => {
   const { client, f } = await connectFpga();
   try {
     const mediaFat = await client.exists("/media/fat");
     const exists = await client.exists(`${f.root}/PSX`);
+    const at = `Reached it at ${f.host}.`;
     return {
       ok: true,
+      host: f.host,
       message: mediaFat
         ? exists
-          ? "Confirmed MiSTer/SuperStation layout — PSX folder found."
-          : "Confirmed MiSTer/SuperStation layout — PSX folder will be created on first transfer."
+          ? `Confirmed MiSTer/SuperStation layout — PSX folder found. ${at}`
+          : `Confirmed MiSTer/SuperStation layout — PSX folder will be created on first transfer. ${at}`
         : `SSH connected, but /media/fat was not found. Verify that ${f.host} is the intended device.`,
     };
   } finally {

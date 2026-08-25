@@ -39,6 +39,17 @@ contextBridge.exposeInMainWorld("gameStore", {
     return () => ipcRenderer.removeListener("fpga-inventory-changed", wrapped);
   },
   discoverFpga: () => ipcRenderer.invoke("fpga-discover"),
+  /** Progress while the app re-finds a device whose address changed. */
+  onFpgaLocating: (listener: (state: { stage: string }) => void) => {
+    const wrapped = (_e: Electron.IpcRendererEvent, state: { stage: string }) => listener(state);
+    ipcRenderer.on("fpga-locating", wrapped);
+    return () => ipcRenderer.removeListener("fpga-locating", wrapped);
+  },
+  onFpgaAddressChanged: (listener: (state: { host: string }) => void) => {
+    const wrapped = (_e: Electron.IpcRendererEvent, state: { host: string }) => listener(state);
+    ipcRenderer.on("fpga-address-changed", wrapped);
+    return () => ipcRenderer.removeListener("fpga-address-changed", wrapped);
+  },
   onFpgaDiscoveryProgress: (listener: (progress: unknown) => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);
     ipcRenderer.on("fpga-discovery-progress", wrapped);
