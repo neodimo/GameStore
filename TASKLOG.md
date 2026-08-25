@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-25 — v0.17.0 N64 catalog and MiSTer management release verified
+
+- **What was done:** Merged PR #42 and published GameStore v0.17.0, carrying persistent genre exclusions, the compact sidebar, PSX/N64 MiSTer management with explicit deletion confirmation, Update All-sourced BIOS readiness/install, and the USA-first N64 catalog plus N64 download/cart/transfer support.
+- **Evidence:** PR verification run `32820448484` passed in 1m22s at merged commit `b5758306722d334aed3cbad149ecbc8d881d7c48`: 183 tests, TypeScript, production builds, and media checks. Release run `32820601306` passed Linux in 2m55s and Windows in 4m33s, including their respective packages and size gates.
+- **Artifacts:** Public release `https://github.com/neodimo/GameStore/releases/tag/v0.17.0`; PR `https://github.com/neodimo/GameStore/pull/42`; Windows installer `GameStore-Setup-0.17.0-x64.exe` (92,884,394 bytes), blockmap (96,870 bytes), AppImage (123,596,295 bytes), Debian package (84,469,904 bytes), and both updater manifests. All artifacts are public and the release is non-draft/non-prerelease.
+- **State:** Released. Local worktree is clean. Hardware acceptance remains: connect to the real MiSTer, refresh the device view, and inspect/update BIOS state before sending N64 titles.
+- **Next owner + concrete artifact:** Omid installs `GameStore-Setup-0.17.0-x64.exe` from the release and checks the compact navigation, genre exclusions, N64 catalog browsing, and **Manage MiSTer** against `MiSTer.local`.
+- **Failure mode:** No release is considered complete when only one platform finishes. The Linux release appeared first, but Windows installer/blockmap and `latest.yml` were verified only after its job completed.
+
 ## 2026-08-24 — N64 catalog, genre exclusions, compact navigation and MiSTer device manager
 
 - **What was done:** Added persistent multi-genre exclusion alongside the existing single-genre dropdown: every genre begins visible, and unchecking one removes any matching game from the current results. Added a one-click compact sidebar that preserves icon navigation. Added the **Manage MiSTer** view: live PSX/N64 folder inventory, explicit per-game device deletion confirmation, refresh, and BIOS readiness. Added a reproducible N64 catalog generated from OpenVGDB release identity plus LaunchBox metadata: 333 USA-first/English-PAL-fallback games, with Nintendo 64 artwork URLs and N64 download/cart/transfer routing. Japanese N64 releases are intentionally absent until a direct, reviewed romhack.ing English patch record exists; the provider disallows crawl-based discovery, so no imported title is falsely advertised as English-playable.
