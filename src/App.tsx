@@ -73,6 +73,10 @@ function Catalog() {
     null,
   );
   const [fpgaGameIds, setFpgaGameIds] = useState<Set<string>>(new Set());
+  // Which games already have a patched copy on disk. Read from the provenance
+  // records the patcher writes, so the badge reflects work that actually
+  // happened rather than merely that a translation exists for the title.
+  const [patched, setPatched] = useState<Map<string, TranslationProvenance>>(new Map());
   const detailsRef = useRef<HTMLDivElement>(null);
   const genres = useMemo(
     () => Array.from(new Set(games.flatMap((g) => g.genres))).sort(),
@@ -157,6 +161,14 @@ function Catalog() {
     });
     void loadInventory();
     return window.gameStore?.onFpgaInventoryChanged(() => void loadInventory());
+  }, []);
+  useEffect(() => {
+    const loadPatched = () =>
+      window.gameStore
+        ?.listTranslations()
+        .then((applied) => setPatched(new Map(applied.map((entry) => [entry.gameId, entry]))));
+    void loadPatched();
+    return window.gameStore?.onLibraryChanged(() => void loadPatched());
   }, []);
   const reset = () => {
     setQuery("");
@@ -329,6 +341,7 @@ function Catalog() {
                       selected={selected === game.id}
                       favorite={favorites.has(game.id)}
                       onFpga={fpgaGameIds.has(game.id)}
+                      patched={patched.get(game.id)}
                       onFav={() => toggleFav(game.id)}
                       onOpen={() =>
                         setSelected(selected === game.id ? null : game.id)
@@ -634,6 +647,15 @@ function TranslationPanel({ game }: { game: Game }) {
   const target = entry?.target ?? undefined;
   const fileName = (value: string) => value.split(/[\\/]/).pop() ?? value;
 
+  // Without this the panel forgot: a game patched last week reopened offering
+  // to patch it again, with nothing on screen saying it was already done.
+  useEffect(() => {
+    if (!desktop) return;
+    void window.gameStore!
+      .listTranslations()
+      .then((list) => setApplied(list.find((record) => record.gameId === game.id) ?? null));
+  }, [desktop, game.id]);
+
   useEffect(() => {
     if (!desktop) return;
     void window.gameStore!.findTranslationSource(game.title).then((source) => {
@@ -753,11 +775,21 @@ function TranslationPanel({ game }: { game: Game }) {
             </>
           )}
           {applied ? (
-            <p className="translation-done">
-              Wrote {applied.output.file} · verified by {applied.verification}
-              {applied.unverifiedSourceAccepted ? " · source unverified" : ""}. Your original image is
-              untouched.
-            </p>
+            <div className="translation-done">
+              <p>
+                <b>Patched and ready.</b> {applied.output.file} · {new Date(applied.appliedAt).toLocaleDateString()}
+                {applied.team ? ` · ${applied.team}` : ""}
+              </p>
+              <p className="translation-provenance">
+                {applied.unverifiedSourceAccepted
+                  ? "The source image could not be verified and you chose to apply anyway."
+                  : `Source verified by ${applied.verification}.`}{" "}
+                Your original image is untouched, and the copy is queued in the MiSTer cart.
+              </p>
+              <button className="patch-button" onClick={() => void apply()} disabled={!sourcePath || !patchPath || busy}>
+                {busy ? "Applying…" : "Patch again"}
+              </button>
+            </div>
           ) : (
             <button
               className="patch-button primary"
@@ -787,6 +819,7 @@ function GameCard({
   selected,
   favorite,
   onFpga,
+  patched,
   onFav,
   onOpen,
   onContextMenu,
@@ -795,6 +828,7 @@ function GameCard({
   selected: boolean;
   favorite: boolean;
   onFpga: boolean;
+  patched?: TranslationProvenance;
   onFav: () => void;
   onOpen: () => void;
   onContextMenu: (x: number, y: number) => void;
@@ -822,7 +856,21 @@ function GameCard({
               ? "US"
               : "JP"}
         </span>
-        {game.translation && <span className="translated">EN PATCH</span>}
+        {/*
+          * Two different facts that used to look identical: a translation
+          * existing for this title, and one having actually been applied to a
+          * copy on disk. The applied state wins and reads as done.
+          */}
+        {patched ? (
+          <span
+            className="translated done"
+            title={`Patched ${new Date(patched.appliedAt).toLocaleDateString()}${patched.team ? ` · ${patched.team}` : ""}`}
+          >
+            PATCHED
+          </span>
+        ) : (
+          game.translation && <span className="translated">EN PATCH</span>
+        )}
         {onFpga && (
           <span className="fpga-library" title="Already found in your connected MiSTer / SuperStation library" aria-label="Already in connected MiSTer or SuperStation library">
             <HardDrive />
@@ -1225,7 +1273,13 @@ function LibraryCart() {
         {!items.length ? <div className="cart-empty"><ShoppingCart /><p>Downloaded games will appear here automatically.</p></div> : <>
           <div className="cart-items">
             {items.map((item) => <div className="cart-item" key={item.id}>
-              <div><b>{item.title}</b><span>{item.platform} · {item.files.length} managed {item.files.length === 1 ? "file" : "files"}</span></div>
+              <div>
+                <b>{item.title}{item.translated && <em className="cart-patched" title={item.translated.team ? `Patched with ${item.translated.team}` : "Translated copy"}>PATCHED</em>}</b>
+                <span>
+                  {item.platform} · {item.files.length} managed {item.files.length === 1 ? "file" : "files"}
+                  {item.translated ? " · English copy, original untouched" : ""}
+                </span>
+              </div>
               <button aria-label={`Remove ${item.title} from MiSTer cart`} title="Keep files, remove from cart" onClick={() => void window.gameStore!.removeLibraryCartItem(item.id)}><X /></button>
             </div>)}
           </div>

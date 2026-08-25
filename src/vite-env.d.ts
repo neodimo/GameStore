@@ -106,7 +106,7 @@ type TranslationProvenance = {
   unverifiedSourceAccepted: boolean;
   patch: { file: string; sha256: string };
   source: { file: string; size: number; crc32: string; sha1: string };
-  output: { file: string; size: number; sha1: string };
+  output: { file: string; directory: string; size: number; sha1: string };
 };
 type FpgaSettings = {
   /** Last address that worked. A cache, refreshed automatically when it moves. */
@@ -138,7 +138,20 @@ type GameDownloadProgress = {
   message?: string;
 };
 type CollectionSource = { name: string; url: string; platform: string };
-type LibraryItem = { id: string; title: string; platform: string; directory: string; files: string[]; queuedAt: string };
+type LibraryItem = {
+  id: string;
+  title: string;
+  platform: string;
+  directory: string;
+  files: string[];
+  queuedAt: string;
+  /**
+   * Present when the entry is a translated copy. Carried on the entry rather
+   * than inferred from the filename, because a patched copy deliberately keeps
+   * the original release name so artwork still resolves.
+   */
+  translated?: { team?: string; appliedAt: string };
+};
 type ReleaseVariant = {
   region: "USA" | "Europe" | "Japan" | "World" | "Unknown";
   translated: boolean;

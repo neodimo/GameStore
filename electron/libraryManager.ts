@@ -12,6 +12,16 @@ export type LibraryItem = {
   directory: string;
   files: string[];
   queuedAt: string;
+  /**
+   * Set when this entry is a translated copy rather than the original dump.
+   *
+   * The flag lives on the queue entry instead of being derived from the
+   * filename because the translated copy deliberately *keeps* the canonical
+   * original release name — that is what lets the artwork scraper still find
+   * its box art. Filename alone therefore cannot tell the two apart, and
+   * guessing wrong would tell someone an untranslated disc was patched.
+   */
+  translated?: { team?: string; appliedAt: string };
 };
 
 type LibraryIndex = { version: 1; cart: LibraryItem[] };
@@ -83,6 +93,15 @@ const writeIndex = async (root: string, index: LibraryIndex) => {
 };
 
 export const getCart = async (root: string) => (await readIndex(root)).cart;
+
+/** Queues files that already exist on disk, such as a freshly patched copy. */
+export const addToCart = async (root: string, item: Omit<LibraryItem, "queuedAt">) => {
+  const index = await readIndex(root);
+  const entry: LibraryItem = { ...item, queuedAt: new Date().toISOString() };
+  index.cart = [...index.cart.filter((existing) => existing.id !== entry.id), entry];
+  await writeIndex(root, index);
+  return entry;
+};
 
 /** Resolves the original disc already acquired through Add to cart. */
 export const findCartDiscImage = async (root: string, title: string) => {

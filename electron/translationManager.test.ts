@@ -132,6 +132,7 @@ describe("translation manager", () => {
     // The translated copy is marked by its folder and its provenance record,
     // never by a filename the artwork scraper would then fail to match.
     expect(entry.output.file).toBe(CANONICAL);
+    expect(entry.output.directory).toBe(destination);
     expect(entry.verification).toBe("manifest-sha1");
     expect(entry.unverifiedSourceAccepted).toBe(false);
   });
