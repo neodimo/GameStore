@@ -46,6 +46,7 @@ describe("patch containers", () => {
     expect(detectPatchFormat(bytes("UPS1"))).toBe("ups");
     expect(detectPatchFormat(bytes("BPS1"))).toBe("bps");
     expect(detectPatchFormat(bytes("PPF30", 2))).toBe("ppf");
+    expect(detectPatchFormat(Buffer.from([0xd6, 0xc3, 0xc4, 0x00]))).toBe("xdelta");
     expect(detectPatchFormat(bytes("not a patch at all"))).toBeNull();
   });
 

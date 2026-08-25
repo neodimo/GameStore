@@ -14,7 +14,7 @@ import { crc32 } from "node:zlib";
  * which of those happened so the caller can refuse to write an unproven image
  * rather than silently producing a corrupt one.
  */
-export type PatchFormat = "ips" | "ups" | "bps" | "ppf";
+export type PatchFormat = "ips" | "ups" | "bps" | "ppf" | "xdelta";
 export type PatchVerification = "source-and-target-crc" | "source-sample" | "none";
 export type PatchApplication = {
   output: Buffer;
@@ -40,6 +40,7 @@ export const detectPatchFormat = (patch: Buffer): PatchFormat | null => {
   if (patch.length >= 4 && patch.subarray(0, 4).toString("ascii") === "UPS1") return "ups";
   if (patch.length >= 4 && patch.subarray(0, 4).toString("ascii") === "BPS1") return "bps";
   if (patch.length >= 5 && patch.subarray(0, 3).toString("ascii") === "PPF") return "ppf";
+  if (patch.length >= 3 && patch[0] === 0xd6 && patch[1] === 0xc3 && patch[2] === 0xc4) return "xdelta";
   return null;
 };
 
@@ -273,7 +274,8 @@ const applyPpf = (source: Buffer, patch: Buffer): PatchApplication => {
 
 export const applyPatch = (source: Buffer, patch: Buffer): PatchApplication => {
   const format = detectPatchFormat(patch);
-  if (!format) throw new PatchError("Unrecognized patch file. GameStore applies IPS, UPS, BPS and PPF patches.");
+  if (!format) throw new PatchError("Unrecognized patch file. GameStore applies IPS, UPS, BPS, PPF and xdelta patches.");
+  if (format === "xdelta") throw new PatchError("xdelta patches must use the asynchronous decoder.");
   if (format === "ips") return applyIps(source, patch);
   if (format === "ups") return applyUps(source, patch);
   if (format === "bps") return applyBps(source, patch);

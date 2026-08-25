@@ -84,6 +84,16 @@ const writeIndex = async (root: string, index: LibraryIndex) => {
 
 export const getCart = async (root: string) => (await readIndex(root)).cart;
 
+/** Resolves the original disc already acquired through Add to cart. */
+export const findCartDiscImage = async (root: string, title: string) => {
+  const item = (await getCart(root)).find((entry) => entry.platform === "PSX" && entry.title === title);
+  if (!item) return null;
+  const images = item.files.filter((file) => /\.(bin|img|iso)$/i.test(file));
+  if (images.length === 1) return images[0];
+  const bins = images.filter((file) => /\.bin$/i.test(file));
+  return bins.length === 1 ? bins[0] : null;
+};
+
 export const removeFromCart = async (root: string, id: string) => {
   const index = await readIndex(root);
   index.cart = index.cart.filter((item) => item.id !== id);

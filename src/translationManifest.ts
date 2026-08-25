@@ -44,6 +44,8 @@ export type TranslationRecord = {
     file?: string;
     /** SHA-256 of the patch file itself. Absent until a release is checked. */
     sha256?: string;
+    /** Published checksum of the successfully patched image, when available. */
+    outputSha1?: string;
   };
   target: {
     /**
@@ -105,10 +107,16 @@ export const translationManifest: TranslationRecord[] = [
   {
     gameId: "mizzurna-falls",
     title: "Mizzurna Falls",
-    team: "Fan translation",
+    team: "nikita600 / Cirosan / Resident Evie",
     status: "Complete",
-    patch: { container: "ppf" },
-    target: { release: "Mizzurna Falls (Japan)", serial: "SLPS-01783", targetVerified: false },
+    page: "https://romhack.ing/database/content/entry/DNNv5JQBNs8FWu0C5oRp",
+    patch: {
+      container: "xdelta",
+      file: "ProjectMizzurnaBeta.xdelta",
+      outputSha1: "8239544d8ee3af231964d435fc6d9d8c5b496fe0",
+    },
+    target: { release: "Mizzurna Falls (Japan)", serial: "SLPS-01783", targetVerified: true },
+    notes: "The published installer directions confirm the Redump source SHA-1 and the translated output SHA-1.",
   },
   {
     gameId: "paranoiascape",

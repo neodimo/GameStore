@@ -21,7 +21,8 @@ import {
   type DebridProvider,
   libraryRoot,
 } from "./downloadManager";
-import { checkoutCart, getCart, removeFromCart } from "./libraryManager";
+import { checkoutCart, findCartDiscImage, getCart, removeFromCart } from "./libraryManager";
+import { openTranslationBrowser } from "./translationDownloads";
 import { applyTranslation, readProvenance, type TranslationTarget } from "./translationManager";
 import { matchRemoteTitles, type InventoryCatalogGame } from "./fpgaInventory";
 import {
@@ -789,10 +790,16 @@ ipcMain.handle("translation-pick-file", async (_e, kind: "image" | "patch", titl
     properties: ["openFile"],
     filters: kind === "image"
       ? [{ name: "PlayStation disc images", extensions: ["bin", "img", "iso"] }]
-      : [{ name: "Translation patches", extensions: ["ppf", "ips", "bps", "ups"] }],
+      : [{ name: "Translation patches", extensions: ["ppf", "ips", "bps", "ups", "xdelta"] }],
   });
   return picked.canceled || !picked.filePaths.length ? null : picked.filePaths[0];
 });
+ipcMain.handle("translation-find-source", async (_e, title: string) => {
+  return findCartDiscImage(libraryRoot(), title);
+});
+ipcMain.handle("translation-browse-patch", (_e, request: {
+  gameId: string; title: string; url: string; expectedFile?: string; container: string;
+}) => openTranslationBrowser(win!, libraryRoot(), request));
 ipcMain.handle("translation-apply", async (_e, request: {
   gameId: string;
   title: string;
@@ -801,6 +808,7 @@ ipcMain.handle("translation-apply", async (_e, request: {
   outputName: string;
   target?: TranslationTarget;
   expectedPatchSha256?: string;
+  expectedOutputSha1?: string;
   team?: string;
   allowUnverifiedSource?: boolean;
 }) => {
