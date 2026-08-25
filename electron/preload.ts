@@ -104,6 +104,18 @@ contextBridge.exposeInMainWorld("gameStore", {
   },
   pickTranslationFile: (kind: "image" | "patch", title: string) =>
     ipcRenderer.invoke("translation-pick-file", kind, title),
+  findTranslationSource: (title: string) => ipcRenderer.invoke("translation-find-source", title),
+  browseTranslationPatch: (request: unknown) => ipcRenderer.invoke("translation-browse-patch", request),
+  onTranslationPatchReady: (callback: (payload: { gameId: string; path: string }) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, payload: { gameId: string; path: string }) => callback(payload);
+    ipcRenderer.on("translation-patch-ready", wrapped);
+    return () => ipcRenderer.removeListener("translation-patch-ready", wrapped);
+  },
+  onTranslationPatchError: (callback: (payload: { gameId: string; message: string }) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, payload: { gameId: string; message: string }) => callback(payload);
+    ipcRenderer.on("translation-patch-error", wrapped);
+    return () => ipcRenderer.removeListener("translation-patch-error", wrapped);
+  },
   applyTranslation: (request: unknown) => ipcRenderer.invoke("translation-apply", request),
   listTranslations: () => ipcRenderer.invoke("translation-list"),
 });

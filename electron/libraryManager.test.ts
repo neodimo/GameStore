@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkoutCart, finalizeDownload, getCart } from "./libraryManager";
+import { checkoutCart, finalizeDownload, findCartDiscImage, getCart } from "./libraryManager";
 
 const roots: string[] = [];
 const root = async () => {
@@ -33,6 +33,17 @@ describe("managed library", () => {
     expect(item.directory).toBe(path.join(dir, "Games", "PSX", "Tekken 3 (USA)"));
     expect(await getCart(dir)).toHaveLength(1);
     await expect(fs.access(path.join(incoming, files[0]))).rejects.toThrow();
+    expect(await findCartDiscImage(dir, "Tekken 3 (USA)")).toBe(path.join(item.directory, "Tekken 3 (USA).bin"));
+  });
+
+  it("does not guess when a cart item contains more than one disc image", async () => {
+    const dir = await root();
+    const incoming = path.join(dir, "incoming");
+    await fs.mkdir(incoming);
+    const files = ["Disc 1.bin", "Disc 2.bin", "Set.cue"];
+    await Promise.all(files.map((name) => fs.writeFile(path.join(incoming, name), name)));
+    await finalizeDownload({ root: dir, title: "Two-disc game", platform: "PSX", downloadedFiles: files.map((name) => path.join(incoming, name)) });
+    expect(await findCartDiscImage(dir, "Two-disc game")).toBeNull();
   });
 
   it("places a single cartridge image directly in its console folder", async () => {

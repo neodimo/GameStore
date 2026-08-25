@@ -74,6 +74,10 @@ interface Window {
     restartToUpdate(): Promise<void>;
     onUpdateStatus(listener: (status: UpdateStatus) => void): () => void;
     pickTranslationFile(kind: "image" | "patch", title: string): Promise<string | null>;
+    findTranslationSource(title: string): Promise<string | null>;
+    browseTranslationPatch(request: { gameId: string; title: string; url: string; expectedFile?: string; container: string }): Promise<void>;
+    onTranslationPatchReady(callback: (payload: { gameId: string; path: string }) => void): () => void;
+    onTranslationPatchError(callback: (payload: { gameId: string; message: string }) => void): () => void;
     applyTranslation(request: TranslationApplyRequest): Promise<TranslationProvenance>;
     listTranslations(): Promise<TranslationProvenance[]>;
   };
@@ -87,6 +91,7 @@ type TranslationApplyRequest = {
   outputName: string;
   target?: { release: string; serial: string; size: number; crc32: string; sha1: string };
   expectedPatchSha256?: string;
+  expectedOutputSha1?: string;
   team?: string;
   allowUnverifiedSource?: boolean;
 };

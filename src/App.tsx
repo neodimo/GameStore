@@ -623,7 +623,9 @@ function CoverImage({ game, full = false }: { game: Game; full?: boolean }) {
 function TranslationPanel({ game }: { game: Game }) {
   const entry = translationFor(game.id);
   const [sourcePath, setSourcePath] = useState<string | null>(null);
+  const [sourceFromLibrary, setSourceFromLibrary] = useState(false);
   const [patchPath, setPatchPath] = useState<string | null>(null);
+  const [patchDownloaded, setPatchDownloaded] = useState(false);
   const [override, setOverride] = useState(false);
   const [busy, setBusy] = useState(false);
   const [applied, setApplied] = useState<TranslationProvenance | null>(null);
@@ -632,11 +634,38 @@ function TranslationPanel({ game }: { game: Game }) {
   const target = entry?.target ?? undefined;
   const fileName = (value: string) => value.split(/[\\/]/).pop() ?? value;
 
+  useEffect(() => {
+    if (!desktop) return;
+    void window.gameStore!.findTranslationSource(game.title).then((source) => {
+      if (source) {
+        setSourcePath(source);
+        setSourceFromLibrary(true);
+      }
+    });
+    const stopReady = window.gameStore!.onTranslationPatchReady((payload) => {
+      if (payload.gameId === game.id) {
+        setPatchPath(payload.path);
+        setPatchDownloaded(true);
+        setError(null);
+      }
+    });
+    const stopError = window.gameStore!.onTranslationPatchError((payload) => {
+      if (payload.gameId === game.id) setError(payload.message);
+    });
+    return () => { stopReady(); stopError(); };
+  }, [desktop, game.id, game.title]);
+
   const pick = async (kind: "image" | "patch") => {
     const picked = await window.gameStore?.pickTranslationFile(kind, game.title);
     if (!picked) return;
     setError(null);
-    (kind === "image" ? setSourcePath : setPatchPath)(picked);
+    if (kind === "image") {
+      setSourcePath(picked);
+      setSourceFromLibrary(false);
+    } else {
+      setPatchPath(picked);
+      setPatchDownloaded(false);
+    }
   };
 
   const apply = async () => {
@@ -654,6 +683,7 @@ function TranslationPanel({ game }: { game: Game }) {
         outputName: target.track,
         target,
         expectedPatchSha256: entry?.record.patch.sha256,
+        expectedOutputSha1: entry?.record.patch.outputSha1,
         team: entry?.record.team,
         allowUnverifiedSource: override,
       }));
@@ -687,17 +717,28 @@ function TranslationPanel({ game }: { game: Game }) {
         </p>
       )}
       {entry?.record.notes && <p className="translation-note">{entry.record.notes}</p>}
-      <button className="patch-button" onClick={() => open(entry?.record.page ?? game.translation!.url)}>
-        Find the patch <ExternalLink />
+      <button className="patch-button" onClick={() => {
+        const url = entry?.record.page ?? game.translation!.url;
+        if (desktop && entry) {
+          void window.gameStore!.browseTranslationPatch({
+            gameId: game.id,
+            title: game.title,
+            url,
+            expectedFile: entry.record.patch.file,
+            container: entry.record.patch.container,
+          }).catch((failure) => setError(failure instanceof Error ? failure.message : String(failure)));
+        } else open(url);
+      }}>
+        Browse and download patch <ExternalLink />
       </button>
       {desktop ? (
         <>
           <div className="translation-files">
             <button onClick={() => void pick("image")}>
-              {sourcePath ? fileName(sourcePath) : "Choose the original disc image…"}
+              {sourcePath ? `${fileName(sourcePath)}${sourceFromLibrary ? " · from your GameStore library" : ""}` : "Original disc not in your GameStore cart…"}
             </button>
             <button onClick={() => void pick("patch")}>
-              {patchPath ? fileName(patchPath) : "Choose the downloaded patch…"}
+              {patchPath ? `${fileName(patchPath)}${patchDownloaded ? " · downloaded by GameStore" : ""}` : "Download a patch above, or choose one…"}
             </button>
           </div>
           {error && (

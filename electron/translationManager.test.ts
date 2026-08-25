@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { crc32of } from "./patchFormats";
+import { init as initXdelta, xd3_encode_memory, xd3_smatch_cfg } from "xdelta3-wasm";
 import {
   applyTranslation,
   readProvenance,
@@ -159,6 +160,33 @@ describe("translation manager", () => {
     const entry = await applyTranslation(root, request());
     expect(entry.verification).toBe("source-and-target-crc");
     expect(await fs.readFile(path.join(destination, CANONICAL))).toEqual(translated);
+  });
+
+  it("applies xdelta and proves the publisher's expected output hash", async () => {
+    const source = image();
+    const translated = Buffer.from("TARGET IMAGE CONTENT, TRANSLATED ENGLISH TEXT", "ascii");
+    await initXdelta();
+    const encoded = xd3_encode_memory(translated, source, source.length * 4, xd3_smatch_cfg.DEFAULT);
+    expect(encoded.ret).toBe(0);
+    await fs.writeFile(patchPath, encoded.output);
+    const entry = await applyTranslation(root, request({
+      target: targetFor(source),
+      expectedOutputSha1: sha1(translated),
+    }));
+    expect(entry.container).toBe("xdelta");
+    expect(await fs.readFile(path.join(destination, CANONICAL))).toEqual(translated);
+  });
+
+  it("refuses an xdelta result that misses its published output hash", async () => {
+    const source = image();
+    await initXdelta();
+    const encoded = xd3_encode_memory(Buffer.from(source).fill(0x45), source, source.length * 4, xd3_smatch_cfg.DEFAULT);
+    await fs.writeFile(patchPath, encoded.output);
+    await expect(applyTranslation(root, request({
+      target: targetFor(source),
+      expectedOutputSha1: "0".repeat(40),
+    }))).rejects.toThrow(/failed its expected output check/i);
+    await expect(fs.readdir(destination)).rejects.toThrow();
   });
 
   it("marks an explicitly overridden verification in the permanent record", async () => {

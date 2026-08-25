@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { applyPatch, crc32of, detectPatchFormat, PatchError, PatchVerification } from "./patchFormats";
+import { init as initXdelta, xd3_decode_memory } from "xdelta3-wasm";
 
 /**
  * Applies a translation patch to a disc image under the project's standing
@@ -35,6 +36,7 @@ export type TranslationRequest = {
   outputName: string;
   target?: TranslationTarget;
   expectedPatchSha256?: string;
+  expectedOutputSha1?: string;
   team?: string;
   /**
    * Applies a patch that could not be proven against this image. Recorded in
@@ -154,20 +156,37 @@ export async function applyTranslation(
 
   const container = detectPatchFormat(patch);
   if (!container)
-    throw new TranslationRefused("Unrecognized patch file. GameStore applies IPS, UPS, BPS and PPF patches.");
+    throw new TranslationRefused("Unrecognized patch file. GameStore applies IPS, UPS, BPS, PPF and xdelta patches.");
 
   const source = await fs.readFile(request.sourcePath);
   const verification = verifySource(source, container, request.target, request.allowUnverifiedSource ?? false);
 
   let applied;
   try {
-    applied = applyPatch(source, patch);
+    if (container === "xdelta") {
+      await initXdelta();
+      // PlayStation translation patches normally preserve the disc image size.
+      // Keep a small margin for patches that add data while avoiding an
+      // unbounded WASM allocation from an untrusted download.
+      const decoded = xd3_decode_memory(patch, source, Math.ceil(source.length * 1.1));
+      if (decoded.ret !== 0) throw new PatchError(`xdelta refused the patch (${decoded.str}).`);
+      applied = { output: Buffer.from(decoded.output), verification: "none" as const };
+    } else {
+      applied = applyPatch(source, patch);
+    }
   } catch (error) {
     // A patch that fails mid-apply has still written nothing: the patched image
     // only exists in memory until the rename below.
     if (error instanceof PatchError) throw new TranslationRefused(`${error.message} Nothing was written.`);
     throw error;
   }
+
+  const outputSha1 = sha1of(applied.output);
+  if (request.expectedOutputSha1 && outputSha1 !== request.expectedOutputSha1.toLowerCase())
+    throw new TranslationRefused(
+      `The patched image failed its expected output check. Expected SHA-1 ${request.expectedOutputSha1}, ` +
+        `found ${outputSha1}. Nothing was written.`,
+    );
 
   await fs.mkdir(request.destinationDirectory, { recursive: true });
   const outputPath = path.join(request.destinationDirectory, request.outputName);
@@ -204,7 +223,7 @@ export async function applyTranslation(
       crc32: hex32(crc32of(source)),
       sha1: sha1of(source),
     },
-    output: { file: path.basename(outputPath), size: applied.output.length, sha1: sha1of(applied.output) },
+    output: { file: path.basename(outputPath), size: applied.output.length, sha1: outputSha1 },
     target: request.target,
   };
   await writeProvenance(libraryRoot, entry);

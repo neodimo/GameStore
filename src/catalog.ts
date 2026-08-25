@@ -379,7 +379,7 @@ const coreGames: Game[] = [
     undefined,
     undefined,
     {
-      team: "Fan translation",
+      team: "nikita600 / Cirosan / Resident Evie",
       status: "Complete",
     },
   ),
