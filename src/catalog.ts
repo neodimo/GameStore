@@ -59,12 +59,13 @@ export const translationSearchTerm = (title: string) =>
     .trim();
 /**
  * ROMhacking.net currently delegates site search to Google. Keep this URL in
- * the same shape as the site's own search form so a catalog lookup follows the
- * path users already know works instead of relying on the retired internal
- * `?page=translations&search=` endpoint.
+ * romhack.ing's own translation-search route. ROMhacking.net closed and its
+ * Google site-search fallback was a dead end disguised as a search result.
+ * `queryString` is the supported, shareable state from romhack.ing's own form;
+ * the route itself supplies the Translation category filter.
  */
 export const translationSearchUrl = (q: string) =>
-  `https://www.google.com/search?q=${encodeURIComponent(q)}&btnG=Search&sitesearch=www.romhacking.net`;
+  `https://romhack.ing/search/translation?queryString=${encodeURIComponent(q)}`;
 const retroGameTalk = (q: string) =>
   `https://retrogametalk.com/repo/?s=${encodeURIComponent(q)}`;
 /**

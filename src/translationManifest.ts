@@ -101,6 +101,7 @@ export const translationManifest: TranslationRecord[] = [
     title: "Racing Lagoon",
     team: "Hilltop Works",
     status: "Complete",
+    page: "https://romhack.ing/database/content/entry/HtNv5JQBNs8FWu0C0n9I/racing-lagoon-english-translation",
     patch: { container: "ppf" },
     target: { release: "Racing Lagoon (Japan, Asia)", serial: "SLPS-02038", targetVerified: false },
   },
@@ -141,6 +142,8 @@ export const translationManifest: TranslationRecord[] = [
     status: "Complete",
     patch: { container: "ppf" },
     target: { release: "Germs - Nerawareta Machi (Japan)", serial: "SLPS-02107", targetVerified: false },
+    notes:
+      "romhack.ing currently returns only a Spanish release for this title. GameStore opens its live translation search, but cannot claim an English download is available there until one is published.",
   },
   {
     gameId: "ore-no-ryouri",

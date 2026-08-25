@@ -739,6 +739,10 @@ function TranslationPanel({ game }: { game: Game }) {
         </p>
       )}
       {entry?.record.notes && <p className="translation-note">{entry.record.notes}</p>}
+      <p className="translation-note">
+        romhack.ing may show a short slider after <b>Get downloads</b>. Complete it there; when the real
+        file begins, GameStore saves, extracts, selects, and closes this window automatically.
+      </p>
       <button className="patch-button" onClick={() => {
         const url = entry?.record.page ?? game.translation!.url;
         if (desktop && entry) {
