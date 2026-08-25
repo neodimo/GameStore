@@ -39,10 +39,12 @@ interface Window {
     onFpgaInventoryChanged(listener: () => void): () => void;
     discoverFpga(): Promise<NetworkCandidate[]>;
     onFpgaDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
+    onFpgaLocating(listener: (state: { stage: string }) => void): () => void;
+    onFpgaAddressChanged(listener: (state: { host: string }) => void): () => void;
     setFpgaSettings(
       settings: Partial<FpgaSettings> & { password?: string },
     ): Promise<FpgaSettings>;
-    testFpga(): Promise<{ ok: boolean; message: string }>;
+    testFpga(): Promise<{ ok: boolean; message: string; host?: string }>;
     transferToFpga(
       title: string,
     ): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
@@ -107,11 +109,16 @@ type TranslationProvenance = {
   output: { file: string; size: number; sha1: string };
 };
 type FpgaSettings = {
+  /** Last address that worked. A cache, refreshed automatically when it moves. */
   host: string;
+  /** Network name the device answers to; survives a DHCP lease change. */
+  deviceName: string;
   port: number;
   username: string;
   root: string;
   hasPassword: boolean;
+  /** True once the SSH host key is on file, which lets the app re-find it alone. */
+  recognized: boolean;
 };
 type FpgaInventory = { status: "unconfigured" | "scanning" | "ready"; gameIds: string[]; scannedAt?: number };
 type NetworkCandidate = {

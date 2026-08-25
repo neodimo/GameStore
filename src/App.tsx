@@ -1274,12 +1274,15 @@ function ProviderSettings({
   const [scan, setScan] = useState("");
   const [cache, setCache] = useState<MediaCacheStats | null>(null);
   const [device, setDevice] = useState({
-    host: "MiSTer",
+    host: "MiSTer.local",
+    deviceName: "MiSTer.local",
     port: 22,
     username: "root",
     password: "",
     root: "/media/fat/games",
+    recognized: false,
   });
+  const [locating, setLocating] = useState("");
   useEffect(() => {
     window.gameStore?.getTheGamesDbKey().then(setKey);
     window.gameStore
@@ -1291,9 +1294,16 @@ function ProviderSettings({
       setEmuState(state);
       setEmu((current) => ({ ...current, username: state.username }));
     });
-    return window.gameStore?.onFpgaDiscoveryProgress(({ done, total }) =>
+    const stopProgress = window.gameStore?.onFpgaDiscoveryProgress(({ done, total }) =>
       setScan(`Scanning local network · ${done}/${total}`),
     );
+    const stopLocating = window.gameStore?.onFpgaLocating(({ stage }) => setLocating(stage));
+    const stopMoved = window.gameStore?.onFpgaAddressChanged(({ host }) => {
+      setDevice((d) => ({ ...d, host }));
+      setLocating("");
+      setScan(`Your device moved to ${host} — GameStore found it and saved the new address.`);
+    });
+    return () => { stopProgress?.(); stopLocating?.(); stopMoved?.(); };
   }, []);
   /**
    * Saving a collection source is also when it gets indexed. Every Add to Cart
@@ -1615,12 +1625,22 @@ function ProviderSettings({
           per game. GameStore quietly indexes that PSX folder once in the
           background and marks matching catalog covers already on your device.
         </p>
+        <p className="device-hint">
+          A MiSTer answers to <b>MiSTer.local</b> on your network, so leaving the
+          device name alone is the reliable setup — the name keeps working after
+          your router hands out a different address. GameStore remembers which
+          device is yours and quietly re-finds it whenever the address changes,
+          so you should not need to come back here.
+          {device.recognized
+            ? " This device has been recognised and can be found again on its own."
+            : " Connect once and this device will be recognised."}
+        </p>
         <div className="settings-actions scan-actions">
           <button onClick={scanNetwork}><Wifi /> Scan network</button>
-          {scan && <span>{scan}</span>}
+          {(locating || scan) && <span>{locating || scan}</span>}
         </div>
         {!!devices.length && <div className="device-candidates">
-          {devices.map((candidate) => <button key={candidate.host} onClick={() => setDevice({ ...device, host: candidate.host, port: candidate.port })}>
+          {devices.map((candidate) => <button key={candidate.host} onClick={() => setDevice({ ...device, host: candidate.host, port: candidate.port, deviceName: candidate.hostname || device.deviceName })}>
             <b>{candidate.hostname || candidate.host}</b>
             <span>{candidate.host} · {candidate.confidence}</span>
             <small>{candidate.reason}</small>
@@ -1628,7 +1648,16 @@ function ProviderSettings({
         </div>}
         <div className="device-fields">
           <label>
-            Hostname / IP
+            Device name
+            <input
+              value={device.deviceName}
+              placeholder="MiSTer.local"
+              onChange={(e) => setDevice({ ...device, deviceName: e.target.value })}
+            />
+          </label>
+          <label>
+            Address
+            <small>found automatically</small>
             <input
               value={device.host}
               onChange={(e) => setDevice({ ...device, host: e.target.value })}
