@@ -3,6 +3,12 @@ import { createCuratedShelves, games, metaLine, translationSearchTerm, translati
 import { ps1Expansion } from './ps1Expansion';
 describe('catalog invariants',()=>{
  it('contains the full USA retail base plus the eligible regional catalog',()=>{expect(games.filter(g=>g.region==='USA').length).toBeGreaterThanOrEqual(1350);expect(new Set(games.map(g=>g.id)).size).toBe(games.length)});
+ it('adds a sourced N64 catalog without admitting unreviewed Japanese imports',()=>{
+  const n64=games.filter(g=>g.platform==='N64');
+  expect(n64.length).toBeGreaterThanOrEqual(300);
+  expect(n64.every(g=>g.region==='USA'||g.region==='Europe')).toBe(true);
+  expect(n64.every(g=>Boolean(g.cover)&&g.cover!.includes('Nintendo%20-%20Nintendo%2064'))).toBe(true);
+ });
  /**
   * Redump lists cheat cartridges, magazine cover discs and bonus albums because
   * they are real PlayStation discs. A catalog for finding something to play

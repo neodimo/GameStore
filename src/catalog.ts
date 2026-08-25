@@ -1,6 +1,7 @@
 export type LinkState = "verified" | "unverified" | "stale" | "dead";
 export type Game = {
   id: string;
+  platform: "PS1" | "N64";
   title: string;
   year: number;
   region: "USA" | "Europe" | "Japan";
@@ -107,6 +108,7 @@ const g = (
   };
   return {
     id,
+    platform: "PS1",
     title,
     year,
     region,
@@ -743,6 +745,7 @@ export const games: Game[] = [
   ...legacyGames
     .filter((game) => game.region !== "USA" && !sourcedUsTitles.has(titleKey(game.title)))
     .map((game) => ({ ...game, curatorNote: undefined })),
+  ...n64Games,
 ];
 
 type ShelfRecipe = { title: string; subtitle: string; matches: (game: Game) => boolean };
@@ -789,4 +792,5 @@ export const facetOrder = [
 ];
 import { ps1Expansion } from "./ps1Expansion";
 import { usCatalog } from "./ps1UsCatalog";
+import { n64Games } from "./n64Catalog";
 import { translationManifest } from "./translationManifest";

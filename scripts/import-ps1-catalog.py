@@ -182,20 +182,24 @@ def fetch(url: str, destination: Path, member: str, cache: Path | None) -> Path:
     return (cache or destination) / member
 
 
-def load_openvgdb(database: Path) -> tuple[list[dict[str, object]], dict[str, int]]:
+def load_openvgdb(
+    database: Path, system_id: int, include_europe_fallback: bool = False,
+) -> tuple[list[dict[str, object]], dict[str, int]]:
     connection = sqlite3.connect(database)
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
         """
         SELECT rel.releaseTitleName, rel.releaseDescription,
                rel.releaseDeveloper, rel.releaseGenre, rel.releaseDate,
-               rel.releaseReferenceURL, rom.romFileName, rom.romLanguage
+               rel.releaseReferenceURL, rel.TEMPregionLocalizedName,
+               rom.romFileName, rom.romLanguage
         FROM RELEASES rel
         JOIN ROMs rom ON rom.romID = rel.romID
-        WHERE rom.systemID = 38
-          AND rel.TEMPregionLocalizedName = 'USA'
-          AND rom.romLanguage LIKE '%English%'
-        """
+        WHERE rom.systemID = ?
+          AND rel.TEMPregionLocalizedName IN ('USA', 'Europe')
+          AND (rom.romLanguage LIKE '%English%' OR rom.romLanguage IS NULL)
+        """,
+        (system_id,),
     ).fetchall()
 
     candidates: dict[str, sqlite3.Row] = {}
@@ -203,26 +207,35 @@ def load_openvgdb(database: Path) -> tuple[list[dict[str, object]], dict[str, in
     for row in rows:
         filename = row["romFileName"] or ""
         title = row["releaseTitleName"] or ""
+        region = row["TEMPregionLocalizedName"]
+        if region == "Europe" and not include_europe_fallback:
+            continue
         if NON_RETAIL.search(filename) or DISC_AFTER_FIRST.search(filename):
             continue
         label = non_game(title, filename)
         if label:
             excluded[label] = excluded.get(label, 0) + 1
             continue
-        previous = candidates.get(title)
+        identity = match_key(title)
+        previous = candidates.get(identity)
         # Prefer a source-backed description, then the least decorated retail dump.
-        score = (bool(row["releaseDescription"]), -filename.count("("), filename)
+        # USA is the default library. European English releases only survive
+        # when the title has no USA release, which preserves PAL-only games
+        # without duplicating regional editions.
+        score = (region == "USA", bool(row["releaseDescription"]), -filename.count("("), filename)
         old_score = (
+            previous["TEMPregionLocalizedName"] == "USA",
             bool(previous["releaseDescription"]),
             -(previous["romFileName"] or "").count("("),
             previous["romFileName"] or "",
         ) if previous else None
         if previous is None or score > old_score:
-            candidates[title] = row
+            candidates[identity] = row
 
     used_ids: dict[str, int] = {}
     output = []
-    for title, row in sorted(candidates.items(), key=lambda item: item[0].casefold()):
+    for _, row in sorted(candidates.items(), key=lambda item: (item[1]["releaseTitleName"] or "").casefold()):
+        title = row["releaseTitleName"] or ""
         base_id = slug(title)
         used_ids[base_id] = used_ids.get(base_id, 0) + 1
         record_id = base_id if used_ids[base_id] == 1 else f"{base_id}-{used_ids[base_id]}"
@@ -320,8 +333,12 @@ def enrich(records: list[dict[str, object]], launchbox: dict[str, dict[str, str]
 
 
 def main() -> None:
+    global LAUNCHBOX_PLATFORM
     parser = argparse.ArgumentParser()
     parser.add_argument("output", type=Path)
+    parser.add_argument("--system-id", type=int, default=38)
+    parser.add_argument("--launchbox-platform", default=LAUNCHBOX_PLATFORM)
+    parser.add_argument("--europe-fallback", action="store_true")
     parser.add_argument(
         "--cache",
         type=Path,
@@ -334,7 +351,12 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
-        records, excluded = load_openvgdb(fetch(OPENVGDB_URL, root, "openvgdb.sqlite", cache))
+        LAUNCHBOX_PLATFORM = arguments.launchbox_platform
+        records, excluded = load_openvgdb(
+            fetch(OPENVGDB_URL, root, "openvgdb.sqlite", cache),
+            arguments.system_id,
+            arguments.europe_fallback,
+        )
         matched = enrich(records, load_launchbox(fetch(LAUNCHBOX_URL, root, "Metadata.xml", cache)))
 
     payload = json.dumps(records, ensure_ascii=False, separators=(",", ":"))

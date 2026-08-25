@@ -14,6 +14,8 @@ import {
   Image,
   Library,
   LoaderCircle,
+  PanelLeftClose,
+  PanelLeftOpen,
   RefreshCw,
   RotateCcw,
   Search,
@@ -33,6 +35,7 @@ import { MediaGallery } from "./MediaGallery";
 import { restartMediaAudit } from "./mediaLibrary";
 
 type Sort = "curated" | "title" | "year-new" | "year-old";
+type PlatformFilter = "All" | Game["platform"];
 const open = (url: string) =>
   window.gameStore?.openExternal(url) ?? window.open(url, "_blank", "noopener");
 const formatBytes = (value: number) =>
@@ -48,6 +51,10 @@ const loadFavs = () => {
     return new Set<string>();
   }
 };
+const loadHiddenGenres = () => {
+  try { return new Set<string>(JSON.parse(localStorage.getItem("gamestore:hidden-genres") || "[]")); }
+  catch { return new Set<string>(); }
+};
 export function App() {
   return (
     <ArtworkProvider games={games}>
@@ -61,6 +68,11 @@ function Catalog() {
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("All regions");
   const [genre, setGenre] = useState("All genres");
+  const [hiddenGenres, setHiddenGenres] = useState<Set<string>>(loadHiddenGenres);
+  const [genreMenu, setGenreMenu] = useState(false);
+  const [platform, setPlatform] = useState<PlatformFilter>("All");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("gamestore:sidebar-collapsed") === "true");
+  const [deviceManager, setDeviceManager] = useState(false);
   const [facet, setFacet] = useState("All flavors");
   const [translation, setTranslation] = useState(false);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
@@ -78,13 +90,11 @@ function Catalog() {
   // happened rather than merely that a translation exists for the title.
   const [patched, setPatched] = useState<Map<string, TranslationProvenance>>(new Map());
   const detailsRef = useRef<HTMLDivElement>(null);
-  const genres = useMemo(
-    () => Array.from(new Set(games.flatMap((g) => g.genres))).sort(),
-    [],
-  );
+  const visiblePlatformGames = useMemo(() => games.filter((game) => platform === "All" || game.platform === platform), [platform]);
+  const genres = useMemo(() => Array.from(new Set(visiblePlatformGames.flatMap((g) => g.genres))).sort(), [visiblePlatformGames]);
   const filtered = useMemo(
     () =>
-      games
+      visiblePlatformGames
         .filter((g) => {
           const text =
             `${g.title} ${g.description} ${g.genres.join(" ")} ${g.facets.join(" ")}`.toLowerCase();
@@ -92,6 +102,7 @@ function Catalog() {
             (!query || text.includes(query.toLowerCase())) &&
             (region === "All regions" || g.region === region) &&
             (genre === "All genres" || g.genres.includes(genre)) &&
+            !g.genres.some((item) => hiddenGenres.has(item)) &&
             (facet === "All flavors" || g.facets.includes(facet)) &&
             (!translation || !!g.translation) &&
             (!favoriteOnly || favorites.has(g.id))
@@ -106,7 +117,7 @@ function Catalog() {
                 ? a.year - b.year
                 : 0,
         ),
-    [query, region, genre, facet, translation, favoriteOnly, favorites, sort],
+    [visiblePlatformGames, query, region, genre, hiddenGenres, facet, translation, favoriteOnly, favorites, sort],
   );
   const groups = useMemo(() => {
     const rows: Game[][] = [];
@@ -155,7 +166,7 @@ function Catalog() {
     return () => removeEventListener("keydown", key);
   }, []);
   useEffect(() => {
-    const catalog = games.map(({ id, title }) => ({ id, title }));
+    const catalog: { id: string; title: string; platform: "PSX" | "N64" }[] = games.map(({ id, title, platform }) => ({ id, title, platform: platform === "N64" ? "N64" : "PSX" }));
     const loadInventory = () => window.gameStore?.getFpgaInventory(catalog).then((result) => {
       if (result?.status === "ready") setFpgaGameIds(new Set(result.gameIds));
     });
@@ -177,6 +188,7 @@ function Catalog() {
     setFacet("All flavors");
     setTranslation(false);
     setFavoriteOnly(false);
+    setDeviceManager(false);
   };
   const browsing =
     !!query ||
@@ -184,9 +196,15 @@ function Catalog() {
     genre !== "All genres" ||
     facet !== "All flavors" ||
     translation ||
-    favoriteOnly;
+    favoriteOnly || hiddenGenres.size > 0 || platform !== "All";
+  const toggleGenre = (value: string) => setHiddenGenres((previous) => {
+    const next = new Set(previous);
+    next.has(value) ? next.delete(value) : next.add(value);
+    localStorage.setItem("gamestore:hidden-genres", JSON.stringify([...next]));
+    return next;
+  });
   return (
-    <div className="shell">
+    <div className={`shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside>
         <div className="brand">
           <div className="logo">
@@ -195,13 +213,17 @@ function Catalog() {
           <b>
             GAME<span>STORE</span>
           </b>
+          <button className="sidebar-toggle" title={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"} onClick={() => setSidebarCollapsed((current) => {
+            localStorage.setItem("gamestore:sidebar-collapsed", String(!current));
+            return !current;
+          })}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button>
         </div>
         <nav>
-          <button className={!favoriteOnly ? "active" : ""} onClick={reset}>
+          <button className={!favoriteOnly && !deviceManager ? "active" : ""} onClick={reset} title="Discover">
             <Compass />
             Discover
           </button>
-          <button disabled title="More platforms are coming after the PS1 catalog">
+          <button onClick={() => { setDeviceManager(false); setPlatform("All"); }} title="Platforms">
             <Gamepad2 />
             Platforms
           </button>
@@ -220,8 +242,12 @@ function Catalog() {
             <Heart />
             Favorites
           </button>
+          <button className={deviceManager ? "active" : ""} onClick={() => setDeviceManager(true)} title="Manage MiSTer">
+            <HardDrive />
+            Manage MiSTer
+          </button>
         </nav>
-        <button className="settings-link" onClick={() => setSettings(true)}>
+        <button className="settings-link" onClick={() => setSettings(true)} title="Settings">
           <Settings />
           Settings
         </button>
@@ -246,9 +272,11 @@ function Catalog() {
           <LibraryCart />
         </header>
         <main>
+          {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : <>
           <div className="platforms">
-            <button className="active">All</button>
-            <button>PS1</button>
+            <button className={platform === "All" ? "active" : ""} onClick={() => setPlatform("All")}>All</button>
+            <button className={platform === "PS1" ? "active" : ""} onClick={() => setPlatform("PS1")}>PS1</button>
+            <button className={platform === "N64" ? "active" : ""} onClick={() => setPlatform("N64")}>N64</button>
             <button disabled>PS2</button>
             <button disabled>Saturn</button>
             <button disabled>Dreamcast</button>
@@ -270,6 +298,15 @@ function Catalog() {
                 <option key={x}>{x}</option>
               ))}
             </select>
+            <div className="genre-exclusions">
+              <button className={hiddenGenres.size ? "genre-button active" : "genre-button"} onClick={() => setGenreMenu((value) => !value)} aria-expanded={genreMenu}>
+                {hiddenGenres.size ? `Hide ${hiddenGenres.size} genre${hiddenGenres.size === 1 ? "" : "s"}` : "Genres"} <ChevronDown />
+              </button>
+              {genreMenu && <div className="genre-popover">
+                <div><b>Visible genres</b><button onClick={() => { setHiddenGenres(new Set()); localStorage.removeItem("gamestore:hidden-genres"); }}>Show all</button></div>
+                {genres.map((item) => <label key={item}><input type="checkbox" checked={!hiddenGenres.has(item)} onChange={() => toggleGenre(item)} /> {item}</label>)}
+              </div>}
+            </div>
             <select value={facet} onChange={(e) => setFacet(e.target.value)}>
               <option>All flavors</option>
               {facetOrder.map((x) => (
@@ -322,10 +359,10 @@ function Catalog() {
               <h2>
                 {favoriteOnly
                   ? `${filtered.length} favorite ${filtered.length === 1 ? "game" : "games"}`
-                  : `${filtered.length} PlayStation ${filtered.length === 1 ? "game" : "games"}`}
+                  : `${filtered.length} ${platform === "N64" ? "Nintendo 64" : platform === "PS1" ? "PlayStation" : "catalog"} ${filtered.length === 1 ? "game" : "games"}`}
               </h2>
               <p>
-                USA first · PAL fallback · Japan exclusives with English patches
+                USA first · PAL fallback · Japan exclusives only with a reviewed English patch
               </p>
             </div>
             <Grid2X2 />
@@ -381,9 +418,10 @@ function Catalog() {
               </div>
             )}
           </div>
+          </>}
         </main>
         <footer>
-          <b>GameStore 0.11.2</b>
+          <b>GameStore 0.17.0</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -415,6 +453,7 @@ function Catalog() {
 /** Footer readout of how much of the catalog resolved automatically. */
 function ArtworkStatus() {
   const { index, unmatched, resolving, refreshIndex } = useArtwork();
+  const indexedGames = games.filter((game) => game.platform === "PS1");
   if (index.status === "loading")
     return (
       <span>
@@ -429,13 +468,13 @@ function ArtworkStatus() {
   if (resolving)
     return (
       <span>
-        <LoaderCircle className="spin" /> {games.length - unmatched}/
-        {games.length} covers matched · still searching the rest
+        <LoaderCircle className="spin" /> {indexedGames.length - unmatched}/
+        {indexedGames.length} PS1 covers matched · still searching the rest
       </span>
     );
   return (
     <span>
-      {games.length - unmatched}/{games.length} covers matched from{" "}
+      {indexedGames.length - unmatched}/{indexedGames.length} PS1 covers matched from{" "}
       {index.files.length.toLocaleString()} Libretro scans · right-click a game
       for alternates
       <button className="link" onClick={() => void refreshIndex()}>
@@ -1132,7 +1171,7 @@ function Acquisition({ game }: { game: Game }) {
     if (!link.trim() || !window.gameStore) return;
     setState({ status: "downloading", percent: 0, message: "Resolving provider link…" });
     try {
-      const result = await window.gameStore.downloadGame(provider, link.trim(), game.title);
+      const result = await window.gameStore.downloadGame(provider, link.trim(), game.title, game.platform);
       setState({ status: "done", percent: 100, message: `Ready and added to the MiSTer cart · ${result.directory}` });
     } catch (e) {
       setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
@@ -1152,7 +1191,7 @@ function Acquisition({ game }: { game: Game }) {
     setState({ status: "idle" });
     setCandidates([]);
     try {
-      const found = await window.gameStore!.searchCollections(game.title, game.region);
+      const found = await window.gameStore!.searchCollections(game.title, game.region, game.platform);
       if (!found.length)
         setState({
           status: "error",
@@ -1175,6 +1214,7 @@ function Acquisition({ game }: { game: Game }) {
         candidate.sourceUrl,
         [candidate.path],
         game.title,
+        game.platform,
       );
       setState({
         status: "done",
@@ -1251,6 +1291,46 @@ function Acquisition({ game }: { game: Game }) {
       }}><HardDriveUpload /> {sending ? "Sending…" : "Send this game to SuperStation / MiSTer now"}</button>}
     </section>
   );
+}
+
+function MiSTerManager({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const [device, setDevice] = useState<DeviceLibrary | null>(null);
+  const [status, setStatus] = useState("Loading your MiSTer library…");
+  const [busy, setBusy] = useState(false);
+  const load = async () => {
+    setBusy(true); setStatus("Checking game folders and BIOS files…");
+    try { const result = await window.gameStore?.getFpgaDeviceLibrary(); if (!result) throw new Error("Open GameStore on your desktop to manage MiSTer files."); setDevice(result); setStatus(`Connected to ${result.host}`); }
+    catch (error) { setDevice(null); setStatus(error instanceof Error ? error.message : String(error)); }
+    finally { setBusy(false); }
+  };
+  useEffect(() => { void load(); }, []);
+  const install = async (platform: "PSX" | "N64") => {
+    setBusy(true); setStatus(`Installing ${platform} BIOS files from Update All’s configured BIOS Database…`);
+    try { await window.gameStore!.installFpgaBios(platform); await load(); }
+    catch (error) { setStatus(error instanceof Error ? error.message : String(error)); setBusy(false); }
+  };
+  return <section className="mister-manager">
+    <div className="mister-heading"><div><p className="eyebrow">DEVICE LIBRARY</p><h1>Manage MiSTer</h1><p>What is actually on the device, plus the system files each exposed console needs.</p></div><button className="export" onClick={() => void load()} disabled={busy}><RefreshCw className={busy ? "spin" : ""} /> Refresh</button></div>
+    {!device ? <div className="device-empty"><HardDrive /><h2>MiSTer unavailable</h2><p>{status}</p><button onClick={onOpenSettings}>Open device settings</button></div> : <>
+      <p className="device-status">{status}</p>
+      <div className="bios-grid">
+        {device.bios.map((bios) => <section className={bios.ready ? "bios-card ready" : "bios-card"} key={bios.platform}>
+          <div><b>{bios.platform === "PSX" ? "Sony PlayStation" : "Nintendo 64"}</b><span>{bios.ready ? "BIOS ready" : "BIOS needed"}</span></div>
+          <p>{bios.files.filter((file) => file.present).length}/{bios.files.length} Update All BIOS Database files present</p>
+          {!bios.ready && <button disabled={busy} onClick={() => void install(bios.platform)}>Install verified BIOS files</button>}
+        </section>)}
+      </div>
+      <div className="device-library-grid">
+        {(["PSX", "N64"] as const).map((platform) => <section className="device-console" key={platform}>
+          <div><h2>{platform === "PSX" ? "PlayStation" : "Nintendo 64"}</h2><span>{device.folders[platform].length} installed</span></div>
+          {!device.folders[platform].length ? <p>No managed games on this console yet.</p> : <ul>{device.folders[platform].map((folder) => <li key={folder}><span>{folder}</span><button disabled={busy} title="Remove this game from MiSTer" onClick={async () => {
+            if (!confirm(`Remove “${folder}” from your MiSTer? The local GameStore library will stay intact.`)) return;
+            setBusy(true); try { await window.gameStore!.deleteFpgaDeviceGame(platform, folder); await load(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error)); setBusy(false); }
+          }}><Trash2 /></button></li>)}</ul>}
+        </section>)}
+      </div>
+    </>}
+  </section>;
 }
 
 function LibraryCart() {
