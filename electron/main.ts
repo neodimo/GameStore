@@ -1087,7 +1087,9 @@ ipcMain.handle("library-cart-remove", async (_e, id: string) => {
 ipcMain.handle("library-cart-checkout", async () => {
   if (!(await getCart(libraryRoot())).length) throw new Error("The MiSTer cart is empty.");
   const completed = await checkoutCart(libraryRoot(), async (item) => {
-    const platform = item.platform === "N64" ? "N64" : item.platform === "PSX" ? "PSX" : undefined;
+    // Cart items store the core folder; a console the build does not carry is
+    // refused by name rather than silently transferred into the wrong folder.
+    const platform = isDeviceFolder(item.platform) ? item.platform : undefined;
     if (!platform) throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
     await transferFilesToFpga(item.title, item.files, platform);
   }, () => win?.webContents.send("library-changed"));

@@ -747,6 +747,7 @@ export const games: Game[] = [
     .filter((game) => game.region !== "USA" && !sourcedUsTitles.has(titleKey(game.title)))
     .map((game) => ({ ...game, curatorNote: undefined })),
   ...n64Games,
+  ...saturnGames,
 ];
 
 type ShelfRecipe = { title: string; subtitle: string; matches: (game: Game) => boolean };
@@ -794,4 +795,5 @@ export const facetOrder = [
 import { ps1Expansion } from "./ps1Expansion";
 import { usCatalog } from "./ps1UsCatalog";
 import { n64Games } from "./n64Catalog";
+import { saturnGames } from "./satCatalog";
 import { translationManifest } from "./translationManifest";

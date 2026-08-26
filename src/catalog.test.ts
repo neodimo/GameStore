@@ -9,6 +9,28 @@ describe('catalog invariants',()=>{
   expect(n64.every(g=>g.region==='USA'||g.region==='Europe')).toBe(true);
   expect(n64.every(g=>Boolean(g.cover)&&g.cover!.includes('Nintendo%20-%20Nintendo%2064'))).toBe(true);
  });
+ it('adds a Sega Saturn catalog from the same pinned import pipeline',()=>{
+  const saturn=games.filter(g=>g.platform==='SAT');
+  expect(saturn.length).toBeGreaterThanOrEqual(200);
+  expect(saturn.every(g=>g.region==='USA'||g.region==='Europe')).toBe(true);
+  expect(saturn.every(g=>g.id.startsWith('sat-'))).toBe(true);
+  // Saturn discs are Redump `.cue` names; the extension must already be gone.
+  expect(saturn.every(g=>!/\.(cue|chd|bin|iso)$/i.test(g.coverName??''))).toBe(true);
+ });
+ /**
+  * Demo and preview discs the PlayStation patterns did not describe, because
+  * Sega labelled its Saturn ones differently. `Pandemonium!` is pinned beside
+  * them for the same reason the PS1 near-misses are: the obvious keyword
+  * version of this filter matches `demo` inside `Pandemonium` and deletes a
+  * real game.
+  */
+ it('excludes Saturn demo discs without eating a title that merely contains one',()=>{
+  const titles=new Set(games.map(g=>g.title));
+  for(const gone of ['Bootleg Sampler','Core Demo Vol. 2','Panzer Dragoon: Playable Demo','Rayman: Playable Game Preview','Sega Saturn Preview Vol. 1'])
+   expect(titles.has(gone),`${gone} should not be in the catalog`).toBe(false);
+  for(const kept of ['Pandemonium!','Daytona USA C.C.E. Net Link Edition'])
+   expect(titles.has(kept),`${kept} should still be in the catalog`).toBe(true);
+ });
  /**
   * Every N64 cover URL 404'd while the assertion above passed, because that
   * assertion checks the thumbnail folder and the defect was in the filename.

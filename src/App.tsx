@@ -282,10 +282,8 @@ function Catalog() {
           {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : <>
           <div className="platforms">
             <button className={platform === "All" ? "active" : ""} onClick={() => setPlatform("All")}>All</button>
-            <button className={platform === "PS1" ? "active" : ""} onClick={() => setPlatform("PS1")}>PS1</button>
-            <button className={platform === "N64" ? "active" : ""} onClick={() => setPlatform("N64")}>N64</button>
+            {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => setPlatform(definition.id)}>{definition.shortLabel}</button>)}
             <button disabled>PS2</button>
-            <button disabled>Saturn</button>
             <button disabled>Dreamcast</button>
             <button disabled>GameCube</button>
             <button disabled>PSP</button>
@@ -366,7 +364,7 @@ function Catalog() {
               <h2>
                 {favoriteOnly
                   ? `${filtered.length} favorite ${filtered.length === 1 ? "game" : "games"}`
-                  : `${filtered.length} ${platform === "N64" ? "Nintendo 64" : platform === "PS1" ? "PlayStation" : "catalog"} ${filtered.length === 1 ? "game" : "games"}`}
+                  : `${filtered.length} ${platform === "All" ? "catalog" : platformLabel(platform)} ${filtered.length === 1 ? "game" : "games"}`}
               </h2>
               <p>
                 USA first · PAL fallback · Japan exclusives only with a reviewed English patch

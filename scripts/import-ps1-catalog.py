@@ -79,9 +79,14 @@ NON_GAME = [
     )),
     # Demo, sampler and magazine cover discs. "Demo" alone is far too broad, so
     # both words are required.
+    # `Playable Demo` and `Playable Game Preview` are how Sega labelled the
+    # Saturn ones, and `Demo Vol.`/`Preview Vol.` are the numbered series. Each
+    # still requires an adjacent word: bare `demo` deletes Pandemonium! and
+    # bare `preview` is a normal English word a real title can contain.
     ("demo disc", re.compile(
         r"\bDemo (?:CD|Disc)\b|\bInteractive (?:CD )?Sampler\b|\bCollector'?s CD\b"
-        r"|\bJampack\b|PlayStation Underground", re.I,
+        r"|\bJampack\b|PlayStation Underground"
+        r"|\bPlayable (?:Demo|Game Preview)\b|\b(?:Demo|Preview) Vol\.", re.I,
     )),
     # Redump's `(Bonus Disc)` tag means exactly "this is the extra disc, not the
     # game" — the Gran Turismo 2 album and the Persona 2 bonus disc, whose own
@@ -103,6 +108,9 @@ NON_GAME_TITLES = {
     "Pizza Hut Disc 2",
     "PlayStation Picks",
     "Toys 'R' Us: Attack of the Killer Demos!",
+    # Sega's US Saturn demo disc. Its own provider copy calls it a
+    # "Miscellaneous game", and `Sampler` on its own is too broad to match on.
+    "Bootleg Sampler",
 }
 
 
@@ -253,6 +261,12 @@ def load_openvgdb(
         if region == "Europe" and not include_europe_fallback:
             continue
         if NON_RETAIL.search(filename) or DISC_AFTER_FIRST.search(filename):
+            continue
+        # The release title is checked too, not only the dump name. Saturn's
+        # `Deep Fear (Disc 2)` is titled as the second disc while pointing at
+        # the `(Disc 1)` dump, so a filename-only test kept a record whose two
+        # halves disagree about which disc it even is.
+        if DISC_AFTER_FIRST.search(title) or re.search(r"\(Disc [2-9]\)", title):
             continue
         label = non_game(title, filename)
         if label:
