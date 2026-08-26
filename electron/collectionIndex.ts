@@ -76,6 +76,8 @@ export type ReleaseVariant = {
   region: "USA" | "Europe" | "Japan" | "World" | "Unknown";
   translated: boolean;
   english: boolean;
+  /** Prerelease, promotional and modified dumps need an explicit direct link. */
+  retail: boolean;
   label: string;
 };
 const REGION_WORDS: [RegExp, ReleaseVariant["region"]][] = [
@@ -85,6 +87,12 @@ const REGION_WORDS: [RegExp, ReleaseVariant["region"]][] = [
   [/\bworld\b/i, "World"],
 ];
 const TRANSLATION = /\b(t-en|t\+en|english (?:translation|patch(?:ed)?)|eng(?:lish)? translated|translation)\b/i;
+// These are release-status tags, rather than title words: keeping the marker
+// inside parentheses/brackets avoids treating a legitimate title such as
+// Pandemonium! as a demo. A collection search is the automatic path, so it
+// must only ever yield a conventional retail release. Deliberate oddities can
+// still be sent through the explicit direct-link control in the UI.
+const NON_RETAIL_TAG = /[\[(]\s*(?:beta|demo(?:\s*(?:disc|cd|version))?|proto(?:type)?|preview|sample|kiosk|trial|promotional|promo|not\s+for\s+resale|aftermarket|hack|homebrew)\b/i;
 
 export function releaseVariant(filePath: string): ReleaseVariant {
   const name = path.basename(filePath);
@@ -92,12 +100,13 @@ export function releaseVariant(filePath: string): ReleaseVariant {
   const region = REGION_WORDS.find(([pattern]) => pattern.test(tags))?.[1] ?? "Unknown";
   const translated = TRANSLATION.test(name);
   const english = translated || region === "USA" || region === "Europe" || region === "World";
+  const retail = !NON_RETAIL_TAG.test(name);
   const label = translated
     ? `${region === "Unknown" ? "Import" : region} (English translation)`
     : region === "Unknown"
       ? "Unlabelled release"
       : region;
-  return { region, translated, english, label };
+  return { region, translated, english, retail, label };
 }
 
 export type CollectionMatch = CollectionFile & {
@@ -127,7 +136,9 @@ export function matchCollectionFiles(
       score: score(title, file.path, region),
       variant: releaseVariant(file.path),
     }))
-    .filter((file) => file.score >= 0.62)
+    // Never let the region-fallback below turn a beta or demo into the
+    // one-click default. The user's intentional alternative is a direct link.
+    .filter((file) => file.score >= 0.62 && file.variant.retail)
     .sort((a, b) => b.score - a.score || a.bytes - b.bytes);
   const primary = scored.filter(
     (file) =>

@@ -61,8 +61,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   setFpgaSettings: (settings: unknown) =>
     ipcRenderer.invoke("fpga-settings-set", settings),
   testFpga: () => ipcRenderer.invoke("fpga-test"),
-  transferToFpga: (title: string) => ipcRenderer.invoke("fpga-transfer", title),
-  transferLibraryToFpga: (title: string) => ipcRenderer.invoke("fpga-transfer-library", title),
+  transferToFpga: (title: string, platform: string) => ipcRenderer.invoke("fpga-transfer", title, platform),
+  transferLibraryToFpga: (title: string, platform: string) => ipcRenderer.invoke("fpga-transfer-library", title, platform),
   getLibraryCart: () => ipcRenderer.invoke("library-cart-get"),
   removeLibraryCartItem: (id: string) => ipcRenderer.invoke("library-cart-remove", id),
   checkoutLibraryCart: () => ipcRenderer.invoke("library-cart-checkout"),

@@ -56,6 +56,33 @@ describe("managed library", () => {
     expect(item.files).toEqual([path.join(dir, "Games", "GBA", "Advance Wars (USA).gba")]);
   });
 
+  it("keeps the canonical Saturn core folder in newly queued records", async () => {
+    const dir = await root();
+    const incoming = path.join(dir, "incoming");
+    await fs.mkdir(incoming);
+    const source = path.join(incoming, "NiGHTS into Dreams (USA).chd");
+    await fs.writeFile(source, "disc");
+    const item = await finalizeDownload({ root: dir, title: "NiGHTS into Dreams", platform: "SAT", downloadedFiles: [source] });
+    expect(item.platform).toBe("Saturn");
+    expect(item.directory).toBe(path.join(dir, "Games", "Saturn", "NiGHTS into Dreams"));
+  });
+
+  it("converts catalog platform IDs into the matching MiSTer folders", async () => {
+    const dir = await root();
+    const incoming = path.join(dir, "incoming");
+    await fs.mkdir(incoming);
+    const psx = path.join(incoming, "Ridge Racer.chd");
+    const n64 = path.join(incoming, "Mario Kart 64.z64");
+    await Promise.all([fs.writeFile(psx, "disc"), fs.writeFile(n64, "cart")]);
+
+    const disc = await finalizeDownload({ root: dir, title: "Ridge Racer", platform: "PS1", downloadedFiles: [psx] });
+    const cart = await finalizeDownload({ root: dir, title: "Mario Kart 64", platform: "N64", downloadedFiles: [n64] });
+    expect(disc.platform).toBe("PSX");
+    expect(disc.directory).toBe(path.join(dir, "Games", "PSX", "Ridge Racer"));
+    expect(cart.platform).toBe("N64");
+    expect(cart.directory).toBe(path.join(dir, "Games", "N64"));
+  });
+
   it("keeps a patched copy visibly marked when it is queued for transfer", async () => {
     const dir = await root();
     const file = path.join(dir, "Games", "PSX", "Mizzurna Falls (English)", "Mizzurna Falls (Japan).bin");

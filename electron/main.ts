@@ -41,6 +41,8 @@ import {
   DEVICE_PLATFORMS,
   deviceEntryTitle,
   deviceFolderForCatalog,
+  deviceFolderForPlatformId,
+  deviceFolderForStored,
   devicePlatform,
   isDeviceFolder,
   isGameEntry,
@@ -685,7 +687,7 @@ const refreshFpgaInventory = async () => {
   return inventoryRefresh;
 };
 ipcMain.handle("fpga-settings-get", publicFpga);
-ipcMain.handle("fpga-inventory-get", async (_e, catalog: (InventoryCatalogGame & { platform?: DevicePlatform })[]) => {
+ipcMain.handle("fpga-inventory-get", async (_e, catalog: (InventoryCatalogGame & { platform?: string })[]) => {
   const settings = await readSettings();
   const f = settings.fpga;
   if (!f) return { status: "unconfigured" as const, gameIds: [] };
@@ -695,7 +697,16 @@ ipcMain.handle("fpga-inventory-get", async (_e, catalog: (InventoryCatalogGame &
     // one written before this field was a map still carries `psxFolders`.
     const folders: Partial<Record<DevicePlatform, string[]>> =
       cached.folders ?? { PSX: (cached as any).psxFolders ?? [] };
-    return { status: "ready" as const, gameIds: devicePlatforms.flatMap((platform) => matchRemoteTitles(folders[platform] ?? [], catalog.filter((game) => (game.platform ?? "PSX") === platform))), scannedAt: cached.scannedAt };
+    return {
+      status: "ready" as const,
+      gameIds: devicePlatforms.flatMap((platform) =>
+        matchRemoteTitles(
+          folders[platform] ?? [],
+          catalog.filter((game) => deviceFolderForPlatformId(game.platform) === platform),
+        ),
+      ),
+      scannedAt: cached.scannedAt,
+    };
   }
   // Fire this exactly once per device configuration; the initial paint and all
   // scrolling remain local while SFTP answers in the background.
@@ -1064,25 +1075,33 @@ ipcMain.handle("library-cart-checkout", async () => {
   const completed = await checkoutCart(libraryRoot(), async (item) => {
     // Cart items store the core folder; a console the build does not carry is
     // refused by name rather than silently transferred into the wrong folder.
-    const platform = isDeviceFolder(item.platform) ? item.platform : undefined;
+    const platform = deviceFolderForStored(item.platform);
     if (!platform) throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
     await transferFilesToFpga(item.title, item.files, platform);
   }, () => win?.webContents.send("library-changed"));
   return { items: completed.length, files: completed.reduce((sum, item) => sum + item.files.length, 0) };
 });
-ipcMain.handle("fpga-transfer", async (_e, gameTitle: string) => {
+ipcMain.handle("fpga-transfer", async (_e, gameTitle: string, catalogPlatform?: string) => {
+  const platform = deviceFolderForCatalog(catalogPlatform);
+  const definition = devicePlatform(platform);
   const picked = await dialog.showOpenDialog(win!, {
     title: `Select ${gameTitle} game files`,
     properties: ["openFile", "multiSelections"],
-    filters: [{ name: "MiSTer CD images", extensions: ["chd", "cue", "bin"] }],
+    filters: [{ name: `${definition.label} game files`, extensions: definition.extensions.map((extension) => extension.slice(1)) }],
   });
   if (picked.canceled || !picked.filePaths.length) return { canceled: true };
-  return transferFilesToFpga(gameTitle, picked.filePaths);
+  return transferFilesToFpga(gameTitle, picked.filePaths, platform);
 });
-ipcMain.handle("fpga-transfer-library", async (_e, gameTitle: string) => {
-  const item = (await getCart(libraryRoot())).find((entry) => entry.title === gameTitle);
+ipcMain.handle("fpga-transfer-library", async (_e, gameTitle: string, catalogPlatform?: string) => {
+  const platform = deviceFolderForCatalog(catalogPlatform);
+  // A title alone is not an identity: the same title can exist in several
+  // console libraries. The renderer supplies its catalog platform and legacy
+  // all-caps SATURN records are normalized before comparison.
+  const item = (await getCart(libraryRoot())).find(
+    (entry) => entry.title === gameTitle && deviceFolderForStored(entry.platform) === platform,
+  );
   if (!item) throw new Error("This game is not currently in the MiSTer cart.");
-  const result = await transferFilesToFpga(gameTitle, item.files);
+  const result = await transferFilesToFpga(gameTitle, item.files, platform);
   await removeFromCart(libraryRoot(), item.id);
   win?.webContents.send("library-changed");
   return result;
