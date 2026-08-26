@@ -1720,9 +1720,11 @@ footer {
   z-index: 100;
 }
 .settings-modal {
-  width: min(620px, calc(100vw - 32px));
+  width: min(760px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: #171a1c;
   border: 1px solid #44494c;
   border-radius: 10px;
@@ -1736,6 +1738,46 @@ footer {
 .settings-modal > div:first-child button {
   border: 0;
   background: transparent;
+  cursor: pointer;
+}
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 18px 0 0;
+  border-bottom: 1px solid #34383a;
+}
+.settings-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #8f9699;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: 600 12px "Space Grotesk";
+}
+.settings-tabs button:hover { color: #e8e8e6; }
+.settings-tabs button.active {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+}
+.settings-panel {
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 4px 8px 0;
+}
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+  border-top: 1px solid #34383a;
+}
+.settings-footer .save-provider {
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 16px;
+  background: var(--amber);
+  color: #111;
+  font-weight: 700;
   cursor: pointer;
 }
 .settings-modal h2 {
@@ -1780,6 +1822,33 @@ footer {
   background: var(--amber);
   border-color: var(--amber);
 }
+.collection-sources { display: grid; gap: 12px; margin-top: 18px; }
+.collection-source {
+  padding: 12px;
+  border: 1px solid #34393b;
+  border-radius: 7px;
+  background: #101214;
+}
+.collection-source label { margin-top: 0; }
+.collection-source label > span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 7px;
+}
+.collection-source input { margin-top: 0; }
+.collection-source button {
+  min-width: 86px;
+  border: 1px solid #555c60;
+  border-radius: 6px;
+  padding: 0 13px;
+  background: #24292c;
+  color: var(--cyan);
+  font-weight: 700;
+  cursor: pointer;
+}
+.collection-source button:disabled { opacity: .45; cursor: default; }
+.collection-source .index-status { display: block; margin-top: 7px; }
 .test-result {
   padding: 9px 11px;
   background: #101214;

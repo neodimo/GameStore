@@ -36,6 +36,7 @@ import {
   deviceFolderLabel,
   platformLabel,
   platformOf,
+  type PlatformId,
 } from "./platforms";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
@@ -1414,6 +1415,7 @@ function ProviderSettings({
   favorites: Set<string>;
   onClose: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<"general" | "downloads" | "media" | "device">("general");
   const [key, setKey] = useState("");
   const [saved, setSaved] = useState(false);
   const [exported, setExported] = useState(false);
@@ -1437,7 +1439,7 @@ function ProviderSettings({
    * adding to it. Every console in the registry now gets its own slot.
    */
   const [collectionUrls, setCollectionUrls] = useState<Record<string, string>>({});
-  const [indexing, setIndexing] = useState("");
+  const [indexing, setIndexing] = useState<Record<string, string>>({});
   const [devices, setDevices] = useState<NetworkCandidate[]>([]);
   const [scan, setScan] = useState("");
   const [cache, setCache] = useState<MediaCacheStats | null>(null);
@@ -1480,40 +1482,51 @@ function ProviderSettings({
     });
     return () => { stopProgress?.(); stopLocating?.(); stopMoved?.(); };
   }, []);
-  /**
-   * Saving a collection source is also when it gets indexed. Every Add to Cart
-   * used to re-download the whole `.torrent` — up to 64 MB — and re-decode its
-   * bencode before it could rank one filename, so searching felt like indexing
-   * because it was. The manifest is parsed once, here, and kept.
-   */
-  const save = async () => {
-    await window.gameStore?.setTheGamesDbKey(key);
-    await window.gameStore?.setFpgaSettings(device);
-    // Merge by platform. Editing one console's URL must never drop another's,
-    // and clearing a field is how a source is removed.
-    const collections: CollectionSource[] = PLATFORMS.flatMap((platform) => {
+  const configuredCollections = (): CollectionSource[] =>
+    PLATFORMS.flatMap((platform) => {
       const url = (collectionUrls[platform.id] ?? "").trim();
       if (!url) return [];
       const existing = debridState.collections.find(
         (source) => source.platform === platform.id,
       );
-      return [{ name: existing?.name ?? `${platform.shortLabel} collection`, url, platform: platform.id }];
+      return [{
+        name: existing?.name ?? `${platform.shortLabel} collection`,
+        url,
+        platform: platform.id,
+      }];
     });
+
+  /** Saving persists settings only. Collection indexing is an explicit per-console action. */
+  const save = async () => {
+    await window.gameStore?.setTheGamesDbKey(key);
+    await window.gameStore?.setFpgaSettings(device);
+    const collections = configuredCollections();
     setDebridState(
       (await window.gameStore?.setDebridSettings({ ...debrid, collections })) ??
         debridState,
     );
-    for (const source of collections) {
-      setIndexing(`Indexing ${source.name}…`);
-      try {
-        const result = await window.gameStore!.indexCollection(source);
-        setIndexing(`${source.name}: ${result.files.toLocaleString()} files indexed`);
-      } catch (e) {
-        setIndexing(e instanceof Error ? e.message : String(e));
-      }
-    }
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
+  };
+  const indexCollection = async (platformId: PlatformId) => {
+    const collections = configuredCollections();
+    const source = collections.find((candidate) => candidate.platform === platformId);
+    if (!source) return;
+    setIndexing((current) => ({ ...current, [platformId]: `Indexing ${source.name}…` }));
+    try {
+      const nextState = await window.gameStore!.setDebridSettings({ ...debrid, collections });
+      setDebridState(nextState);
+      const result = await window.gameStore!.indexCollection(source);
+      setIndexing((current) => ({
+        ...current,
+        [platformId]: `${result.files.toLocaleString()} files indexed`,
+      }));
+    } catch (error) {
+      setIndexing((current) => ({
+        ...current,
+        [platformId]: error instanceof Error ? error.message : String(error),
+      }));
+    }
   };
   /** Authentication is intentionally separate from console media discovery. */
   const loginEmuMovies = async () => {
@@ -1623,6 +1636,25 @@ function ProviderSettings({
             <X />
           </button>
         </div>
+        <nav className="settings-tabs" aria-label="Settings sections">
+          {([
+            ["general", "General"],
+            ["downloads", "Downloads"],
+            ["media", "Media"],
+            ["device", "MiSTer"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              className={activeTab === id ? "active" : ""}
+              aria-selected={activeTab === id}
+              onClick={() => setActiveTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="settings-panel">
+        {activeTab === "general" && <>
         <h2>Artwork scrapers</h2>
         <p>
           Libretro works without configuration. Add your TheGamesDB key to
@@ -1652,7 +1684,8 @@ function ProviderSettings({
             <Download /> {exported ? "Shelf exported" : "Export favorites"}
           </button>
         </div>
-        <hr />
+        </>}
+        {activeTab === "downloads" && <>
         <h2><Download /> Download providers</h2>
         <p>
           Paste provider API tokens here. They are encrypted locally and omitted from logs, exports, and catalog data. Game downloads land under Documents/GameStore/Games.
@@ -1665,24 +1698,39 @@ function ProviderSettings({
           TorBox API token {debridState.hasTorBox && <small>· saved</small>}
           <input type="password" value={debrid.torbox} onChange={(e) => setDebrid({ ...debrid, torbox: e.target.value })} placeholder="Blank keeps saved token" />
         </label>
+        <div className="collection-sources">
         {PLATFORMS.map((platform) => {
           const saved = debridState.collections.find((source) => source.platform === platform.id);
-          return <label key={platform.id}>
-            {platform.label} collection torrent URL {saved && <small>· saved</small>}
-            <input
-              value={collectionUrls[platform.id] ?? ""}
-              onChange={(e) => setCollectionUrls((prev) => ({ ...prev, [platform.id]: e.target.value }))}
-              placeholder="Paste one HTTPS .torrent URL once"
-            />
-          </label>;
+          const status = indexing[platform.id];
+          const busy = status?.startsWith("Indexing ");
+          return <div className="collection-source" key={platform.id}>
+            <label>
+              {platform.label} collection torrent URL {saved && <small>· saved</small>}
+              <span>
+                <input
+                  value={collectionUrls[platform.id] ?? ""}
+                  onChange={(e) => setCollectionUrls((prev) => ({ ...prev, [platform.id]: e.target.value }))}
+                  placeholder="Paste one HTTPS .torrent URL"
+                />
+                <button
+                  disabled={busy || !(collectionUrls[platform.id] ?? "").trim()}
+                  onClick={() => void indexCollection(platform.id)}
+                >
+                  {busy ? "Indexing…" : saved ? "Re-index" : "Index"}
+                </button>
+              </span>
+            </label>
+            {status && <small className="index-status">{status}</small>}
+          </div>;
         })}
-        <small>One source per console. GameStore indexes only sources you configure, once, when you save; every game then finds its exact file instantly. Clearing a field removes that console's source.</small>
-        {indexing && <p className="index-status">{indexing}</p>}
+        </div>
+        <small>One source per console. Save stores the URLs; use that console's Index button to build or refresh its file list. Clearing a field removes that console's source when settings are saved.</small>
         <div className="settings-actions split-actions">
           <button onClick={() => testDebridProvider("realdebrid")}>Test Real-Debrid</button>
           <button onClick={() => testDebridProvider("torbox")}>Test TorBox</button>
         </div>
-        <hr />
+        </>}
+        {activeTab === "media" && <>
         <h2><Film /> EmuMovies account</h2>
         <p>
           Sign in and GameStore uses EmuMovies video snaps for previews — one
@@ -1807,7 +1855,8 @@ function ProviderSettings({
             <Trash2 /> Clear media
           </button>
         </div>
-        <hr />
+        </>}
+        {activeTab === "device" && <>
         <h2>
           <Wifi /> SuperStation / MiSTer
         </h2>
@@ -1907,11 +1956,15 @@ function ProviderSettings({
               setTest(error instanceof Error ? error.message : String(error));
             }
           }}>Refresh device library</button>
+        </div>
+        </>}
+        </div>
+        {test && <p className="test-result">{test}</p>}
+        <div className="settings-footer">
           <button className="save-provider" onClick={save}>
             {saved ? "Saved" : "Save settings"}
           </button>
         </div>
-        {test && <p className="test-result">{test}</p>}
       </section>
       {scrapeDialog && (
         <div className="scrape-dialog-backdrop" onMouseDown={(event) => {
