@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-25 — v0.18.1 combined settings and console-platform release
+
+- **What was done:** Merged Bert's Settings tabs/per-console indexing control commit (`0e974f0`) with the console-platform registry cleanup and the unreleased retail-release/Saturn-transfer fixes. Settings now separates General, Downloads, Media, and MiSTer; saving configuration does not bulk-index collections, while each configured console has its own Index/Re-index control. Platform behavior is centrally derived for PS1, N64, and Saturn across inventory, routing, transfer, deletion, picker filtering, and BIOS checks.
+- **Evidence:** The combined tree is `master` commit pending release tag. `npm test`, `npm run lint`, `npm run build`, and size checks are the release verification gates. Bert reported 190 tests passed; his remaining worker exhausted the pre-existing 2 GB Node heap ceiling, so the combined full suite is rerun here before publication.
+- **Artifacts:** Source is committed on `master`; the published installer and workflow evidence will be attached to GitHub release `v0.18.1`. No device writes are part of this release operation.
+- **State:** Release in progress. The highest-risk transfer fixes are unit/build-verified; a real Saturn transfer remains a post-install device acceptance check because it writes to MiSTer.
+- **Next owner + concrete artifact:** Gonzo owns tagging/publishing and CI verification. Omid's acceptance artifact is the v0.18.1 Windows installer; validate a Saturn send resolves `/media/fat/games/Saturn/<title>/` and use a configured console's adjacent Index button.
+
 ## 2026-08-25 — consolidate console-specific device and library rules
 
 - **What was done:** Extended the shared console registry so catalog identities (`PS1`, `N64`, `SAT`) are translated centrally to their MiSTer core folders (`PSX`, `N64`, `Saturn`). Registered consoles now draw their accepted extensions and flat-vs-per-game-folder layout from that one registry for download finalization, cart records, manual-file picker filters, device transfer paths, device inventory, deletion, and BIOS status. This corrects two remaining catalog/core-name mismatches: downloads arriving from the Saturn catalog now queue as `Saturn`, and inventory matching recognizes every catalog platform after the renderer's core-folder mapping. Unknown legacy local-library platforms keep the generic fallback.
