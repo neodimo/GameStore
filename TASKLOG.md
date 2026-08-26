@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-25 — v0.18.2 published and CI-verified
+
+- **What was done:** Published GameStore `v0.18.2` from `master` commit `104b8c7`, including Bert's left Settings sidebar merge and the discovery/navigation corrections.
+- **Evidence:** Tagged release workflow [32938234059](https://github.com/neodimo/GameStore/actions/runs/32938234059) passed: Linux in 2m57s and Windows in 4m06s. The public release is non-draft/non-prerelease and includes the Windows installer, Linux AppImage/Debian package, and updater manifests.
+- **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.18.2. Windows installer: `GameStore-Setup-0.18.2-x64.exe` (93,097,948 bytes). Source tag `v0.18.2` is pushed; this completion note will be committed/pushed on `master` immediately after publication.
+- **State:** Done. User-desktop visual acceptance remains useful for the newly explicit title-bar icon, because native window chrome differs across Windows/Linux desktops.
+- **Next owner + concrete artifact:** Omid owns acceptance with `GameStore-Setup-0.18.2-x64.exe`: hide a genre while in one console, return to All to confirm other libraries remain; open Platforms; collapse the sidebar; and verify the cartridge in the title bar.
+
 ## 2026-08-25 — discovery/navigation corrections and v0.18.2 release preparation
 
 - **What was done:** Merged Bert's left-sidebar Settings tab layout (`7b094d2`) into `master`, then fixed the catalog/navigation issues reported by Omid: genre exclusion state is now scoped to the active platform view; shelves are generated from the current console catalog; the flavor menu is populated from that same current scope; the shelf eyebrow text is removed; sort options are Title and Rating with real score ordering; the Platforms navigation item opens a dedicated platform chooser; and collapsed navigation hides labels while preserving 20px icons. Added the cartridge asset to the Electron window and packaged resources so the application title bar uses the same cartridge icon as the installer.
