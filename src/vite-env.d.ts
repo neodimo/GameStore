@@ -79,7 +79,7 @@ interface Window {
     onEmuMoviesProgress(listener: (message: string) => void): () => void;
     indexEmuMovies(system?: string, catalog?: { title: string; region: string; coverName?: string }[]): Promise<{ folder: string; quality: string; snaps: number; indexedAt: number; coverage?: { catalog: number; matched: number; unmatched: number; ambiguous: number } }>;
     forgetEmuMovies(): Promise<boolean>;
-    getEmuMoviesSnap(title: string, region: string, coverName?: string): Promise<EmuMoviesSnap | null>;
+    getEmuMoviesSnap(title: string, region: string, coverName?: string, system?: CatalogPlatformId): Promise<EmuMoviesSnap | null>;
     getUpdateStatus(): Promise<UpdateStatus>;
     checkForUpdates(): Promise<void>;
     downloadUpdate(): Promise<void>;
@@ -184,6 +184,7 @@ type EmuMoviesSettings = {
   snaps: number;
   quality: string;
   indexedAt: number;
+  manifests: { platform: CatalogPlatformId; snaps: number; quality: string; indexedAt: number }[];
 };
 type EmuMoviesProbe = {
   ok: boolean;

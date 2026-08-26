@@ -104,8 +104,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   indexEmuMovies: (system = "PS1", catalog: unknown[] = []) =>
     ipcRenderer.invoke("emumovies-index", system, catalog),
   forgetEmuMovies: () => ipcRenderer.invoke("emumovies-forget"),
-  getEmuMoviesSnap: (title: string, region: string, coverName?: string) =>
-    ipcRenderer.invoke("emumovies-snap", title, region, coverName),
+  getEmuMoviesSnap: (title: string, region: string, coverName?: string, system = "PS1") =>
+    ipcRenderer.invoke("emumovies-snap", title, region, coverName, system),
   getUpdateStatus: () => ipcRenderer.invoke("update-status-get"),
   checkForUpdates: () => ipcRenderer.invoke("update-check"),
   downloadUpdate: () => ipcRenderer.invoke("update-download"),

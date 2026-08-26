@@ -133,6 +133,8 @@ const LATER_SONY = /\b(2|3|4|5|portable|psp|vita)\b/i;
 
 const SYSTEM_ALIASES: Record<string, RegExp> = {
   PS1: /sony|playstation|psx/i,
+  N64: /nintendo\s*(?:64|n64)|\bn64\b/i,
+  SAT: /sega\s*saturn|\bsaturn\b/i,
 };
 
 const connect = async (credentials: EmuMoviesCredentials, secure: boolean) => {

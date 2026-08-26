@@ -430,14 +430,23 @@ const emuCredentials = async (): Promise<EmuMoviesCredentials | null> => {
 };
 ipcMain.handle("emumovies-settings-get", async () => {
   const stored = (await readSettings()).emumovies;
-  const manifest = await readSnapManifest(snapDir());
+  const manifests = (await Promise.all(DEVICE_PLATFORMS.map(async (platform) => {
+    const manifest = await readSnapManifest(snapDir(), platform.catalogId);
+    return manifest && {
+      platform: platform.catalogId,
+      snaps: manifest.files.length,
+      quality: manifest.quality,
+      indexedAt: manifest.indexedAt,
+    };
+  }))).flatMap((manifest) => manifest ? [manifest] : []);
   return {
     username: stored?.username ?? "",
     hasPassword: !!stored?.password,
-    indexed: !!manifest,
-    snaps: manifest?.files.length ?? 0,
-    quality: manifest?.quality ?? "",
-    indexedAt: manifest?.indexedAt ?? 0,
+    indexed: manifests.length > 0,
+    snaps: manifests.reduce((total, manifest) => total + manifest.snaps, 0),
+    quality: manifests.map((manifest) => manifest.quality).join(" / "),
+    indexedAt: Math.max(0, ...manifests.map((manifest) => manifest.indexedAt)),
+    manifests,
   };
 });
 /**
@@ -502,7 +511,9 @@ ipcMain.handle("emumovies-forget", async () => {
   );
   delete raw.emumovies;
   await writeSettings(raw);
-  await removeSnapManifest(snapDir());
+  await Promise.all(DEVICE_PLATFORMS.map((platform) =>
+    removeSnapManifest(snapDir(), platform.catalogId),
+  ));
   return true;
 });
 /**
@@ -513,10 +524,10 @@ ipcMain.handle("emumovies-forget", async () => {
  */
 ipcMain.handle(
   "emumovies-snap",
-  async (_e, title: string, region: string, coverName?: string) => {
+  async (_e, title: string, region: string, coverName?: string, system = "PS1") => {
     const credentials = await emuCredentials();
     if (!credentials) return null;
-    const manifest = await readSnapManifest(snapDir());
+    const manifest = await readSnapManifest(snapDir(), system);
     if (!manifest) return null;
     const match = matchSnap(manifest.files, title, region, coverName);
     if (!match) return null;

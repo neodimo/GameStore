@@ -738,6 +738,43 @@ const sourcedUsGames = usCatalog.map((seed) => {
 });
 const sourcedUsTitles = new Set(sourcedUsGames.map((game) => titleKey(game.title)));
 
+/**
+ * Provider genres are excellent factual labels but too broad to make a useful
+ * discovery menu on their own.  These repeatable flavor tags give every
+ * imported console a first-pass discovery vocabulary, while hand-curated tags
+ * on individual records remain additive.  New console imports flow through
+ * the same final catalog pass, so adding a platform cannot quietly create a
+ * flavor-less library.
+ */
+const genreFlavors: Record<string, string[]> = {
+  Action: ["Adrenaline"],
+  Adventure: ["Story rich"],
+  Arcade: ["Arcade reflexes"],
+  "Beat 'em up": ["Brawling"],
+  Fighting: ["Head to head"],
+  Horror: ["Midnight dread"],
+  Platformer: ["Precision platforming"],
+  Puzzle: ["Brainy"],
+  Racing: ["Road fever"],
+  Driving: ["Road fever"],
+  RPG: ["Epic journey"],
+  Shooter: ["Arcade reflexes"],
+  Simulation: ["Sim life"],
+  Sports: ["Sports night"],
+  Strategy: ["Deep systems"],
+  Wrestling: ["Head to head"],
+};
+const flavored = (game: Game): Game => {
+  const derived = game.genres.flatMap((genre) => genreFlavors[genre] ?? []);
+  return {
+    ...game,
+    facets: Array.from(new Set([
+      ...game.facets,
+      ...(derived.length ? derived : ["Classic pick"]),
+    ])).sort(),
+  };
+};
+
 // OpenVGDB supplies the complete English-language USA retail base. The prior
 // hand-verified Europe-only and translated Japan records remain eligible under
 // the project's existing regional rules. Missing source copy stays empty.
@@ -748,7 +785,7 @@ export const games: Game[] = [
     .map((game) => ({ ...game, curatorNote: undefined })),
   ...n64Games,
   ...saturnGames,
-];
+].map(flavored);
 
 type ShelfRecipe = { title: string; subtitle: string; matches: (game: Game) => boolean };
 const shelfRecipes: ShelfRecipe[] = [

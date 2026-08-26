@@ -120,6 +120,22 @@ describe("EmuMovies sign-in is bounded and honest about why it stopped", () => {
 });
 
 describe("EmuMovies FTP layout discovery", () => {
+  it.each([
+    ["N64", "Nintendo 64"],
+    ["SAT", "Sega Saturn"],
+  ])("finds %s video folders through its console alias", async (system, folderName) => {
+    const root = `/Official/Video Snaps (HQ)/${folderName}`;
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Official")],
+      "/Official": [directory("Video Snaps (HQ)")],
+      "/Official/Video Snaps (HQ)": [directory(folderName)],
+      [root]: [video("Example Game (USA).mp4")],
+    };
+    expect((await findSnapFolders(fakeClient(tree), system)).folders).toEqual([
+      { path: root, quality: "HQ480" },
+    ]);
+  });
+
   it("prioritizes the requested console's video branch over broad media siblings", async () => {
     const visited: string[] = [];
     const root = "/Official/Video Snaps (HQ)/Sony Playstation";

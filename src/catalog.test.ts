@@ -158,4 +158,5 @@ describe('catalog invariants',()=>{
   expect(vocabulary.has('Platformer')).toBe(true);
  });
  it('builds replaceable discovery shelves',()=>{const low=createCuratedShelves(()=>0);const high=createCuratedShelves(()=>0.999);expect(low).toHaveLength(4);expect(high).toHaveLength(4);expect(low.map(s=>s.title)).not.toEqual(high.map(s=>s.title));for(const shelf of [...low,...high])expect(shelf.ids.length).toBeGreaterThan(0)});
+ it('gives every current console a discovery flavor vocabulary',()=>{for(const platform of ['PS1','N64','SAT']){const library=games.filter(game=>game.platform===platform);expect(library.length).toBeGreaterThan(0);expect(library.filter(game=>game.facets.length>0).length/library.length).toBeGreaterThan(.95);expect(createCuratedShelves(()=>.5,library).length).toBeGreaterThan(0)}});
 });

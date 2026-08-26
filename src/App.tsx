@@ -27,7 +27,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { createCuratedShelves, facetOrder, games, metaLine, Game } from "./catalog";
+import { createCuratedShelves, games, metaLine, Game } from "./catalog";
 import { translationFor } from "./translationManifest";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import {
@@ -104,7 +104,16 @@ function Catalog() {
   const genres = useMemo(() => Array.from(new Set(visiblePlatformGames.flatMap((g) => g.genres))).sort(), [visiblePlatformGames]);
   const flavors = useMemo(() => Array.from(new Set(visiblePlatformGames.flatMap((g) => g.facets))).sort(), [visiblePlatformGames]);
   const hiddenGenres = useMemo(() => new Set(hiddenGenresByPlatform[platform] ?? []), [hiddenGenresByPlatform, platform]);
-  const curatedShelves = useMemo(() => createCuratedShelves(Math.random, visiblePlatformGames), [visiblePlatformGames]);
+  const discoveryShelves = useMemo(() => {
+    const scopes = platform === "All" ? PLATFORMS : [platformOf(platform)];
+    return scopes.map((definition) => ({
+      platform: definition,
+      shelves: createCuratedShelves(
+        Math.random,
+        games.filter((game) => game.platform === definition.id),
+      ),
+    }));
+  }, [platform]);
   const filtered = useMemo(
     () =>
       visiblePlatformGames
@@ -349,7 +358,9 @@ function Catalog() {
             </select>
           </div>
           {!browsing && <div className="curated-shelves">
-            {curatedShelves.map((shelf) => (
+            {discoveryShelves.map(({ platform: shelfPlatform, shelves }) => <section className="console-shelves" key={shelfPlatform.id}>
+              {platform === "All" && <h2>{shelfPlatform.label}</h2>}
+              {shelves.map((shelf) => (
               <section className="feature" key={shelf.title}>
                 <div>
                   <h1>{shelf.title}</h1>
@@ -367,7 +378,8 @@ function Catalog() {
                     ))}
                 </div>
               </section>
-            ))}
+              ))}
+            </section>)}
           </div>}
           <div className="catalog-head">
             <div>
@@ -1453,7 +1465,7 @@ function ProviderSettings({
   const [emuState, setEmuState] = useState<EmuMoviesSettings | null>(null);
   const [emuStatus, setEmuStatus] = useState("");
   const [emuBusy, setEmuBusy] = useState(false);
-  const [emuSystem, setEmuSystem] = useState("PS1");
+  const [emuSystem, setEmuSystem] = useState<"All" | PlatformId>("All");
   const [scrapeDialog, setScrapeDialog] = useState(false);
   const [skipExistingMedia, setSkipExistingMedia] = useState(() =>
     localStorage.getItem("gamestore:scraping:skip-existing") !== "false",
@@ -1579,19 +1591,26 @@ function ProviderSettings({
   };
   const indexEmuMovies = async () => {
     setEmuBusy(true);
-    setEmuStatus(`Targeting ${emuSystem} video snaps…`);
+    const targets = emuSystem === "All" ? PLATFORMS : [platformOf(emuSystem)];
+    setEmuStatus(`Targeting ${targets.map((platform) => platform.shortLabel).join(", ")} video snaps…`);
     const stopProgress = window.gameStore!.onEmuMoviesProgress(setEmuStatus);
     try {
-      const indexed = await window.gameStore!.indexEmuMovies(
-        emuSystem,
-        games.map(({ title, region, coverName }) => ({ title, region, coverName })),
-      );
-      const coverage = indexed.coverage;
-      setEmuStatus(
-        coverage
-          ? `${emuSystem}: ${coverage.matched.toLocaleString()} of ${coverage.catalog.toLocaleString()} games matched from ${indexed.snaps.toLocaleString()} ${indexed.quality} provider files; ${coverage.ambiguous.toLocaleString()} ambiguous and ${coverage.unmatched.toLocaleString()} unavailable. Downloads remain per-game and on demand.`
-          : `${emuSystem}: ${indexed.snaps.toLocaleString()} ${indexed.quality} provider files indexed. Downloads remain per-game and on demand.`,
-      );
+      const results = await Promise.allSettled(targets.map(async (platform) => ({
+        platform,
+        indexed: await window.gameStore!.indexEmuMovies(
+          platform.id,
+          games.filter((game) => game.platform === platform.id).map(({ title, region, coverName }) => ({ title, region, coverName })),
+        ),
+      })));
+      const messages = results.map((result, index) => {
+        const label = targets[index].shortLabel;
+        if (result.status === "rejected") return `${label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`;
+        const { indexed } = result.value;
+        return indexed.coverage
+          ? `${label}: ${indexed.coverage.matched.toLocaleString()}/${indexed.coverage.catalog.toLocaleString()} matched`
+          : `${label}: ${indexed.snaps.toLocaleString()} files indexed`;
+      });
+      setEmuStatus(`${messages.join(" · ")}. Downloads remain per-game and on demand.`);
       setEmuState(await window.gameStore!.getEmuMoviesSettings());
       setScrapeDialog(false);
     } catch (error) {
@@ -1847,7 +1866,7 @@ function ProviderSettings({
             <span>
               <b>Video</b>
               <small>{emuState?.indexed
-                ? `${emuState.snaps.toLocaleString()} ${emuState.quality} EmuMovies snaps available for Sony PlayStation.`
+                ? `${emuState.snaps.toLocaleString()} EmuMovies snaps indexed across ${emuState.manifests.length} console${emuState.manifests.length === 1 ? "" : "s"}.`
                 : "EmuMovies video snaps, matched by console and preferred region."}</small>
             </span>
             <button disabled={!emuState?.hasPassword || emuBusy} onClick={() => setScrapeDialog(true)}>
@@ -2012,19 +2031,20 @@ function ProviderSettings({
             </p>
             <label>
               Console
-              <select value={emuSystem} onChange={(event) => setEmuSystem(event.target.value)}>
-                <option value="PS1">Sony PlayStation</option>
+              <select value={emuSystem} onChange={(event) => setEmuSystem(event.target.value as "All" | PlatformId)}>
+                <option value="All">All current consoles</option>
+                {PLATFORMS.map((platform) => <option key={platform.id} value={platform.id}>{platform.label}</option>)}
               </select>
             </label>
             <div className="scrape-summary">
               <Film />
-              <span><b>EmuMovies video snaps</b><small>One region-preferred, Disc-1-first match per catalog title. Demos and other consoles are excluded.</small></span>
+              <span><b>EmuMovies video snaps</b><small>One region-preferred, Disc-1-first match per catalog title for every selected console. Demos and other non-retail releases are excluded.</small></span>
             </div>
             {emuStatus && <p className="index-status">{emuStatus}</p>}
             <footer>
               <button disabled={emuBusy} onClick={() => setScrapeDialog(false)}>Cancel</button>
               <button className="primary" disabled={emuBusy} onClick={indexEmuMovies}>
-                {emuBusy ? "Scraping Sony PlayStation…" : "Scrape Sony PlayStation video"}
+                {emuBusy ? "Scraping video…" : emuSystem === "All" ? "Scrape all console video" : `Scrape ${platformOf(emuSystem).label} video`}
               </button>
             </footer>
           </section>

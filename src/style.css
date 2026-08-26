@@ -375,6 +375,8 @@ main {
 .feature {
   margin: 27px 0 34px;
 }
+.console-shelves + .console-shelves { border-top: 1px solid #2b2e30; margin-top: 42px; padding-top: 12px; }
+.console-shelves > h2 { margin: 8px 0 -3px; color: var(--amber); font: 600 21px "Space Grotesk"; }
 .feature > div:first-child {
   display: flex;
   align-items: baseline;

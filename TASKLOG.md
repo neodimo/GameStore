@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-25 — multi-console EmuMovies, console discovery shelves, and flavor coverage
+
+- **What was done:** Removed the remaining PS1-only EmuMovies assumptions. Each registered console now has a provider alias and its own manifest; previews request the manifest for the game’s actual platform; Media settings offer **All current consoles** plus each individual console. Discover now builds shelves from each selected console’s library. In the all-platform view, shelves are grouped by console rather than drawn from one mixed pool. Platforms remains a console chooser without curated shelves. Added a shared genre-to-flavor pass across all catalog records, preserving hand-curated flavors and assigning `Classic pick` to provider genres outside the semantic map so every current and future imported game has a discoverable flavor.
+- **Evidence:** Added EmuMovies discovery tests for Nintendo 64 and Sega Saturn, plus a catalog invariant that every registered console has flavor coverage and produces discovery shelves. `npm run lint`, `npm test` (**14 files / 203 tests**), `npm run build`, and `git diff --check` pass.
+- **Artifacts:** Modified `electron/emuMovies.ts`, `electron/main.ts`, `electron/preload.ts`, `electron/emuMovies.test.ts`, `src/mediaLibrary.ts`, `src/vite-env.d.ts`, `src/App.tsx`, `src/catalog.ts`, `src/catalog.test.ts`, and `src/style.css`. Changes are local pending commit at this entry; no installer or device write has been published/performed.
+- **State:** Done locally and verified. Provider-side folder visibility/coverage for N64 and Saturn remains account-dependent and will report per-console rather than pretending the PS1 index applies to them.
+- **Next owner + concrete artifact:** Gonzo owns committing/pushing this batch. Omid can use Settings → Media → **Scrape all console video** after installing a build that contains it; the status will state PS1/N64/Saturn results separately.
+- **Failure mode:** One default argument (`PS1`) existed in both indexing UI and snap lookup. That made cross-console support impossible even if an alternate manifest were created: a preview would keep reading PS1. Console identity must travel from the `Game` record through every media lookup, and settings summaries must retain one manifest per console.
+
 ## 2026-08-25 — v0.18.2 published and CI-verified
 
 - **What was done:** Published GameStore `v0.18.2` from `master` commit `104b8c7`, including Bert's left Settings sidebar merge and the discovery/navigation corrections.
