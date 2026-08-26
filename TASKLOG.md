@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-26 — v0.18.5 published and CI-verified
+
+- **What was done:** Published GameStore `v0.18.5`, carrying the N64 EmuMovies nested-layout discovery repair.
+- **Evidence:** Tagged release workflow [32948274696](https://github.com/neodimo/GameStore/actions/runs/32948274696) passed: Linux in 3m09s and Windows in 5m16s. Both jobs ran clean installs, tests, lint, media-light and package-size checks before publishing. The public release is non-draft/non-prerelease.
+- **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.18.5. Windows installer: `GameStore-Setup-0.18.5-x64.exe` (93,098,864 bytes); Linux AppImage: `GameStore-0.18.5-x86_64.AppImage`; Debian package: `GameStore-0.18.5-amd64.deb`. Source tag `v0.18.5` is commit `f76be164006ae0f2615b2d457e77320969c1951c` on `master`.
+- **State:** Released. Provider-account acceptance remains the one deliberately unclaimed fact: the application now handles bounded nested layouts, but no EmuMovies credential was present in this runtime to inspect the live N64 tree.
+- **Next owner + concrete artifact:** Omid installs `GameStore-Setup-0.18.5-x64.exe` and runs Settings → Media → Scrape **Nintendo 64**. The status line should report N64 files/matches; if it still fails, its exact status text is the next diagnostic artifact.
+
 ## 2026-08-26 — N64 EmuMovies nested-layout discovery repair
 
 - **What was done:** Replaced the final-path-name assumption in EmuMovies N64 discovery. Once the scanner has entered a verified Nintendo manufacturer branch or N64 system branch, it now follows neutral intermediate folders through the existing bounded crawl and accepts real video files below the console branch even when the final directory has a generic name such as `MP4`, `USA`, or `HD`.
