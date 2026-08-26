@@ -133,8 +133,20 @@ const LATER_SONY = /\b(2|3|4|5|portable|psp|vita)\b/i;
 
 const SYSTEM_ALIASES: Record<string, RegExp> = {
   PS1: /sony|playstation|psx/i,
-  N64: /nintendo\s*(?:64|n64)|\bn64\b/i,
+  N64: /nintendo\W*(?:64|n64)|\bn64\b/i,
   SAT: /sega\s*saturn|\bsaturn\b/i,
+};
+
+/**
+ * Provider libraries may group consoles under a manufacturer before naming
+ * the individual system (`/Nintendo/Nintendo 64/...`). These aliases are only
+ * navigation hints: a vendor folder is worth descending into, but it is never
+ * accepted as the requested console's video folder by itself.
+ */
+const SYSTEM_GROUP_ALIASES: Record<string, RegExp> = {
+  PS1: /\bsony\b/i,
+  N64: /\bnintendo\b/i,
+  SAT: /\bsega\b/i,
 };
 
 const connect = async (credentials: EmuMoviesCredentials, secure: boolean) => {
@@ -230,14 +242,15 @@ export type SnapScan = { folders: SnapFolder[]; truncated: boolean };
  * carrying both the requested console and video language are nearly terminal,
  * followed by video/quality branches and system-first branches.
  */
-const discoveryScore = (remote: string, alias: RegExp) => {
+const discoveryScore = (remote: string, alias: RegExp, groupAlias: RegExp) => {
   const system = alias.test(remote) && !LATER_SONY.test(remote);
+  const group = groupAlias.test(remote);
   const snaps = SNAP_FOLDER.test(remote);
   const video = VIDEO_FOLDER.test(remote);
   const quality = qualityOf(remote);
   const qualityScore = quality === "HD1080" ? 40 : quality === "HQ480" ? 30 : quality === "SQ240" ? 20 : 0;
   return (system && video ? 200 : 0) + (snaps ? 100 : video ? 60 : 0) +
-    (system ? 80 : 0) + qualityScore + (/official/i.test(remote) ? 20 : 0);
+    (system ? 80 : group ? 30 : 0) + qualityScore + (/official/i.test(remote) ? 20 : 0);
 };
 
 export const findSnapFolders = async (
@@ -247,6 +260,7 @@ export const findSnapFolders = async (
   onProgress?: ProbeProgress,
 ): Promise<SnapScan> => {
   const alias = SYSTEM_ALIASES[system] ?? new RegExp(system, "i");
+  const groupAlias = SYSTEM_GROUP_ALIASES[system] ?? alias;
   const useful = /official|video|snap|media|download/i;
   const queue = [{ path: "/", depth: 0, score: Number.MAX_SAFE_INTEGER }];
   const visited = new Set<string>();
@@ -295,16 +309,18 @@ export const findSnapFolders = async (
     for (const name of directories(entries)) {
       const child = joinRemote(current.path, name);
       const childHasSystem = alias.test(name) && !LATER_SONY.test(name);
+      const childHasGroup = groupAlias.test(name);
       const childHasVideo = VIDEO_FOLDER.test(name);
       const relevant =
         childHasSystem ||
+        childHasGroup ||
         childHasVideo ||
         useful.test(name) ||
         qualityOf(name) !== "Unknown";
       if (relevant) queue.push({
         path: child,
         depth: current.depth + 1,
-        score: discoveryScore(child, alias),
+        score: discoveryScore(child, alias, groupAlias),
       });
     }
     if (found.length && (found.some((item) => item.quality === "HD1080") &&

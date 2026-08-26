@@ -136,6 +136,32 @@ describe("EmuMovies FTP layout discovery", () => {
     ]);
   });
 
+  it.each([
+    ["N64", "Nintendo", "Nintendo 64"],
+    ["SAT", "Sega", "Sega Saturn"],
+  ])("descends through the %s manufacturer group", async (system, group, folderName) => {
+    const root = `/${group}/${folderName}/Video Snaps`;
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory(group)],
+      [`/${group}`]: [directory(folderName)],
+      [`/${group}/${folderName}`]: [directory("Video Snaps")],
+      [root]: [video("Example Game (USA).mp4")],
+    };
+    expect((await findSnapFolders(fakeClient(tree), system)).folders).toEqual([
+      { path: root, quality: "Unknown" },
+    ]);
+  });
+
+  it("recognises a separator in the provider's Nintendo 64 system name", async () => {
+    const root = "/Official/Video Snaps (HQ)/Nintendo - Nintendo 64";
+    expect((await findSnapFolders(fakeClient({
+      "/": [directory("Official")],
+      "/Official": [directory("Video Snaps (HQ)")],
+      "/Official/Video Snaps (HQ)": [directory("Nintendo - Nintendo 64")],
+      [root]: [video("Mario Kart 64 (USA).mp4")],
+    }), "N64")).folders).toEqual([{ path: root, quality: "HQ480" }]);
+  });
+
   it("prioritizes the requested console's video branch over broad media siblings", async () => {
     const visited: string[] = [];
     const root = "/Official/Video Snaps (HQ)/Sony Playstation";
