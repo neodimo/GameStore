@@ -12,6 +12,35 @@ import {
 } from "./devicePlatforms";
 
 describe("MiSTer remote library matching", () => {
+  /**
+   * Taken from a real MiSTer. A device entry is named after the release, so
+   * matching only the catalog's display title missed these: the article moves
+   * in the No-Intro name, `Pokémon` loses its accent, and No-Intro's own
+   * `Superman - The New Superman Aventures` carries a typo.
+   */
+  it("matches a device entry against the release name, not just the display title", () => {
+    const catalog = [
+      { id: "n64-zelda-oot", title: "The Legend of Zelda: Ocarina of Time", coverName: "Legend of Zelda, The - Ocarina of Time (USA)" },
+      { id: "n64-pokemon-snap", title: "Pokémon Snap", coverName: "Pokemon Snap (USA)" },
+      { id: "n64-superman-adventures", title: "Superman: The New Superman Adventures", coverName: "Superman - The New Superman Aventures (USA) (En,Fr,Es)" },
+      { id: "n64-absent", title: "A Game Not Installed", coverName: "A Game Not Installed (USA)" },
+    ];
+    expect(
+      matchRemoteTitles(
+        [
+          "Legend of Zelda, The - Ocarina of Time (USA) (Rev 2)",
+          "Pokemon Snap (USA)",
+          "Superman - The New Superman Aventures (USA) (En,Fr,Es)",
+        ],
+        catalog,
+      ),
+    ).toEqual(["n64-zelda-oot", "n64-pokemon-snap", "n64-superman-adventures"]);
+  });
+
+  it("folds diacritics so an accented catalog title matches a plain device entry", () => {
+    expect(normalizeRemoteTitle("Pokémon Stadium 2")).toBe("pokemon stadium 2");
+  });
+
   it("matches managed folders while ignoring release tags and punctuation", () => {
     expect(normalizeRemoteTitle("Future Cop - L.A.P.D. (USA)")).toBe("future cop l a p d");
     expect(matchRemoteTitles(["Future Cop - L.A.P.D. (USA)"], [
@@ -53,10 +82,17 @@ describe("device entries by console layout", () => {
     expect(games).not.toContain("media");
   });
 
-  it("reads a disc folder as directories and leaves loose files alone", () => {
+  /**
+   * `media` sits in the PlayStation folder too, on the same real device the
+   * N64 symptom was reported from. Excluding it only from the cartridge layout
+   * would have fixed the console it was noticed on and left it listed as a
+   * game on the console it was not.
+   */
+  it("reads a disc folder as directories, and media is not a game there either", () => {
     const psx = devicePlatform("PSX");
     const listing = [
       dir("Vagrant Story"),
+      dir("media"),
       file("boot.rom"),
       file("Some Stray Image.chd"),
       dir(".."),

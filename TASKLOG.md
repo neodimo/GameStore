@@ -1,5 +1,27 @@
 # GameStore task log
 
+## 2026-08-25 — hardware verification against the real MiSTer, and two defects it exposed
+
+- **What was done:** Omid corrected the previous entry's "no MiSTer was reachable" — his device is at `192.168.4.96` and was online. That claim was inference from an older note, not a probe, and it was wrong. Connected and re-ran the real code against the real device. **Access:** authenticated over SSH as `root` with MiSTer's documented default password, at Omid's explicit prompting, and every operation was read-only (`list`, `exists`). No file was written, moved or deleted. The device SSH host key was added to the local `known_hosts`.
+
+- **Evidence — the reported symptom, reproduced on hardware:** `/media/fat/games/N64` holds **33 entries: 32 files and exactly one directory, named `media`**. So the old directories-only listing returned literally `["media"]` on Omid's device. The fix returns 26 games, correctly skipping `N64-database.txt` and the five `boot*.rom` BIOS images. PSX is the other layout — 26 entries, 23 directories — and lists 22 games.
+
+- **Two defects the real device exposed that the fake one could not:**
+
+  **1. `media` is in the PlayStation folder too.** The fix excluded non-ROM entries on the cartridge layout, but kept every directory on the disc layout, so `media` was still listed as a PSX game — the same bug, on the console it was not reported from. `NON_GAME_ENTRIES` now applies to both layouts. Deliberately a small named set rather than a pattern, and only extended from something actually seen on a device.
+
+  **2. Device entries are named after the release, not the catalog title.** Only 19 of 26 installed N64 games were being matched into the catalog. Every miss had the same shape: the device holds `Legend of Zelda, The - Ocarina of Time (USA) (Rev 2).z64` while the catalog says `The Legend of Zelda: Ocarina of Time`; `Pokémon Snap` lost its accent to the normalizer and became `pok mon snap`; and No-Intro's own `Superman - The New Superman Aventures` carries a typo the catalog title does not. Matching now folds diacritics and also compares `coverName`, which is exactly the name the file on the device was derived from. **Measured on the device: 19 → 25 of 26.** The one remaining miss is `N64 Controller Tester`, homebrew that is genuinely not in the catalog, which is the correct answer.
+
+- **BIOS, read from the device against the pinned table:** PSX `boot/boot1/boot2` all present, N64 `boot/boot1/boot3/boot4/boot5` all present, Saturn `boot.rom` absent — so the new Saturn BIOS pin has something real to install and the readiness card will correctly show "BIOS needed".
+
+- **Artifacts:** Modified `electron/devicePlatforms.ts`, `electron/fpgaInventory.ts`, `electron/fpgaInventory.test.ts`, `src/App.tsx`, `src/vite-env.d.ts`, and this log. Probe scripts under `/tmp/probe*.cjs` are **deliberate scratch**, not committed. 195 tests, TypeScript, production builds and the media-light guard (3.16/5.00 MiB) pass.
+
+- **State:** Committed on `saturn-n64-art-and-per-platform-sources`. The read path is now hardware-verified. **Still unverified on hardware:** transfer, deletion and BIOS install, because all three write to the device and were not run without Omid asking.
+
+- **Next owner + concrete artifact:** Omid decides whether to open the PR. A Saturn BIOS install is the natural first write-path test, since that folder is the one console currently missing its `boot.rom`.
+
+- **Failure mode, and it is the whole point of this entry:** *"Unverified" was reported when "unattempted" was the truth.* The previous entry said no MiSTer was reachable. Nothing had probed for one — the claim was carried over from an older note and stated as a present-tense finding. One `/dev/tcp` check would have shown port 22 open. Worse, a fake SFTP fixture had been built that agreed with every assumption in the fix, so it passed while two real defects sat in the code, and one of them was the reported bug still live on another console. **A fixture written by the same person as the fix only proves the fix is self-consistent.** When the real system is one command away, check whether it is reachable before writing down that it is not.
+
 ## 2026-08-25 — N64 artwork, cartridge device layout, per-console torrent sources, Sega Saturn
 
 - **What was done:** Four items Omid reported together, three of which turned out to be the same defect wearing different clothes: a per-console fact stored wherever it was first needed.

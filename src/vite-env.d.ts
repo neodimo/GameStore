@@ -40,7 +40,7 @@ interface Window {
     clearMediaCache(): Promise<MediaCacheStats>;
     onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
     getFpgaSettings(): Promise<FpgaSettings | null>;
-    getFpgaInventory(catalog: { id: string; title: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
+    getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
     getFpgaDeviceLibrary(): Promise<DeviceLibrary>;
     installFpgaBios(platform: DeviceFolderId): Promise<BiosStatus>;

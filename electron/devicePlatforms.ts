@@ -103,17 +103,32 @@ export const deviceFolderForCatalog = (catalogId: string | undefined) =>
     DEVICE_PLATFORMS[0]).deviceFolder;
 
 /**
+ * Directories a MiSTer core folder carries that are not games.
+ *
+ * `media` is the artwork/media directory MiSTer scrapers create, and it was
+ * observed on a real device inside both `games/N64` and `games/PSX`. Excluding
+ * it only from the cartridge layout would have fixed the console where it was
+ * reported and left it listed as a game on the console where it was not.
+ *
+ * Deliberately a small named set rather than a pattern: a pattern broad enough
+ * to describe "not a game" would eventually match a real game folder, and this
+ * list is only extended from something actually seen on a device.
+ */
+const NON_GAME_ENTRIES = new Set(["media"]);
+
+/**
  * Whether a device entry is one of this platform's games.
  *
  * A folder-layout console shows directories; a flat one shows ROM files, and
- * anything else in the core folder — `media`, a stray text file, a save — is
- * not a game and must not be listed as one.
+ * anything else in the core folder — a BIOS image, `N64-database.txt`, a stray
+ * save — is not a game and must not be listed as one.
  */
 export const isGameEntry = (
   platform: DevicePlatformDefinition,
   entry: { name: string; type: string },
 ) => {
   if (entry.name === "." || entry.name === "..") return false;
+  if (NON_GAME_ENTRIES.has(entry.name.toLowerCase())) return false;
   if (platform.layout === "folder") return entry.type === "d";
   if (entry.type === "d") return false;
   const lower = entry.name.toLowerCase();

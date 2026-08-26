@@ -173,7 +173,7 @@ function Catalog() {
     return () => removeEventListener("keydown", key);
   }, []);
   useEffect(() => {
-    const catalog = games.map(({ id, title, platform }) => ({ id, title, platform: deviceFolderFor(platform) }));
+    const catalog = games.map(({ id, title, coverName, platform }) => ({ id, title, coverName, platform: deviceFolderFor(platform) }));
     const loadInventory = () => window.gameStore?.getFpgaInventory(catalog).then((result) => {
       if (result?.status === "ready") setFpgaGameIds(new Set(result.gameIds));
     });
