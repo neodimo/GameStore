@@ -121,7 +121,7 @@ The original 30 adversarial fixtures remain the hand-verified data-quality core 
 
 ## Release workflow
 
-For GameStore, wrapping up an approved change means carrying it through the complete release path by default: merge the green PR, tag the version, wait for Windows and Linux release jobs, and verify the published installers plus updater metadata. Stop at a draft/release candidate only when Omid explicitly asks for review before release or a real acceptance gate prevents safe publication.
+For GameStore, every completed, verified batch is release-authorized by default: merge the green work, tag the version, wait for Windows and Linux release jobs, and verify the published installers plus updater metadata. The only ordinary pause is an active overlapping Bert lane in this Discord channel; Gonzo must notice that coordination context, wait for/merge Bert's work, then release the combined tree. Omid can explicitly request review or a release hold. A real acceptance gate may still prevent safe publication.
 # Icon direction (2026-08-24)
 
 - The shipped icon is a cartridge-only silhouette on transparency, with the neon sunset/play artwork retained and no enclosing badge/background.
