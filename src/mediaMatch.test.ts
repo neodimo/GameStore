@@ -19,21 +19,23 @@ const indexes = {
   Named_Snaps: thumbnailIndexSample,
   Named_Titles: thumbnailIndexSample,
 };
+/** The fixture is a PlayStation listing; see the note in `artMatch.test.ts`. */
+const PSX = "Sony%20-%20PlayStation";
 
 describe("screenshots", () => {
   it("returns a strip rather than a single frame", () => {
-    const shots = resolveScreenshots("Tobal No. 2", "Japan", indexes);
+    const shots = resolveScreenshots("Tobal No. 2", "Japan", indexes, PSX);
     expect(shots.length).toBeGreaterThan(1);
   });
 
   it("leads with gameplay frames, not title screens", () => {
-    const shots = resolveScreenshots("Incredible Crisis", "USA", indexes);
+    const shots = resolveScreenshots("Incredible Crisis", "USA", indexes, PSX);
     expect(shots[0].kind).toBe("Screenshot");
   });
 
   it("keeps both kinds so the strip has title screens further down", () => {
     const kinds = new Set(
-      resolveScreenshots("Incredible Crisis", "USA", indexes).map(
+      resolveScreenshots("Incredible Crisis", "USA", indexes, PSX).map(
         (s) => s.kind,
       ),
     );
@@ -41,15 +43,18 @@ describe("screenshots", () => {
   });
 
   it("survives a missing folder index instead of throwing", () => {
-    const shots = resolveScreenshots("Vib-Ribbon", "Europe", {
-      Named_Snaps: thumbnailIndexSample,
-    });
+    const shots = resolveScreenshots(
+      "Vib-Ribbon",
+      "Europe",
+      { Named_Snaps: thumbnailIndexSample },
+      PSX,
+    );
     expect(shots.length).toBeGreaterThan(0);
     expect(shots.every((s) => s.kind === "Screenshot")).toBe(true);
   });
 
   it("returns nothing for a title that is not in the index", () => {
-    expect(resolveScreenshots("Totally Invented Game", "USA", indexes)).toEqual(
+    expect(resolveScreenshots("Totally Invented Game", "USA", indexes, PSX)).toEqual(
       [],
     );
   });
@@ -60,7 +65,7 @@ describe("screenshots", () => {
    * Ford Racing, 007 Racing, Nicktoons Racing and friends.
    */
   it("does not fill the strip with games that merely share a word", () => {
-    const files = resolveScreenshots("Racing Lagoon", "Japan", indexes).map(
+    const files = resolveScreenshots("Racing Lagoon", "Japan", indexes, PSX).map(
       (s) => decodeURIComponent(s.url),
     );
     expect(files.length).toBeGreaterThan(0);
@@ -68,7 +73,7 @@ describe("screenshots", () => {
   });
 
   it("excludes a different game with a similar name", () => {
-    const files = resolveScreenshots("Kowloon's Gate", "Japan", indexes).map(
+    const files = resolveScreenshots("Kowloon's Gate", "Japan", indexes, PSX).map(
       (s) => decodeURIComponent(s.url),
     );
     expect(files.some((f) => /Heaven's Gate/i.test(f))).toBe(false);
@@ -80,7 +85,7 @@ describe("screenshots", () => {
    * menu, the PAL menu and the Japanese menu presented as one game's frames.
    */
   it("shows only the primary variant, not every regional printing", () => {
-    const files = resolveScreenshots("Incredible Crisis", "USA", indexes).map(
+    const files = resolveScreenshots("Incredible Crisis", "USA", indexes, PSX).map(
       (s) => decodeURIComponent(s.url),
     );
     expect(files.length).toBeGreaterThan(0);
@@ -89,7 +94,7 @@ describe("screenshots", () => {
   });
 
   it("follows the catalog region rather than always preferring USA", () => {
-    const files = resolveScreenshots("Vib-Ribbon", "Europe", indexes).map((s) =>
+    const files = resolveScreenshots("Vib-Ribbon", "Europe", indexes, PSX).map((s) =>
       decodeURIComponent(s.url),
     );
     expect(files.length).toBeGreaterThan(0);
@@ -98,17 +103,19 @@ describe("screenshots", () => {
 
   it("does not claim an untagged frame belongs to the primary region", () => {
     const release = ["Strict Test (USA).png", "Strict Test.png"];
-    const files = resolveScreenshots("Strict Test", "USA", {
-      Named_Snaps: release,
-      Named_Titles: release,
-    }).map((shot) => decodeURIComponent(shot.url));
+    const files = resolveScreenshots(
+      "Strict Test",
+      "USA",
+      { Named_Snaps: release, Named_Titles: release },
+      PSX,
+    ).map((shot) => decodeURIComponent(shot.url));
     expect(files).toHaveLength(2);
     expect(files.every((file) => /\(USA\)/.test(file))).toBe(true);
   });
 
   /** One regional printing, with a single Disc 1 start screen. */
   it("keeps one retail printing and only one primary title screen", () => {
-    const shots = resolveScreenshots("Kowloon's Gate", "Japan", indexes);
+    const shots = resolveScreenshots("Kowloon's Gate", "Japan", indexes, PSX);
     const files = shots.map((s) => decodeURIComponent(s.url));
     expect(files.some((file) => file.includes("Disc 1"))).toBe(true);
     expect(files.some((file) => file.includes("Disc 4"))).toBe(true);
@@ -128,10 +135,12 @@ describe("screenshots", () => {
       "Retail Test (USA) (Beta).png",
       "Retail Test (USA) (Prototype).png",
     ];
-    const files = resolveScreenshots("Retail Test", "USA", {
-      Named_Snaps: release,
-      Named_Titles: release,
-    }).map((shot) => decodeURIComponent(shot.url));
+    const files = resolveScreenshots(
+      "Retail Test",
+      "USA",
+      { Named_Snaps: release, Named_Titles: release },
+      PSX,
+    ).map((shot) => decodeURIComponent(shot.url));
     expect(files).toHaveLength(2);
     expect(files.every((file) => !/(Demo|Beta|Prototype)/.test(file))).toBe(true);
   });

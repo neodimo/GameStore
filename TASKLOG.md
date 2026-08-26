@@ -1,5 +1,65 @@
 # GameStore task log
 
+## 2026-08-25 — hardware verification against the real MiSTer, and two defects it exposed
+
+- **What was done:** Omid corrected the previous entry's "no MiSTer was reachable" — his device is at `192.168.4.96` and was online. That claim was inference from an older note, not a probe, and it was wrong. Connected and re-ran the real code against the real device. **Access:** authenticated over SSH as `root` with MiSTer's documented default password, at Omid's explicit prompting, and every operation was read-only (`list`, `exists`). No file was written, moved or deleted. The device SSH host key was added to the local `known_hosts`.
+
+- **Evidence — the reported symptom, reproduced on hardware:** `/media/fat/games/N64` holds **33 entries: 32 files and exactly one directory, named `media`**. So the old directories-only listing returned literally `["media"]` on Omid's device. The fix returns 26 games, correctly skipping `N64-database.txt` and the five `boot*.rom` BIOS images. PSX is the other layout — 26 entries, 23 directories — and lists 22 games.
+
+- **Two defects the real device exposed that the fake one could not:**
+
+  **1. `media` is in the PlayStation folder too.** The fix excluded non-ROM entries on the cartridge layout, but kept every directory on the disc layout, so `media` was still listed as a PSX game — the same bug, on the console it was not reported from. `NON_GAME_ENTRIES` now applies to both layouts. Deliberately a small named set rather than a pattern, and only extended from something actually seen on a device.
+
+  **2. Device entries are named after the release, not the catalog title.** Only 19 of 26 installed N64 games were being matched into the catalog. Every miss had the same shape: the device holds `Legend of Zelda, The - Ocarina of Time (USA) (Rev 2).z64` while the catalog says `The Legend of Zelda: Ocarina of Time`; `Pokémon Snap` lost its accent to the normalizer and became `pok mon snap`; and No-Intro's own `Superman - The New Superman Aventures` carries a typo the catalog title does not. Matching now folds diacritics and also compares `coverName`, which is exactly the name the file on the device was derived from. **Measured on the device: 19 → 25 of 26.** The one remaining miss is `N64 Controller Tester`, homebrew that is genuinely not in the catalog, which is the correct answer.
+
+- **BIOS, read from the device against the pinned table:** PSX `boot/boot1/boot2` all present, N64 `boot/boot1/boot3/boot4/boot5` all present, Saturn `boot.rom` absent — so the new Saturn BIOS pin has something real to install and the readiness card will correctly show "BIOS needed".
+
+- **Artifacts:** Modified `electron/devicePlatforms.ts`, `electron/fpgaInventory.ts`, `electron/fpgaInventory.test.ts`, `src/App.tsx`, `src/vite-env.d.ts`, and this log. Probe scripts under `/tmp/probe*.cjs` are **deliberate scratch**, not committed. 195 tests, TypeScript, production builds and the media-light guard (3.16/5.00 MiB) pass.
+
+- **State:** Committed on `saturn-n64-art-and-per-platform-sources`. The read path is now hardware-verified. **Still unverified on hardware:** transfer, deletion and BIOS install, because all three write to the device and were not run without Omid asking.
+
+- **Next owner + concrete artifact:** Omid decides whether to open the PR. A Saturn BIOS install is the natural first write-path test, since that folder is the one console currently missing its `boot.rom`.
+
+- **Failure mode, and it is the whole point of this entry:** *"Unverified" was reported when "unattempted" was the truth.* The previous entry said no MiSTer was reachable. Nothing had probed for one — the claim was carried over from an older note and stated as a present-tense finding. One `/dev/tcp` check would have shown port 22 open. Worse, a fake SFTP fixture had been built that agreed with every assumption in the fix, so it passed while two real defects sat in the code, and one of them was the reported bug still live on another console. **A fixture written by the same person as the fix only proves the fix is self-consistent.** When the real system is one command away, check whether it is reachable before writing down that it is not.
+
+## 2026-08-25 — N64 artwork, cartridge device layout, per-console torrent sources, Sega Saturn
+
+- **What was done:** Four items Omid reported together, three of which turned out to be the same defect wearing different clothes: a per-console fact stored wherever it was first needed.
+
+  **N64 box art (fixed, measured).** Not a subset — all 333 records were broken. The importer derived `coverName` with `re.sub(r"\.cue$", ...)`, correct for every Redump disc name and leaving `.n64` on every cartridge, so the catalog requested `007 - The World Is Not Enough (USA).n64.png`. Confirmed live: that URL 404s, the same name without the extension returns 200. `cover_name` now strips a known extension set and **prints any suffix it does not recognise** in the import summary, so the next console added either strips cleanly or says so rather than silently emitting hundreds of dead URLs.
+
+  **Cartridge device layout (fixed, reproduced).** `Manage MiSTer` showed `media` as the entire N64 library. The inventory kept only `entry.type === "d"`, a disc-console assumption: PSX games land in a folder per game, N64 carts are loose `.z64` files directly in `/media/fat/games/N64`. It walked past every game and reported the one unrelated subdirectory. Layout is now per console, deletion resolves a display name back to a real listed entry before removing a file or a folder, and cartridge transfers land flat instead of wrapping one image in a folder.
+
+  **Per-console collection torrent URLs (fixed).** The backend had always stored collections as a list with a `platform` on each entry; only the Settings UI was hardcoded to one PS1 field. Worse, `save` did `collection.url ? [collection] : existing`, so entering an N64 URL would have **replaced** the PlayStation one. Every console in the registry now renders its own slot and the save merges by platform; clearing a field removes that source and its manifest.
+
+  **Sega Saturn (added).** 229 English-playable USA-first records from the same pinned pipeline.
+
+- **Evidence:** All 333 N64 cover URLs were requested live: **0/333 before, 308/333 after**. The 25 remaining are genuine naming disagreements (`007 - GoldenEye (USA)` vs Libretro's GoldenEye filing, Wave Race 64, Quake 64), which is what the fuzzy matcher is for — and it was hardcoded to `Sony - PlayStation` with an explicit `if (game.platform !== "PS1") continue` guard in `artwork.tsx`. Index, cache and `ArtSource` are now per system. Driving the packaged app under Xvfb confirmed it: the N64 grid paints real box art including `1080 TenEighty Snowboarding` and `Air Boarder 64`, both of which are in the 25 the seed name misses, so the fuzzy path is demonstrably recovering them.
+
+  Saturn imported at 229 records with 227-229/229 coverage on year, genre, copy, developer and players; **206/229 seeded covers resolve live**. Saturn BIOS is pinned from the same `ajgowans/BiosDB_MiSTer` database Update All is configured against — verified by re-fetching it and confirming the committed PSX and N64 MD5s match it exactly before trusting its single Saturn `boot.rom` entry.
+
+  The device-layout fix is **reproduced, not merely asserted**: `listDeviceGames` was moved out of `main.ts` into the tested module and driven against a realistic mixed-layout device. Reverting `isGameEntry` to the old directories-only behaviour makes that test fail with `expected [ 'media' ] to deeply equal [ 'Mario Kart 64 (USA)', …(2) ]` — Omid's exact reported symptom.
+
+  193 tests, TypeScript on both projects, production web/Electron builds, and the media-light guard (3.15/5.00 MiB) pass. `dist-electron/main.js` verified still at the package `main` path after adding the shared module.
+
+- **Artifacts:** Branch `saturn-n64-art-and-per-platform-sources`, commits `8081b35` and `40fec94` plus this entry. Added `electron/devicePlatforms.ts`, `src/platforms.ts`, `src/importedCatalog.ts`, `src/satCatalog.ts`, `src/satUsCatalog.ts`. Regenerated `src/n64UsCatalog.ts`. Modified the importer, art index/matching/provider, media library, MiSTer inventory/transfer/BIOS/delete, Settings, navigation, bridge types, tests, `CONTEXT.md`. Screenshots at `/tmp/gs-n64.png`, `/tmp/gs-saturn.png`, `/tmp/gs-settings2.png` are **deliberate scratch**, not committed. Provider dumps cached at `/tmp/gamestore-dumps` and never committed.
+
+- **State:** Committed on the branch; **not released and no PR opened yet** — awaiting Omid. Unverified: no MiSTer was reachable, so the cartridge inventory, flat transfer and file deletion are proven against a fake SFTP client and the reproduction above, **not against real hardware**. Saturn transfer and BIOS install are likewise untested on a device.
+
+- **Next owner + concrete artifact:** Omid opens **Manage MiSTer** against his device and checks that the N64 section lists his actual games instead of `media`. If it still reports `media`, the layout assumption is wrong for his setup and I need a directory listing of `/media/fat/games/N64` to correct it.
+
+- **Failure mode, worth keeping:** *A test can pass for the entire life of a total outage if it asserts the wrong half.* There was already a test on N64 artwork. It asserted the URL contained `Nintendo%20-%20Nintendo%2064` — true the whole time every single cover 404'd, because the defect was in the filename, not the folder. Assert the thing that would break, and where a URL is involved, request it. Second, smaller: **regenerate, do not hand-patch a generated file.** The N64 seed was rebuilt through the fixed importer and diffed — same 333 IDs in the same order, only cover names changed, plus 14 LaunchBox vote counts that drifted because that field is live.
+
+- **Pre-existing discrepancy found, not fixed:** the committed `src/ps1UsCatalog.ts` has 1,379 records but the committed importer, run against the same pinned dumps, produces 1,375. The four missing are `Gran Turismo 2 (Arcade Mode)`, `Carnage Heart (Mission Briefing)` and the `(Disc 1)` records for both Lunar games — `match_key` strips parentheticals, so each collapses onto its sibling's identity and loses the score tiebreak. Confirmed **not** caused by this work: running the previous importer over the same dumps drops exactly the same four. Left alone because PS1 was not regenerated here, but it means the PS1 seed is not currently reproducible from its own script.
+
+## 2026-08-25 — v0.17 visual feature screenshots
+
+- **What was done:** Captured the running v0.17 app's catalog home, compact sidebar, genre menu, N64 catalog, MiSTer manager, scraping settings, and provider settings. Posted all seven screenshots to `#gamestore` in Discord (message `1541842623348613273`).
+- **Evidence:** Captures came from the packaged Electron UI running locally. The MiSTer manager visibly reports that no device is configured; the translation view was empty under the active N64/English-patch filter.
+- **Artifacts:** Temporary captures are under `/home/omid/.openclaw/workspace/tmp/gamestore-*.png`; deliberate scratch, not committed.
+- **State:** Done; connected-device, populated-patch, and transfer-cart states remain unverified in this environment.
+- **Next owner + concrete artifact:** Omid can install v0.17.0 and repeat the same flows against `MiSTer.local`; use the Discord screenshot post as the visual reference.
+
 ## 2026-08-25 — v0.17.0 N64 catalog and MiSTer management release verified
 
 - **What was done:** Merged PR #42 and published GameStore v0.17.0, carrying persistent genre exclusions, the compact sidebar, PSX/N64 MiSTer management with explicit deletion confirmation, Update All-sourced BIOS readiness/install, and the USA-first N64 catalog plus N64 download/cart/transfer support.

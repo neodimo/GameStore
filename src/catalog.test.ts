@@ -9,6 +9,49 @@ describe('catalog invariants',()=>{
   expect(n64.every(g=>g.region==='USA'||g.region==='Europe')).toBe(true);
   expect(n64.every(g=>Boolean(g.cover)&&g.cover!.includes('Nintendo%20-%20Nintendo%2064'))).toBe(true);
  });
+ it('adds a Sega Saturn catalog from the same pinned import pipeline',()=>{
+  const saturn=games.filter(g=>g.platform==='SAT');
+  expect(saturn.length).toBeGreaterThanOrEqual(200);
+  expect(saturn.every(g=>g.region==='USA'||g.region==='Europe')).toBe(true);
+  expect(saturn.every(g=>g.id.startsWith('sat-'))).toBe(true);
+  // Saturn discs are Redump `.cue` names; the extension must already be gone.
+  expect(saturn.every(g=>!/\.(cue|chd|bin|iso)$/i.test(g.coverName??''))).toBe(true);
+ });
+ /**
+  * Demo and preview discs the PlayStation patterns did not describe, because
+  * Sega labelled its Saturn ones differently. `Pandemonium!` is pinned beside
+  * them for the same reason the PS1 near-misses are: the obvious keyword
+  * version of this filter matches `demo` inside `Pandemonium` and deletes a
+  * real game.
+  */
+ it('excludes Saturn demo discs without eating a title that merely contains one',()=>{
+  const titles=new Set(games.map(g=>g.title));
+  for(const gone of ['Bootleg Sampler','Core Demo Vol. 2','Panzer Dragoon: Playable Demo','Rayman: Playable Game Preview','Sega Saturn Preview Vol. 1'])
+   expect(titles.has(gone),`${gone} should not be in the catalog`).toBe(false);
+  for(const kept of ['Pandemonium!','Daytona USA C.C.E. Net Link Edition'])
+   expect(titles.has(kept),`${kept} should still be in the catalog`).toBe(true);
+ });
+ /**
+  * Every N64 cover URL 404'd while the assertion above passed, because that
+  * assertion checks the thumbnail folder and the defect was in the filename.
+  * The importer stripped only `.cue` from the dump name, which is right for a
+  * Redump disc and leaves `... (USA).n64` on every cartridge, producing
+  * `... (USA).n64.png`. Libretro names a thumbnail after the release, never
+  * after the ROM file, so a cover name carrying an image extension is broken
+  * for a whole platform rather than for a few odd titles.
+  */
+ it('never carries a ROM or disc extension in a cover name',()=>{
+  const carrying=games.filter(g=>/\.(cue|chd|iso|bin|n64|z64|v64|nes|sfc|smc|md|gen|gg|sms|gb|gbc|gba|pce|32x)$/i.test(g.coverName??''));
+  expect(carrying.map(g=>`${g.platform} ${g.coverName}`)).toEqual([]);
+ });
+ /** A seeded cover URL must be built from the game's own console. */
+ it('seeds each platform its own Libretro thumbnail system',()=>{
+  const systems:Record<string,string>={PS1:'Sony%20-%20PlayStation',N64:'Nintendo%20-%20Nintendo%2064',SAT:'Sega%20-%20Saturn'};
+  for(const g of games){
+   if(!g.cover?.startsWith('https://thumbnails.libretro.com/')) continue;
+   expect(g.cover,`${g.platform} ${g.title}`).toContain(`/${systems[g.platform]}/`);
+  }
+ });
  /**
   * Redump lists cheat cartridges, magazine cover discs and bonus albums because
   * they are real PlayStation discs. A catalog for finding something to play

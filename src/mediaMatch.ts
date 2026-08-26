@@ -151,6 +151,8 @@ export const resolveScreenshots = (
   title: string,
   region: Region,
   indexes: Partial<Record<ArtFolder, string[]>>,
+  /** Libretro system these filenames came from; see `ArtSource`. */
+  system: string,
   limit = 40,
 ): Screenshot[] => {
   const anchorFrom = (folder: ArtFolder): ArtMatch | undefined =>
@@ -161,7 +163,7 @@ export const resolveScreenshots = (
         const tags = parseArtFilename(file).tags;
         return isRetail(tags) && regionsOf(tags).has(region.toLowerCase() as "usa" | "europe" | "japan" | "world");
       }),
-      folder,
+      { system, folder },
       1,
       SCREENSHOT_FLOOR,
     )[0];
@@ -188,7 +190,7 @@ export const resolveScreenshots = (
       )
         continue;
       const shot: Screenshot = {
-        url: libretroArtUrl(folder, file),
+        url: libretroArtUrl({ system, folder }, file),
         kind: KIND[folder],
         label: tags.join(" · ") || core,
         tags,

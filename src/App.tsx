@@ -30,6 +30,13 @@ import {
 import { createCuratedShelves, facetOrder, games, metaLine, Game } from "./catalog";
 import { translationFor } from "./translationManifest";
 import { ArtworkProvider, useArtwork } from "./artwork";
+import {
+  PLATFORMS,
+  deviceFolderFor,
+  deviceFolderLabel,
+  platformLabel,
+  platformOf,
+} from "./platforms";
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
 import { restartMediaAudit } from "./mediaLibrary";
@@ -166,7 +173,7 @@ function Catalog() {
     return () => removeEventListener("keydown", key);
   }, []);
   useEffect(() => {
-    const catalog: { id: string; title: string; platform: "PSX" | "N64" }[] = games.map(({ id, title, platform }) => ({ id, title, platform: platform === "N64" ? "N64" : "PSX" }));
+    const catalog = games.map(({ id, title, coverName, platform }) => ({ id, title, coverName, platform: deviceFolderFor(platform) }));
     const loadInventory = () => window.gameStore?.getFpgaInventory(catalog).then((result) => {
       if (result?.status === "ready") setFpgaGameIds(new Set(result.gameIds));
     });
@@ -275,10 +282,8 @@ function Catalog() {
           {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : <>
           <div className="platforms">
             <button className={platform === "All" ? "active" : ""} onClick={() => setPlatform("All")}>All</button>
-            <button className={platform === "PS1" ? "active" : ""} onClick={() => setPlatform("PS1")}>PS1</button>
-            <button className={platform === "N64" ? "active" : ""} onClick={() => setPlatform("N64")}>N64</button>
+            {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => setPlatform(definition.id)}>{definition.shortLabel}</button>)}
             <button disabled>PS2</button>
-            <button disabled>Saturn</button>
             <button disabled>Dreamcast</button>
             <button disabled>GameCube</button>
             <button disabled>PSP</button>
@@ -359,7 +364,7 @@ function Catalog() {
               <h2>
                 {favoriteOnly
                   ? `${filtered.length} favorite ${filtered.length === 1 ? "game" : "games"}`
-                  : `${filtered.length} ${platform === "N64" ? "Nintendo 64" : platform === "PS1" ? "PlayStation" : "catalog"} ${filtered.length === 1 ? "game" : "games"}`}
+                  : `${filtered.length} ${platform === "All" ? "catalog" : platformLabel(platform)} ${filtered.length === 1 ? "game" : "games"}`}
               </h2>
               <p>
                 USA first · PAL fallback · Japan exclusives only with a reviewed English patch
@@ -421,7 +426,7 @@ function Catalog() {
           </>}
         </main>
         <footer>
-          <b>GameStore 0.17.0</b>
+          <b>GameStore 0.18.0</b>
           <ArtworkStatus />
         </footer>
       </div>
@@ -452,31 +457,49 @@ function Catalog() {
 
 /** Footer readout of how much of the catalog resolved automatically. */
 function ArtworkStatus() {
-  const { index, unmatched, resolving, refreshIndex } = useArtwork();
-  const indexedGames = games.filter((game) => game.platform === "PS1");
-  if (index.status === "loading")
+  const { indexes, unmatched, resolvable, resolving, refreshIndex } =
+    useArtwork();
+  const states = PLATFORMS.map((platform) => indexes[platform.id]).filter(
+    (state) => state.status !== "idle",
+  );
+  const scans = states.reduce((total, state) => total + state.files.length, 0);
+  if (states.length && states.every((state) => state.status === "loading"))
     return (
       <span>
         <LoaderCircle className="spin" /> Matching box art…
       </span>
     );
-  if (index.status === "error")
+  // One console's pack being unreachable is reported without hiding the
+  // consoles that did resolve, which a single shared index could not express.
+  const failed = PLATFORMS.filter(
+    (platform) => indexes[platform.id].status === "error",
+  );
+  if (failed.length === states.length && failed.length)
     return (
-      <span className="warn">Artwork index unavailable · {index.message}</span>
+      <span className="warn">
+        Artwork index unavailable · {indexes[failed[0].id].message}
+      </span>
     );
   // Seeded covers land at once; the fuzzy tail fills in behind this readout.
   if (resolving)
     return (
       <span>
-        <LoaderCircle className="spin" /> {indexedGames.length - unmatched}/
-        {indexedGames.length} PS1 covers matched · still searching the rest
+        <LoaderCircle className="spin" /> {resolvable - unmatched}/{resolvable}{" "}
+        covers matched · still searching the rest
       </span>
     );
   return (
     <span>
-      {indexedGames.length - unmatched}/{indexedGames.length} PS1 covers matched from{" "}
-      {index.files.length.toLocaleString()} Libretro scans · right-click a game
-      for alternates
+      {resolvable - unmatched}/{resolvable} covers matched from{" "}
+      {scans.toLocaleString()} Libretro scans · right-click a game for
+      alternates
+      {failed.length > 0 && (
+        <span className="warn">
+          {" "}
+          · {failed.map((platform) => platform.shortLabel).join(", ")} artwork
+          unavailable
+        </span>
+      )}
       <button className="link" onClick={() => void refreshIndex()}>
         <RefreshCw /> Refresh
       </button>
@@ -1304,7 +1327,7 @@ function MiSTerManager({ onOpenSettings }: { onOpenSettings: () => void }) {
     finally { setBusy(false); }
   };
   useEffect(() => { void load(); }, []);
-  const install = async (platform: "PSX" | "N64") => {
+  const install = async (platform: DeviceFolderId) => {
     setBusy(true); setStatus(`Installing ${platform} BIOS files from Update All’s configured BIOS Database…`);
     try { await window.gameStore!.installFpgaBios(platform); await load(); }
     catch (error) { setStatus(error instanceof Error ? error.message : String(error)); setBusy(false); }
@@ -1315,15 +1338,15 @@ function MiSTerManager({ onOpenSettings }: { onOpenSettings: () => void }) {
       <p className="device-status">{status}</p>
       <div className="bios-grid">
         {device.bios.map((bios) => <section className={bios.ready ? "bios-card ready" : "bios-card"} key={bios.platform}>
-          <div><b>{bios.platform === "PSX" ? "Sony PlayStation" : "Nintendo 64"}</b><span>{bios.ready ? "BIOS ready" : "BIOS needed"}</span></div>
+          <div><b>{deviceFolderLabel(bios.platform)}</b><span>{bios.ready ? "BIOS ready" : "BIOS needed"}</span></div>
           <p>{bios.files.filter((file) => file.present).length}/{bios.files.length} Update All BIOS Database files present</p>
           {!bios.ready && <button disabled={busy} onClick={() => void install(bios.platform)}>Install verified BIOS files</button>}
         </section>)}
       </div>
       <div className="device-library-grid">
-        {(["PSX", "N64"] as const).map((platform) => <section className="device-console" key={platform}>
-          <div><h2>{platform === "PSX" ? "PlayStation" : "Nintendo 64"}</h2><span>{device.folders[platform].length} installed</span></div>
-          {!device.folders[platform].length ? <p>No managed games on this console yet.</p> : <ul>{device.folders[platform].map((folder) => <li key={folder}><span>{folder}</span><button disabled={busy} title="Remove this game from MiSTer" onClick={async () => {
+        {PLATFORMS.map((definition) => definition.deviceFolder).map((platform) => <section className="device-console" key={platform}>
+          <div><h2>{deviceFolderLabel(platform)}</h2><span>{(device.folders[platform] ?? []).length} installed</span></div>
+          {!(device.folders[platform] ?? []).length ? <p>No managed games on this console yet.</p> : <ul>{(device.folders[platform] ?? []).map((folder) => <li key={folder}><span>{folder}</span><button disabled={busy} title="Remove this game from MiSTer" onClick={async () => {
             if (!confirm(`Remove “${folder}” from your MiSTer? The local GameStore library will stay intact.`)) return;
             setBusy(true); try { await window.gameStore!.deleteFpgaDeviceGame(platform, folder); await load(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error)); setBusy(false); }
           }}><Trash2 /></button></li>)}</ul>}
@@ -1406,7 +1429,14 @@ function ProviderSettings({
     localStorage.getItem("gamestore:scraping:skip-existing") !== "false",
   );
   const [debridState, setDebridState] = useState<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>({ hasRealDebrid: false, hasTorBox: false, collections: [] });
-  const [collection, setCollection] = useState({ name: "PS1 collection", url: "", platform: "PS1" });
+  /**
+   * One collection torrent URL per console, keyed by platform. This was a
+   * single PS1-labelled field even though the backend has always stored a list
+   * with a `platform` on each entry, so there was nowhere to put an N64 source
+   * — and saving one would have replaced the PlayStation one rather than
+   * adding to it. Every console in the registry now gets its own slot.
+   */
+  const [collectionUrls, setCollectionUrls] = useState<Record<string, string>>({});
   const [indexing, setIndexing] = useState("");
   const [devices, setDevices] = useState<NetworkCandidate[]>([]);
   const [scan, setScan] = useState("");
@@ -1427,7 +1457,14 @@ function ProviderSettings({
       ?.getFpgaSettings()
       .then((f) => f && setDevice((d) => ({ ...d, ...f, password: "" })));
     window.gameStore?.getMediaCacheStats().then(setCache);
-    window.gameStore?.getDebridSettings().then(setDebridState);
+    window.gameStore?.getDebridSettings().then((state) => {
+      setDebridState(state);
+      setCollectionUrls(
+        Object.fromEntries(
+          state.collections.map((source) => [source.platform, source.url]),
+        ),
+      );
+    });
     window.gameStore?.getEmuMoviesSettings().then((state) => {
       setEmuState(state);
       setEmu((current) => ({ ...current, username: state.username }));
@@ -1452,7 +1489,16 @@ function ProviderSettings({
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
     await window.gameStore?.setFpgaSettings(device);
-    const collections = collection.url ? [collection] : debridState.collections;
+    // Merge by platform. Editing one console's URL must never drop another's,
+    // and clearing a field is how a source is removed.
+    const collections: CollectionSource[] = PLATFORMS.flatMap((platform) => {
+      const url = (collectionUrls[platform.id] ?? "").trim();
+      if (!url) return [];
+      const existing = debridState.collections.find(
+        (source) => source.platform === platform.id,
+      );
+      return [{ name: existing?.name ?? `${platform.shortLabel} collection`, url, platform: platform.id }];
+    });
     setDebridState(
       (await window.gameStore?.setDebridSettings({ ...debrid, collections })) ??
         debridState,
@@ -1619,11 +1665,18 @@ function ProviderSettings({
           TorBox API token {debridState.hasTorBox && <small>· saved</small>}
           <input type="password" value={debrid.torbox} onChange={(e) => setDebrid({ ...debrid, torbox: e.target.value })} placeholder="Blank keeps saved token" />
         </label>
-        <label>
-          PS1 collection torrent URL {debridState.collections.length > 0 && <small>· {debridState.collections.length} saved</small>}
-          <input value={collection.url} onChange={(e) => setCollection({ ...collection, url: e.target.value })} placeholder="Paste one HTTPS .torrent URL once" />
-        </label>
-        <small>GameStore indexes only sources you configure, once, when you save. Every game then finds its exact file instantly.</small>
+        {PLATFORMS.map((platform) => {
+          const saved = debridState.collections.find((source) => source.platform === platform.id);
+          return <label key={platform.id}>
+            {platform.label} collection torrent URL {saved && <small>· saved</small>}
+            <input
+              value={collectionUrls[platform.id] ?? ""}
+              onChange={(e) => setCollectionUrls((prev) => ({ ...prev, [platform.id]: e.target.value }))}
+              placeholder="Paste one HTTPS .torrent URL once"
+            />
+          </label>;
+        })}
+        <small>One source per console. GameStore indexes only sources you configure, once, when you save; every game then finds its exact file instantly. Clearing a field removes that console's source.</small>
         {indexing && <p className="index-status">{indexing}</p>}
         <div className="settings-actions split-actions">
           <button onClick={() => testDebridProvider("realdebrid")}>Test Real-Debrid</button>

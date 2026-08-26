@@ -11,9 +11,15 @@ interface Window {
       { url: string; gameId: number; title: string; source: string }[]
     >;
     getArtIndex(
+      system: string,
       folder: string,
       force?: boolean,
-    ): Promise<{ folder: string; files: string[]; fetchedAt: number }>;
+    ): Promise<{
+      system: string;
+      folder: string;
+      files: string[];
+      fetchedAt: number;
+    }>;
     /**
      * Local downscaled address for a remote cover, or null when it could not be
      * cached and the remote original should be used instead.
@@ -34,11 +40,11 @@ interface Window {
     clearMediaCache(): Promise<MediaCacheStats>;
     onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
     getFpgaSettings(): Promise<FpgaSettings | null>;
-    getFpgaInventory(catalog: { id: string; title: string; platform?: "PSX" | "N64" }[]): Promise<FpgaInventory>;
+    getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
     getFpgaDeviceLibrary(): Promise<DeviceLibrary>;
-    installFpgaBios(platform: "PSX" | "N64"): Promise<BiosStatus>;
-    deleteFpgaDeviceGame(platform: "PSX" | "N64", folder: string): Promise<{ deleted: string }>;
+    installFpgaBios(platform: DeviceFolderId): Promise<BiosStatus>;
+    deleteFpgaDeviceGame(platform: DeviceFolderId, folder: string): Promise<{ deleted: string }>;
     onFpgaInventoryChanged(listener: () => void): () => void;
     discoverFpga(): Promise<NetworkCandidate[]>;
     onFpgaDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
@@ -60,12 +66,12 @@ interface Window {
     getDebridSettings(): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
     setDebridSettings(settings: { realdebrid?: string; torbox?: string; collections?: CollectionSource[] }): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
     testDebrid(provider: "realdebrid" | "torbox"): Promise<{ ok: boolean; account: string }>;
-    downloadGame(provider: "realdebrid" | "torbox", link: string, title: string, platform?: "PS1" | "N64"): Promise<{ path: string; filename: string; bytes: number; directory: string }>;
+    downloadGame(provider: "realdebrid" | "torbox", link: string, title: string, platform?: CatalogPlatformId): Promise<{ path: string; filename: string; bytes: number; directory: string }>;
     onGameDownloadProgress(listener: (progress: GameDownloadProgress) => void): () => void;
-    searchCollections(title: string, region: string, platform?: "PS1" | "N64"): Promise<CollectionCandidate[]>;
+    searchCollections(title: string, region: string, platform?: CatalogPlatformId): Promise<CollectionCandidate[]>;
     indexCollection(source: CollectionSource): Promise<{ url: string; files: number; indexedAt: number }>;
     getCollectionStatus(): Promise<IndexedCollection[]>;
-    downloadCollectionSelection(sourceUrl: string, paths: string[], title: string, platform?: "PS1" | "N64"): Promise<{ directory: string; files: string[] }>;
+    downloadCollectionSelection(sourceUrl: string, paths: string[], title: string, platform?: CatalogPlatformId): Promise<{ directory: string; files: string[] }>;
     getEmuMoviesSettings(): Promise<EmuMoviesSettings>;
     loginEmuMovies(credentials: { username?: string; password?: string }): Promise<EmuMoviesProbe>;
     /** Streams sign-in stages; returns an unsubscribe function. */
@@ -124,8 +130,13 @@ type FpgaSettings = {
   recognized: boolean;
 };
 type FpgaInventory = { status: "unconfigured" | "scanning" | "ready"; gameIds: string[]; scannedAt?: number };
-type BiosStatus = { platform: "PSX" | "N64"; ready: boolean; files: { name: string; present: boolean }[] };
-type DeviceLibrary = { host: string; folders: Record<"PSX" | "N64", string[]>; bios: BiosStatus[] };
+/** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
+type DeviceFolderId = "PSX" | "N64" | "Saturn";
+/** Catalog platform. Mirrors `PlatformId` in src/platforms.ts. */
+type CatalogPlatformId = "PS1" | "N64" | "SAT";
+type BiosStatus = { platform: DeviceFolderId; ready: boolean; files: { name: string; present: boolean }[] };
+/** Partial: a device cache written before a console existed has no entry for it. */
+type DeviceLibrary = { host: string; folders: Partial<Record<DeviceFolderId, string[]>>; bios: BiosStatus[] };
 type NetworkCandidate = {
   host: string;
   hostname?: string;
