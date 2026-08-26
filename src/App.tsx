@@ -1004,7 +1004,7 @@ const Detail = forwardRef<
     try {
       if (!window.gameStore)
         throw new Error("Network transfer is available in the desktop app.");
-      const result = await window.gameStore.transferToFpga(game.title);
+      const result = await window.gameStore.transferToFpga(game.title, game.platform);
       if (result.canceled) setTransfer({ state: "idle" });
       else
         setTransfer({
@@ -1024,7 +1024,7 @@ const Detail = forwardRef<
       <div className="detail-top">
         <div>
           <p className="eyebrow">
-            {[game.region, "PLAYSTATION", game.year || null].filter(Boolean).join(" · ")}
+            {[game.region, platformLabel(game.platform), game.year || null].filter(Boolean).join(" · ")}
           </p>
           <h2>{game.title}</h2>
           <div className="tags">
@@ -1306,7 +1306,7 @@ function Acquisition({ game }: { game: Game }) {
       {state.status === "done" && <button className="source-fallback" disabled={sending} onClick={async () => {
         setSending(true);
         try {
-          const result = await window.gameStore!.transferLibraryToFpga(game.title);
+          const result = await window.gameStore!.transferLibraryToFpga(game.title, game.platform);
           setState({ status: "done", percent: 100, message: `Downloaded and copied to ${result.remoteDir}` });
         } catch (e) {
           setState({ status: "error", message: e instanceof Error ? e.message : String(e) });

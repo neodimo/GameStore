@@ -53,6 +53,20 @@ describe("collection torrent index", () => {
     const labels = matches.map((item) => item.variant.label);
     expect(labels).toContain("Japan");
     expect(labels).toContain("Japan (English translation)");
+    expect(matches.every((item) => item.variant.retail)).toBe(true);
+  });
+
+  it("never auto-selects prerelease or promotional dumps, even as the only title match", () => {
+    const nights = torrentFiles(b({ info: { name: "Saturn", files: [
+      { length: 1, path: ["NiGHTS into Dreams (Unknown) (Beta) (1996-05-14).bin"] },
+      { length: 2, path: ["NiGHTS into Dreams (USA) (Demo).bin"] },
+      { length: 3, path: ["NiGHTS into Dreams (Europe) [Prototype].bin"] },
+      { length: 4, path: ["NiGHTS into Dreams (USA).bin"] },
+    ] } }));
+    const matches = matchCollectionFiles(nights, "NiGHTS into Dreams", "USA");
+    expect(matches.map((item) => item.path)).toEqual(["NiGHTS into Dreams (USA).bin"]);
+    expect(releaseVariant("NiGHTS into Dreams (Unknown) (Beta) (1996-05-14).bin").retail).toBe(false);
+    expect(matchCollectionFiles(nights.slice(0, 3), "NiGHTS into Dreams", "USA")).toEqual([]);
   });
 
   /** A game with no release in its own region must not return an empty picker. */

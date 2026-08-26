@@ -7,11 +7,18 @@ import {
 import {
   DEVICE_PLATFORMS,
   deviceEntryTitle,
+  deviceFolderForPlatformId,
+  deviceFolderForStored,
   devicePlatform,
   isGameEntry,
 } from "./devicePlatforms";
 
 describe("MiSTer remote library matching", () => {
+  it("normalizes the legacy all-caps Saturn cart name to the real core folder", () => {
+    expect(deviceFolderForStored("SATURN")).toBe("Saturn");
+    expect(deviceFolderForStored("Saturn")).toBe("Saturn");
+  });
+
   /**
    * Taken from a real MiSTer. A device entry is named after the release, so
    * matching only the catalog's display title missed these: the article moves
@@ -124,6 +131,12 @@ describe("device entries by console layout", () => {
         { id: "n64-mario-kart-64", title: "Mario Kart 64", platform: "N64" },
       ]),
     ).toEqual(["n64-mario-kart-64"]);
+  });
+
+  it("keeps catalog identities separate from MiSTer core-folder names", () => {
+    expect(deviceFolderForStored("PS1")).toBeUndefined();
+    expect(deviceFolderForPlatformId("PS1")).toBe("PSX");
+    expect(deviceFolderForPlatformId("SAT")).toBe("Saturn");
   });
 
   /**

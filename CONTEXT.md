@@ -111,6 +111,12 @@ EmuMovies authentication and media discovery are separate operations. Sign-in va
 
 ## Acceptance direction
 
+## Collection-release safety (2026-08-25)
+
+Collection-torrent **Add to Cart** is an automatic retail-release selector. Files labelled beta, demo, prototype, preview, sample, kiosk, trial, promotional, not-for-resale, aftermarket, hack, or homebrew are excluded before scoring and before the regional fallback; a beta-only match must show no candidate rather than download it. The explicit direct-link control remains the intentional route for a nonstandard dump. The regression fixture includes the observed `NiGHTS into Dreams (Unknown) (Beta) (1996-05-14).bin` filename.
+
+Saturn’s canonical MiSTer core folder is `Saturn`. New managed-library records preserve that spelling; legacy `SATURN` records normalize compatibly at checkout. Every transfer API carries a catalog platform and resolves the target core folder before it looks up a queued record or opens SFTP. A title by itself is never enough to identify a transfer, because titles can overlap between consoles. The detail header uses the record’s platform label rather than a hardcoded PlayStation label.
+
 The original 30 adversarial fixtures remain the hand-verified data-quality core inside the 100-game catalog. Expanded titles have explicit lightweight Libretro cover fallbacks and participate in runtime fuzzy media matching; broader exact-release coverage remains an ongoing data-quality gate.
 
 ## Release workflow

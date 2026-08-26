@@ -56,8 +56,9 @@ interface Window {
     testFpga(): Promise<{ ok: boolean; message: string; host?: string }>;
     transferToFpga(
       title: string,
+      platform: string,
     ): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
-    transferLibraryToFpga(title: string): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
+    transferLibraryToFpga(title: string, platform: string): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
     getLibraryCart(): Promise<LibraryItem[]>;
     removeLibraryCartItem(id: string): Promise<LibraryItem[]>;
     checkoutLibraryCart(): Promise<{ items: number; files: number }>;

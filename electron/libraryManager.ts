@@ -4,6 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { pipeline } from "node:stream/promises";
 import yauzl from "yauzl";
+import { deviceFolderForPlatformId, devicePlatform } from "./devicePlatforms";
 
 export type LibraryItem = {
   id: string;
@@ -27,7 +28,6 @@ export type LibraryItem = {
 type LibraryIndex = { version: 1; cart: LibraryItem[] };
 const emptyIndex = (): LibraryIndex => ({ version: 1, cart: [] });
 const cleanName = (value: string) => value.replace(/[\\/:*?"<>|]/g, "-").trim();
-const discPlatforms = new Set(["PSX", "PS2", "SATURN", "DREAMCAST", "SEGACD", "PCECD"]);
 const playableExtensions = new Set([
   ".chd", ".cue", ".bin", ".iso", ".pbp", ".ccd", ".img", ".sub", ".m3u",
   ".gba", ".gb", ".gbc", ".z64", ".n64", ".v64", ".nes", ".sfc", ".smc", ".md", ".gen",
@@ -142,7 +142,12 @@ export async function finalizeDownload(args: {
   platform: string;
   downloadedFiles: string[];
 }) {
-  const platform = cleanName(args.platform.toUpperCase());
+  // Catalog downloads arrive as `PS1`/`SAT`; the cart and device use
+  // `PSX`/`Saturn`. Keep unknown legacy platforms working as generic local
+  // libraries, but make every registered console obey its registry facts.
+  const deviceFolder = deviceFolderForPlatformId(args.platform);
+  const platform = deviceFolder ?? cleanName(args.platform);
+  const definition = deviceFolder ? devicePlatform(deviceFolder) : undefined;
   const archives = args.downloadedFiles.filter((file) => path.extname(file).toLowerCase() === ".zip");
   if (archives.length > 1 || (archives.length && args.downloadedFiles.length > 1))
     throw new Error("A release must resolve to one ZIP archive or a set of game files, not both.");
@@ -168,12 +173,15 @@ export async function finalizeDownload(args: {
     }
   }
 
-  const playable = sourceFiles.filter((file) => playableExtensions.has(path.extname(file).toLowerCase()));
+  const allowedExtensions = new Set(definition?.extensions ?? playableExtensions);
+  const playable = sourceFiles.filter((file) => allowedExtensions.has(path.extname(file).toLowerCase()));
   if (!playable.length) {
     if (staging) await fs.rm(staging, { recursive: true, force: true });
     throw new Error("The downloaded release contains no supported playable game files. The original download was kept.");
   }
-  const needsFolder = discPlatforms.has(platform) || playable.length > 1 || playable.some((file) => path.extname(file).toLowerCase() === ".cue");
+  const needsFolder = definition
+    ? definition.layout === "folder"
+    : playable.length > 1 || playable.some((file) => path.extname(file).toLowerCase() === ".cue");
   const destination = needsFolder
     ? path.join(args.root, "Games", platform, cleanName(args.title))
     : path.join(args.root, "Games", platform);
@@ -201,7 +209,7 @@ export async function finalizeDownload(args: {
   } else {
     await Promise.all(args.downloadedFiles.map((file) => fs.rm(file, { force: true })));
   }
-  const queuedFiles = moved.filter((file) => playableExtensions.has(path.extname(file).toLowerCase()));
+  const queuedFiles = moved.filter((file) => allowedExtensions.has(path.extname(file).toLowerCase()));
   const item: LibraryItem = {
     id: `${platform}:${cleanName(args.title).toLowerCase()}`,
     title: args.title,

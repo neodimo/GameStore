@@ -94,6 +94,29 @@ const byCatalogId = new Map(DEVICE_PLATFORMS.map((p) => [p.catalogId, p]));
 export const isDeviceFolder = (value: unknown): value is DeviceFolder =>
   typeof value === "string" && byFolder.has(value as DeviceFolder);
 
+/**
+ * Reads a stored core-folder name, including the all-caps spelling written by
+ * v0.18.0's library finalizer. The device itself still receives the one
+ * canonical path from DEVICE_PLATFORMS (`Saturn`, never `SATURN`).
+ */
+export const deviceFolderForStored = (value: unknown): DeviceFolder | undefined => {
+  if (typeof value !== "string") return undefined;
+  return DEVICE_FOLDERS.find((folder) => folder.toLowerCase() === value.toLowerCase());
+};
+
+/**
+ * Converts either of the two public platform identities to the actual MiSTer
+ * core folder. Downloads originate in the catalog (`PS1`, `SAT`); library
+ * records and device operations use the core folder (`PSX`, `Saturn`). No
+ * caller should need to know which one it received.
+ */
+export const deviceFolderForPlatformId = (value: unknown): DeviceFolder | undefined => {
+  const stored = deviceFolderForStored(value);
+  if (stored) return stored;
+  if (typeof value !== "string") return undefined;
+  return DEVICE_PLATFORMS.find((platform) => platform.catalogId === value)?.deviceFolder;
+};
+
 /** Falls back to PlayStation so a record written by an older build still reads. */
 export const devicePlatform = (folder: string | undefined) =>
   byFolder.get(folder as DeviceFolder) ?? DEVICE_PLATFORMS[0];
