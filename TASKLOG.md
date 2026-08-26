@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-26 — N64 EmuMovies nested-layout discovery repair
+
+- **What was done:** Replaced the final-path-name assumption in EmuMovies N64 discovery. Once the scanner has entered a verified Nintendo manufacturer branch or N64 system branch, it now follows neutral intermediate folders through the existing bounded crawl and accepts real video files below the console branch even when the final directory has a generic name such as `MP4`, `USA`, or `HD`.
+- **Evidence:** The prior v0.18.4 implementation only tested `/Nintendo/Nintendo 64/Video Snaps`; it still abandoned `/Nintendo/Consoles/Nintendo 64/MP4/USA` at `Consoles`, and rejected an `HD` folder containing `.mp4` files because the path omitted “video”/“snap.” Both exact layouts are now regression tests. Full suite passed: **14 files / 208 tests**; TypeScript lint, production build, media-light check, and `git diff --check` passed locally.
+- **Artifacts:** `electron/emuMovies.ts`, `electron/emuMovies.test.ts`, `package.json`, and `package-lock.json` on branch `fix/n64-emumovies-live-path`; version prepared as `0.18.5`. The release will be tagged and published from the merged branch.
+- **State:** Local verification done; live-account acceptance remains unverified because no EmuMovies credential is available in this runtime. The release’s N64 scrape status is the concrete acceptance evidence.
+- **Next owner + concrete artifact:** Gonzo merges/publishes `v0.18.5` and verifies both release jobs. Omid installs `GameStore-Setup-0.18.5-x64.exe` and runs Settings → Media → Scrape **Nintendo 64**; the expected artifact is a nonzero N64 manifest plus its matched/catalog count in the status line.
+- **Failure mode:** Console discovery must carry branch context, rather than requiring every intermediate folder to repeat the console or media word. A test for one provider path does not establish that the crawler can traverse the provider’s real hierarchy.
+
 ## 2026-08-25 — v0.18.3 published and CI-verified
 
 - **What was done:** Published GameStore `v0.18.3`, containing multi-console EmuMovies manifests/lookup, per-console Discover shelves, and complete catalog flavor coverage. The project release policy now defaults verified batches to publication unless Bert has an active overlapping lane in the channel or Omid requests a hold.

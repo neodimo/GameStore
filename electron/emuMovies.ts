@@ -297,8 +297,17 @@ export const findSnapFolders = async (
       continue;
     }
     const pathHasSystem = alias.test(current.path) && !LATER_SONY.test(current.path);
-    const pathHasVideo = VIDEO_FOLDER.test(current.path);
-    if (pathHasSystem && pathHasVideo && videoFiles(entries).length) {
+    // `Sony` also houses later PlayStations.  A manufacturer context must not
+    // turn a rejected PS2/PS3 branch back into a broad traversal candidate.
+    const pathHasGroup = groupAlias.test(current.path) && !LATER_SONY.test(current.path);
+    /*
+     * A console branch is the trustworthy boundary, not a spelling convention
+     * for its last directory.  The live provider has used folders such as
+     * `USA`, `MP4`, and entitlement labels below a system name.  Requiring
+     * `video` or `snap` in that final path made those perfectly valid leaves
+     * invisible even though the contained files are unambiguously video.
+     */
+    if (pathHasSystem && videoFiles(entries).length) {
       found.push({ path: current.path, quality: qualityOf(current.path) });
       // A provider's highest quality tier can be only a partial set. Keep
       // checking the nearby console/video candidates so coverage, rather than
@@ -311,7 +320,16 @@ export const findSnapFolders = async (
       const childHasSystem = alias.test(name) && !LATER_SONY.test(name);
       const childHasGroup = groupAlias.test(name);
       const childHasVideo = VIDEO_FOLDER.test(name);
+      /*
+       * Once a manufacturer or exact-system branch is verified, its neutral
+       * intermediate directories are in scope too.  This remains bounded by
+       * the existing depth, listing-count, and wall-clock ceilings; it merely
+       * avoids treating `Nintendo/Consoles/Nintendo 64/MP4` as unrelated just
+       * because `Consoles` and `MP4` do not repeat the console name.
+       */
       const relevant =
+        pathHasSystem ||
+        pathHasGroup ||
         childHasSystem ||
         childHasGroup ||
         childHasVideo ||

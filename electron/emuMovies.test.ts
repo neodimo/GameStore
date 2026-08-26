@@ -162,6 +162,34 @@ describe("EmuMovies FTP layout discovery", () => {
     }), "N64")).folders).toEqual([{ path: root, quality: "HQ480" }]);
   });
 
+  it("follows neutral manufacturer intermediates to the actual N64 folder", async () => {
+    const root = "/Nintendo/Consoles/Nintendo 64/MP4/USA";
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Nintendo")],
+      "/Nintendo": [directory("Consoles")],
+      "/Nintendo/Consoles": [directory("Nintendo 64")],
+      "/Nintendo/Consoles/Nintendo 64": [directory("MP4")],
+      "/Nintendo/Consoles/Nintendo 64/MP4": [directory("USA")],
+      [root]: [video("Mario Kart 64 (USA).mp4")],
+    };
+    expect((await findSnapFolders(fakeClient(tree), "N64")).folders).toEqual([
+      { path: root, quality: "Unknown" },
+    ]);
+  });
+
+  it("accepts direct N64 clips below a generic console subfolder", async () => {
+    const root = "/Official/Nintendo 64/HD";
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Official")],
+      "/Official": [directory("Nintendo 64")],
+      "/Official/Nintendo 64": [directory("HD")],
+      [root]: [video("The Legend of Zelda - Ocarina of Time (USA).mp4")],
+    };
+    expect((await findSnapFolders(fakeClient(tree), "N64")).folders).toEqual([
+      { path: root, quality: "HD1080" },
+    ]);
+  });
+
   it("prioritizes the requested console's video branch over broad media siblings", async () => {
     const visited: string[] = [];
     const root = "/Official/Video Snaps (HQ)/Sony Playstation";
