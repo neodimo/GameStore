@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-25 — v0.18.1 published and CI-verified
+
+- **What was done:** Published the combined Settings/index controls and console-platform cleanup as GameStore `v0.18.1`. `master` contains Bert's `0e974f0` settings commit plus the console registry, retail-release filtering, and Saturn-routing fixes; release source is commit `29929d6`.
+- **Evidence:** Local combined verification passed: 14 test files / 200 tests, lint, production build, and media-light check. Tagged GitHub Actions run `32936515216` passed: Linux in 3m34s and Windows in 4m20s. The public release exists at `https://github.com/neodimo/GameStore/releases/tag/v0.18.1` with Windows installer `GameStore-Setup-0.18.1-x64.exe` plus Linux `.AppImage` and `.deb` artifacts.
+- **Artifacts:** `v0.18.1` tag and release are published; source is committed/pushed on `master`. This task log completion record is committed/pushed immediately after the release. No local scratch artifacts remain relevant.
+- **State:** Done. Device-writing acceptance remains intentionally unperformed: install v0.18.1, index a single configured console using its adjacent button, and send a Saturn title to confirm `/media/fat/games/Saturn/<title>/` on the real MiSTer.
+- **Next owner + concrete artifact:** Omid owns device acceptance with the v0.18.1 Windows installer. Gonzo owns diagnosis/follow-up only if that acceptance produces an error or mismatch.
+
 ## 2026-08-25 — v0.18.1 combined settings and console-platform release
 
 - **What was done:** Merged Bert's Settings tabs/per-console indexing control commit (`0e974f0`) with the console-platform registry cleanup and the unreleased retail-release/Saturn-transfer fixes. Settings now separates General, Downloads, Media, and MiSTer; saving configuration does not bulk-index collections, while each configured console has its own Index/Re-index control. Platform behavior is centrally derived for PS1, N64, and Saturn across inventory, routing, transfer, deletion, picker filtering, and BIOS checks.
