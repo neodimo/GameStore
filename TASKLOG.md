@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-25 — v0.18.3 published and CI-verified
+
+- **What was done:** Published GameStore `v0.18.3`, containing multi-console EmuMovies manifests/lookup, per-console Discover shelves, and complete catalog flavor coverage. The project release policy now defaults verified batches to publication unless Bert has an active overlapping lane in the channel or Omid requests a hold.
+- **Evidence:** Tagged release workflow [32940192766](https://github.com/neodimo/GameStore/actions/runs/32940192766) passed: Linux in 3m07s and Windows in 4m36s. The public release is non-draft/non-prerelease and includes Windows, AppImage, Debian, and updater artifacts.
+- **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.18.3. Windows installer: `GameStore-Setup-0.18.3-x64.exe` (93,098,318 bytes). Source tag `v0.18.3` is pushed; this completion note will be committed/pushed to `master` immediately after publication.
+- **State:** Done. N64/Saturn EmuMovies coverage still depends on the folders visible to Omid’s provider account; the app reports each console’s result independently.
+- **Next owner + concrete artifact:** Omid can install `GameStore-Setup-0.18.3-x64.exe` and use Settings → Media → **Scrape all console video**. Gonzo defaults later completed, verified batches to this same release path after checking whether Bert is actively changing the overlapping tree.
+
 ## 2026-08-25 — multi-console EmuMovies, console discovery shelves, and flavor coverage
 
 - **What was done:** Removed the remaining PS1-only EmuMovies assumptions. Each registered console now has a provider alias and its own manifest; previews request the manifest for the game’s actual platform; Media settings offer **All current consoles** plus each individual console. Discover now builds shelves from each selected console’s library. In the all-platform view, shelves are grouped by console rather than drawn from one mixed pool. Platforms remains a console chooser without curated shelves. Added a shared genre-to-flavor pass across all catalog records, preserving hand-curated flavors and assigning `Classic pick` to provider genres outside the semantic map so every current and future imported game has a discoverable flavor.
