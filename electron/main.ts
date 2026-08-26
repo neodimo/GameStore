@@ -32,7 +32,11 @@ import {
 import { addToCart, checkoutCart, findCartDiscImage, getCart, removeFromCart } from "./libraryManager";
 import { openTranslationBrowser } from "./translationDownloads";
 import { applyTranslation, readProvenance, type TranslationTarget } from "./translationManager";
-import { matchRemoteTitles, type InventoryCatalogGame } from "./fpgaInventory";
+import {
+  listDeviceGames,
+  matchRemoteTitles,
+  type InventoryCatalogGame,
+} from "./fpgaInventory";
 import {
   DEVICE_PLATFORMS,
   deviceEntryTitle,
@@ -658,35 +662,6 @@ const fpgaFingerprint = (f: NonNullable<ProviderSettings["fpga"]>) =>
   `${f.host}:${f.port || 22}:${f.username || "root"}:${f.root}`;
 const devicePlatforms = DEVICE_PLATFORMS.map((p) => p.deviceFolder);
 type DevicePlatform = DeviceFolder;
-
-/**
- * What is actually installed in each core folder on the device.
- *
- * This used to keep only directory entries, which is a disc-console
- * assumption. A PlayStation release is several files and gets a folder; a
- * cartridge is a single `.z64` sitting directly in `/media/fat/games/N64`, so
- * a real N64 folder full of games listed as empty while the one unrelated
- * subdirectory in it — `media` — was reported as the entire library.
- *
- * Entries come back as display names: a folder name, or a ROM filename with
- * its extension dropped, so both layouts match catalog titles the same way.
- */
-const listDeviceGames = async (client: SftpClient, root: string) =>
-  Object.fromEntries(
-    await Promise.all(
-      DEVICE_PLATFORMS.map(async (platform) => {
-        const entries = await client
-          .list(`${root}/${platform.deviceFolder}`)
-          .catch(() => []);
-        return [
-          platform.deviceFolder,
-          entries
-            .filter((entry) => isGameEntry(platform, entry))
-            .map((entry) => deviceEntryTitle(platform, entry.name)),
-        ];
-      }),
-    ),
-  ) as Record<DevicePlatform, string[]>;
 
 let inventoryRefresh: Promise<Record<DevicePlatform, string[]>> | undefined;
 const refreshFpgaInventory = async () => {

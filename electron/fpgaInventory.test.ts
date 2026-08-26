@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { matchRemoteTitles, normalizeRemoteTitle } from "./fpgaInventory";
+import {
+  listDeviceGames,
+  matchRemoteTitles,
+  normalizeRemoteTitle,
+} from "./fpgaInventory";
 import {
   DEVICE_PLATFORMS,
   deviceEntryTitle,
@@ -84,6 +88,48 @@ describe("device entries by console layout", () => {
         { id: "n64-mario-kart-64", title: "Mario Kart 64", platform: "N64" },
       ]),
     ).toEqual(["n64-mario-kart-64"]);
+  });
+
+  /**
+   * The reported symptom, reproduced against the function that produced it:
+   * a MiSTer whose N64 folder holds loose carts plus one `media` subdirectory
+   * showed `media` as the whole installed N64 library.
+   */
+  it("reads a real mixed-layout device without reporting media as a game", async () => {
+    const device: Record<string, { name: string; type: string }[]> = {
+      "/media/fat/games/PSX": [
+        dir("Vagrant Story"),
+        dir("Silent Hill"),
+        file("boot.rom"),
+      ],
+      "/media/fat/games/N64": [
+        file("Mario Kart 64 (USA).z64"),
+        file("Banjo-Kazooie (USA).z64"),
+        file("Perfect Dark (USA).z64"),
+        dir("media"),
+        file("boot.rom"),
+      ],
+    };
+    const client = {
+      list: async (path: string) => {
+        const entries = device[path];
+        // A console folder that does not exist rejects, as SFTP does.
+        if (!entries) throw new Error("No such file");
+        return entries;
+      },
+    };
+
+    const folders = await listDeviceGames(client, "/media/fat/games");
+    expect(folders.N64).toEqual([
+      "Mario Kart 64 (USA)",
+      "Banjo-Kazooie (USA)",
+      "Perfect Dark (USA)",
+    ]);
+    expect(folders.PSX).toEqual(["Vagrant Story", "Silent Hill"]);
+    // A console with no folder on the device reports empty, never throws.
+    expect(folders.Saturn).toEqual([]);
+    // BIOS files are not games on either layout.
+    expect([...folders.N64, ...folders.PSX]).not.toContain("boot.rom");
   });
 
   it("pins every console's BIOS to a checkable hash", () => {
