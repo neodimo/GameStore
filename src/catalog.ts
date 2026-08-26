@@ -772,11 +772,14 @@ const shuffled = <T,>(values: T[], random: () => number) => {
   return result;
 };
 
-export const createCuratedShelves = (random: () => number = Math.random) =>
+/** Build discovery shelves from the catalog currently in view.  Keeping the
+ * source explicit makes a console's Discover page feel like its own library
+ * instead of always surfacing PlayStation games. */
+export const createCuratedShelves = (random: () => number = Math.random, source: Game[] = games) =>
   shuffled(shelfRecipes, random).slice(0, 4).map((recipe) => ({
     title: recipe.title,
     subtitle: recipe.subtitle,
-    ids: shuffled(games.filter(recipe.matches), random).slice(0, 6).map((game) => game.id),
+    ids: shuffled(source.filter(recipe.matches), random).slice(0, 6).map((game) => game.id),
   })).filter((shelf) => shelf.ids.length > 0);
 
 export const facetOrder = [

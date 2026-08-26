@@ -42,7 +42,7 @@ import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
 import { restartMediaAudit } from "./mediaLibrary";
 
-type Sort = "curated" | "title" | "year-new" | "year-old";
+type Sort = "title" | "rating";
 type PlatformFilter = "All" | Game["platform"];
 const open = (url: string) =>
   window.gameStore?.openExternal(url) ?? window.open(url, "_blank", "noopener");
@@ -59,9 +59,11 @@ const loadFavs = () => {
     return new Set<string>();
   }
 };
-const loadHiddenGenres = () => {
-  try { return new Set<string>(JSON.parse(localStorage.getItem("gamestore:hidden-genres") || "[]")); }
-  catch { return new Set<string>(); }
+const loadHiddenGenres = (): Record<string, string[]> => {
+  try {
+    const stored = JSON.parse(localStorage.getItem("gamestore:hidden-genres-by-platform") || "{}");
+    return stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+  } catch { return {}; }
 };
 export function App() {
   return (
@@ -72,19 +74,19 @@ export function App() {
 }
 
 function Catalog() {
-  const [curatedShelves] = useState(() => createCuratedShelves());
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("All regions");
   const [genre, setGenre] = useState("All genres");
-  const [hiddenGenres, setHiddenGenres] = useState<Set<string>>(loadHiddenGenres);
+  const [hiddenGenresByPlatform, setHiddenGenresByPlatform] = useState<Record<string, string[]>>(loadHiddenGenres);
   const [genreMenu, setGenreMenu] = useState(false);
   const [platform, setPlatform] = useState<PlatformFilter>("All");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("gamestore:sidebar-collapsed") === "true");
   const [deviceManager, setDeviceManager] = useState(false);
+  const [platformDirectory, setPlatformDirectory] = useState(false);
   const [facet, setFacet] = useState("All flavors");
   const [translation, setTranslation] = useState(false);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
-  const [sort, setSort] = useState<Sort>("curated");
+  const [sort, setSort] = useState<Sort>("title");
   const [selected, setSelected] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(loadFavs);
   const [settings, setSettings] = useState(false);
@@ -100,6 +102,9 @@ function Catalog() {
   const detailsRef = useRef<HTMLDivElement>(null);
   const visiblePlatformGames = useMemo(() => games.filter((game) => platform === "All" || game.platform === platform), [platform]);
   const genres = useMemo(() => Array.from(new Set(visiblePlatformGames.flatMap((g) => g.genres))).sort(), [visiblePlatformGames]);
+  const flavors = useMemo(() => Array.from(new Set(visiblePlatformGames.flatMap((g) => g.facets))).sort(), [visiblePlatformGames]);
+  const hiddenGenres = useMemo(() => new Set(hiddenGenresByPlatform[platform] ?? []), [hiddenGenresByPlatform, platform]);
+  const curatedShelves = useMemo(() => createCuratedShelves(Math.random, visiblePlatformGames), [visiblePlatformGames]);
   const filtered = useMemo(
     () =>
       visiblePlatformGames
@@ -117,13 +122,9 @@ function Catalog() {
           );
         })
         .sort((a, b) =>
-          sort === "title"
-            ? a.title.localeCompare(b.title)
-            : sort === "year-new"
-              ? b.year - a.year
-              : sort === "year-old"
-                ? a.year - b.year
-                : 0,
+          sort === "rating"
+            ? (b.rating?.score ?? -Infinity) - (a.rating?.score ?? -Infinity) || a.title.localeCompare(b.title)
+            : a.title.localeCompare(b.title),
         ),
     [visiblePlatformGames, query, region, genre, hiddenGenres, facet, translation, favoriteOnly, favorites, sort],
   );
@@ -197,6 +198,7 @@ function Catalog() {
     setTranslation(false);
     setFavoriteOnly(false);
     setDeviceManager(false);
+    setPlatformDirectory(false);
   };
   const browsing =
     !!query ||
@@ -205,11 +207,17 @@ function Catalog() {
     facet !== "All flavors" ||
     translation ||
     favoriteOnly || hiddenGenres.size > 0 || platform !== "All";
-  const toggleGenre = (value: string) => setHiddenGenres((previous) => {
-    const next = new Set(previous);
+  const choosePlatform = (next: PlatformFilter) => {
+    setPlatform(next);
+    setGenre("All genres");
+    setFacet("All flavors");
+  };
+  const toggleGenre = (value: string) => setHiddenGenresByPlatform((previous) => {
+    const next = new Set(previous[platform] ?? []);
     next.has(value) ? next.delete(value) : next.add(value);
-    localStorage.setItem("gamestore:hidden-genres", JSON.stringify([...next]));
-    return next;
+    const updated = { ...previous, [platform]: [...next] };
+    localStorage.setItem("gamestore:hidden-genres-by-platform", JSON.stringify(updated));
+    return updated;
   });
   return (
     <div className={`shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
@@ -227,37 +235,37 @@ function Catalog() {
           })}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button>
         </div>
         <nav>
-          <button className={!favoriteOnly && !deviceManager ? "active" : ""} onClick={reset} title="Discover">
+          <button className={!favoriteOnly && !deviceManager && !platformDirectory ? "active" : ""} onClick={reset} title="Discover">
             <Compass />
-            Discover
+            <span>Discover</span>
           </button>
-          <button onClick={() => { setDeviceManager(false); setPlatform("All"); }} title="Platforms">
+          <button className={platformDirectory ? "active" : ""} onClick={() => { setDeviceManager(false); setPlatformDirectory(true); }} title="Platforms">
             <Gamepad2 />
-            Platforms
+            <span>Platforms</span>
           </button>
           <button onClick={() => { setFavoriteOnly(false); setFacet("Surreal"); }}>
             <Sparkles />
-            Weird Picks
+            <span>Weird Picks</span>
           </button>
           <button onClick={() => { setFavoriteOnly(false); setTranslation(true); }}>
             <Library />
-            Translations
+            <span>Translations</span>
           </button>
           <button
             className={favoriteOnly ? "active" : ""}
             onClick={() => setFavoriteOnly(true)}
           >
             <Heart />
-            Favorites
+            <span>Favorites</span>
           </button>
           <button className={deviceManager ? "active" : ""} onClick={() => setDeviceManager(true)} title="Manage MiSTer">
             <HardDrive />
-            Manage MiSTer
+            <span>Manage MiSTer</span>
           </button>
         </nav>
         <button className="settings-link" onClick={() => setSettings(true)} title="Settings">
           <Settings />
-          Settings
+          <span>Settings</span>
         </button>
       </aside>
       <div className="workspace">
@@ -280,10 +288,10 @@ function Catalog() {
           <LibraryCart />
         </header>
         <main>
-          {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : <>
+          {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : platformDirectory ? <PlatformDirectory onChoose={(next) => { choosePlatform(next); setPlatformDirectory(false); }} /> : <>
           <div className="platforms">
-            <button className={platform === "All" ? "active" : ""} onClick={() => setPlatform("All")}>All</button>
-            {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => setPlatform(definition.id)}>{definition.shortLabel}</button>)}
+            <button className={platform === "All" ? "active" : ""} onClick={() => choosePlatform("All")}>All</button>
+            {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => choosePlatform(definition.id)}>{definition.shortLabel}</button>)}
             <button disabled>PS2</button>
             <button disabled>Dreamcast</button>
             <button disabled>GameCube</button>
@@ -309,13 +317,17 @@ function Catalog() {
                 {hiddenGenres.size ? `Hide ${hiddenGenres.size} genre${hiddenGenres.size === 1 ? "" : "s"}` : "Genres"} <ChevronDown />
               </button>
               {genreMenu && <div className="genre-popover">
-                <div><b>Visible genres</b><button onClick={() => { setHiddenGenres(new Set()); localStorage.removeItem("gamestore:hidden-genres"); }}>Show all</button></div>
+                <div><b>Visible genres</b><button onClick={() => setHiddenGenresByPlatform((previous) => {
+                  const updated = { ...previous, [platform]: [] };
+                  localStorage.setItem("gamestore:hidden-genres-by-platform", JSON.stringify(updated));
+                  return updated;
+                })}>Show all</button></div>
                 {genres.map((item) => <label key={item}><input type="checkbox" checked={!hiddenGenres.has(item)} onChange={() => toggleGenre(item)} /> {item}</label>)}
               </div>}
             </div>
             <select value={facet} onChange={(e) => setFacet(e.target.value)}>
               <option>All flavors</option>
-              {facetOrder.map((x) => (
+              {flavors.map((x) => (
                 <option key={x}>{x}</option>
               ))}
             </select>
@@ -332,17 +344,14 @@ function Catalog() {
               value={sort}
               onChange={(e) => setSort(e.target.value as Sort)}
             >
-              <option value="curated">Sort: Recommended</option>
               <option value="title">Sort: Title</option>
-              <option value="year-new">Sort: Newest</option>
-              <option value="year-old">Sort: Oldest</option>
+              <option value="rating">Sort: Rating</option>
             </select>
           </div>
           {!browsing && <div className="curated-shelves">
             {curatedShelves.map((shelf) => (
               <section className="feature" key={shelf.title}>
                 <div>
-                  <p>CURATOR'S SHELF</p>
                   <h1>{shelf.title}</h1>
                   <span>{shelf.subtitle}</span>
                 </div>
@@ -873,6 +882,25 @@ function TranslationPanel({ game }: { game: Game }) {
     </section>
   );
 }
+function PlatformDirectory({ onChoose }: { onChoose: (platform: PlatformFilter) => void }) {
+  return <section className="platform-directory">
+    <p className="eyebrow">YOUR LIBRARIES</p>
+    <h1>Platforms</h1>
+    <p>Choose a console to browse its catalog, filters, and discovery shelves.</p>
+    <div className="platform-directory-grid">
+      <button className="platform-directory-card all" onClick={() => onChoose("All")}>
+        <Grid2X2 /><b>All platforms</b><span>{games.length.toLocaleString()} games across every installed catalog</span>
+      </button>
+      {PLATFORMS.map((definition) => {
+        const count = games.filter((game) => game.platform === definition.id).length;
+        return <button className="platform-directory-card" key={definition.id} onClick={() => onChoose(definition.id)}>
+          <Gamepad2 /><b>{definition.label}</b><span>{count.toLocaleString()} games · MiSTer: {deviceFolderLabel(definition.id)}</span>
+        </button>;
+      })}
+    </div>
+  </section>;
+}
+
 function MiniCover({ game, onClick }: { game: Game; onClick: () => void }) {
   return (
     <button className="mini-cover" onClick={onClick}>

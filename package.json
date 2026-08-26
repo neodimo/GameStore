@@ -1,6 +1,6 @@
 {
   "name": "gamestore",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "description": "A Windows and Linux visual catalog for discovering English-playable retro games.",
   "author": "Omid & Gonzo",
   "license": "MIT",
@@ -59,6 +59,12 @@
     ],
     "asarUnpack": [
       "node_modules/@chainsafe/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.png",
+        "to": "build/icon.png"
+      }
     ],
     "win": {
       "icon": "build/icon.png",

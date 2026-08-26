@@ -84,12 +84,12 @@ button {
 .sidebar-toggle { margin-left: auto; border: 0; background: transparent; color: #909699; cursor: pointer; display: grid; place-items: center; padding: 6px; }
 .sidebar-toggle svg { width: 18px; }
 .sidebar-collapsed .brand { padding: 0; justify-content: center; }
-.sidebar-collapsed .brand b, .sidebar-collapsed nav button:not(.sidebar-toggle)::after, .sidebar-collapsed nav button, .sidebar-collapsed .settings-link { font-size: 0; }
+.sidebar-collapsed .brand b, .sidebar-collapsed nav button > span, .sidebar-collapsed .settings-link > span { display: none; }
 .sidebar-collapsed .brand b { display: none; }
 .sidebar-collapsed .sidebar-toggle { position: absolute; top: 25px; right: -9px; background: #202427; border: 1px solid #42474a; border-radius: 50%; z-index: 2; }
 .sidebar-collapsed nav, .sidebar-collapsed .settings-link { margin-left: 8px; margin-right: 8px; padding-left: 10px; padding-right: 10px; }
 .sidebar-collapsed nav button, .sidebar-collapsed .settings-link { justify-content: center; gap: 0; }
-.sidebar-collapsed nav svg, .sidebar-collapsed .settings-link svg { width: 20px; }
+.sidebar-collapsed nav svg, .sidebar-collapsed .settings-link svg { width: 20px; height: 20px; flex: 0 0 20px; }
 .shell > aside {
   height: 100vh;
   position: sticky;
@@ -381,13 +381,6 @@ main {
   gap: 14px;
   margin-bottom: 13px;
 }
-.feature p {
-  color: var(--amber);
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  font-weight: 700;
-  margin: 0;
-}
 .feature h1 {
   font: 600 25px "Space Grotesk";
   margin: 0;
@@ -401,6 +394,15 @@ main {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 14px;
 }
+.platform-directory { max-width: 980px; margin: 40px auto; }
+.platform-directory h1 { margin: 4px 0 8px; font: 600 34px "Space Grotesk"; }
+.platform-directory > p:last-of-type { margin: 0 0 26px; color: #92989b; }
+.platform-directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.platform-directory-card { min-height: 150px; padding: 22px; border: 1px solid #3b4042; border-radius: 9px; background: #15181a; color: #e7e9e9; text-align: left; cursor: pointer; display: grid; grid-template-columns: 32px 1fr; column-gap: 13px; align-content: center; }
+.platform-directory-card:hover, .platform-directory-card.all { border-color: #ae7b26; background: #1d1b16; }
+.platform-directory-card svg { width: 27px; color: var(--amber); grid-row: span 2; }
+.platform-directory-card b { font: 600 19px "Space Grotesk"; }
+.platform-directory-card span { margin-top: 5px; color: #92989b; font-size: 12px; line-height: 1.4; }
 .mini-cover {
   border: 0;
   background: transparent;

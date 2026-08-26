@@ -88,6 +88,11 @@ const createWindow = () => {
     minWidth: 820,
     minHeight: 640,
     backgroundColor: "#0d0f12",
+    // The executable already uses this cartridge at install time; supplying
+    // it to the window keeps the desktop title-bar icon consistent too.
+    icon: app.isPackaged
+      ? path.join(process.resourcesPath, "build", "icon.png")
+      : path.join(__dirname, "../build/icon.png"),
     ...(process.platform === "darwin"
       ? { titleBarStyle: "hiddenInset" as const }
       : {}),

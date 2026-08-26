@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-25 — discovery/navigation corrections and v0.18.2 release preparation
+
+- **What was done:** Merged Bert's left-sidebar Settings tab layout (`7b094d2`) into `master`, then fixed the catalog/navigation issues reported by Omid: genre exclusion state is now scoped to the active platform view; shelves are generated from the current console catalog; the flavor menu is populated from that same current scope; the shelf eyebrow text is removed; sort options are Title and Rating with real score ordering; the Platforms navigation item opens a dedicated platform chooser; and collapsed navigation hides labels while preserving 20px icons. Added the cartridge asset to the Electron window and packaged resources so the application title bar uses the same cartridge icon as the installer.
+- **Evidence:** `npm run lint` passed. `npm test` passed **14 files / 200 tests**. `npm run build` passed renderer TypeScript/Vite and Electron TypeScript. `git diff --check` passed. The first test invocation included an unsupported `--runInBand` flag and was rejected before tests ran; the plain suite above is the valid evidence.
+- **Artifacts:** Modified `src/App.tsx`, `src/catalog.ts`, `src/style.css`, `electron/main.ts`, `package.json`, and `package-lock.json`; all are local pending commit at this entry. Bert's merged source commit is `7b094d2`. Release version prepared as `0.18.2`.
+- **State:** Locally done and build-verified. Packaged title-bar icon is source/package verified; its OS chrome rendering is not visually accepted on a user desktop yet. No device writes were performed.
+- **Next owner + concrete artifact:** Gonzo owns committing, pushing, tagging, publishing `v0.18.2`, and checking release CI. Omid's acceptance artifact is `GameStore-Setup-0.18.2-x64.exe`; check per-console genre hiding, the Platforms chooser, collapsed sidebar icon sizing, and the title-bar cartridge.
+- **Failure mode:** Genre exclusions used one global localStorage set. An exclusion made while browsing one console leaked into every other console and could make the all-platform view look like it had lost libraries. Filter state that derives its option list from a platform must retain that same platform scope.
+
 ## 2026-08-25 — v0.18.1 published and CI-verified
 
 - **What was done:** Published the combined Settings/index controls and console-platform cleanup as GameStore `v0.18.1`. `master` contains Bert's `0e974f0` settings commit plus the console registry, retail-release filtering, and Saturn-routing fixes; release source is commit `29929d6`.
