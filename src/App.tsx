@@ -1636,7 +1636,8 @@ function ProviderSettings({
             <X />
           </button>
         </div>
-        <nav className="settings-tabs" aria-label="Settings sections">
+        <div className="settings-body">
+          <nav className="settings-tabs" aria-label="Settings sections">
           {([
             ["general", "General"],
             ["downloads", "Downloads"],
@@ -1652,8 +1653,8 @@ function ProviderSettings({
               {label}
             </button>
           ))}
-        </nav>
-        <div className="settings-panel">
+          </nav>
+          <div className="settings-panel">
         {activeTab === "general" && <>
         <h2>Artwork scrapers</h2>
         <p>
@@ -1958,6 +1959,7 @@ function ProviderSettings({
           }}>Refresh device library</button>
         </div>
         </>}
+          </div>
         </div>
         {test && <p className="test-result">{test}</p>}
         <div className="settings-footer">
