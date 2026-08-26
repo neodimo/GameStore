@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { Game } from "./catalog";
+import { platformOf } from "./platforms";
 import {
   resolveLongplay,
   resolveScreenshots,
@@ -31,11 +32,17 @@ const listeners = new Set<() => void>();
 let version = 0;
 let started = false;
 let audit: MediaAuditStatus = { state: "idle", completed: 0, total: 0 };
-let resources: Promise<{
+type MediaResources = {
   snaps: string[];
   titles: string[];
   longplays: { identifier: string; title: string }[];
-}> | null = null;
+};
+/**
+ * Screenshot indexes are per console, so they are cached per Libretro system
+ * rather than in one shared slot. A single slot handed whichever console
+ * happened to open first to every other console's gallery.
+ */
+let resources = new Map<string, Promise<MediaResources>>();
 const emit = () => {
   version++;
   for (const listener of listeners) listener();
@@ -89,16 +96,21 @@ const snapPreview = async (game: Game): Promise<VideoPreview | null> => {
   }
 };
 
-const loadResources = () =>
-  (resources ??= Promise.all([
-    window.gameStore!.getArtIndex("Named_Snaps"),
-    window.gameStore!.getArtIndex("Named_Titles"),
+const loadResources = (system: string) => {
+  const cached = resources.get(system);
+  if (cached) return cached;
+  const job = Promise.all([
+    window.gameStore!.getArtIndex(system, "Named_Snaps"),
+    window.gameStore!.getArtIndex(system, "Named_Titles"),
     window.gameStore!.getLongplays(),
   ]).then(([snaps, titles, longplays]) => ({
     snaps: snaps.files,
     titles: titles.files,
     longplays,
-  })));
+  }));
+  resources.set(system, job);
+  return job;
+};
 
 export const ensureGameMedia = (game: Game) => {
   if (!window.gameStore) {
@@ -119,12 +131,18 @@ export const ensureGameMedia = (game: Game) => {
     ...blank(),
     videoError: undefined,
   });
-  const job = loadResources()
+  const system = platformOf(game.platform).thumbnailSystem;
+  const job = loadResources(system)
     .then(async (data) => {
-      const resolved = resolveScreenshots(game.title, game.region, {
-        Named_Snaps: data.snaps,
-        Named_Titles: data.titles,
-      });
+      const resolved = resolveScreenshots(
+        game.title,
+        game.region,
+        {
+          Named_Snaps: data.snaps,
+          Named_Titles: data.titles,
+        },
+        system,
+      );
       // Start still caching immediately. It is independent of the video
       // provider and used to sit behind an FTP probe, so a slow/unconfigured
       // EmuMovies account made both the preview and screenshots look stalled.
@@ -205,7 +223,7 @@ export const ensureGameMedia = (game: Game) => {
  * remains lazy per title; this lightweight warm-up is retained for the first
  * opened detail pane.
  */
-export const startMediaAudit = (_games: Game[]) => {
+export const startMediaAudit = (games: Game[]) => {
   if (started || !window.gameStore) return;
   started = true;
   audit = {
@@ -215,7 +233,12 @@ export const startMediaAudit = (_games: Game[]) => {
     message: "Warming media indexes",
   };
   emit();
-  loadResources()
+  // Warm only the consoles the catalog actually carries, so a platform with
+  // no games costs no request.
+  const systems = new Set(
+    games.map((game) => platformOf(game.platform).thumbnailSystem),
+  );
+  Promise.all([...systems].map((system) => loadResources(system)))
     .then(() => {
       audit = {
         state: "complete",
@@ -238,7 +261,7 @@ export const startMediaAudit = (_games: Game[]) => {
 export const restartMediaAudit = (games: Game[]) => {
   records.clear();
   inflight.clear();
-  resources = null;
+  resources = new Map();
   started = false;
   audit = { state: "idle", completed: 0, total: games.length };
   emit();

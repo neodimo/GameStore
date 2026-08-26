@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-25 — v0.17 visual feature screenshots
+
+- **What was done:** Captured the running v0.17 app's catalog home, compact sidebar, genre menu, N64 catalog, MiSTer manager, scraping settings, and provider settings. Posted all seven screenshots to `#gamestore` in Discord (message `1541842623348613273`).
+- **Evidence:** Captures came from the packaged Electron UI running locally. The MiSTer manager visibly reports that no device is configured; the translation view was empty under the active N64/English-patch filter.
+- **Artifacts:** Temporary captures are under `/home/omid/.openclaw/workspace/tmp/gamestore-*.png`; deliberate scratch, not committed.
+- **State:** Done; connected-device, populated-patch, and transfer-cart states remain unverified in this environment.
+- **Next owner + concrete artifact:** Omid can install v0.17.0 and repeat the same flows against `MiSTer.local`; use the Discord screenshot post as the visual reference.
+
 ## 2026-08-25 — v0.17.0 N64 catalog and MiSTer management release verified
 
 - **What was done:** Merged PR #42 and published GameStore v0.17.0, carrying persistent genre exclusions, the compact sidebar, PSX/N64 MiSTer management with explicit deletion confirmation, Update All-sourced BIOS readiness/install, and the USA-first N64 catalog plus N64 download/cart/transfer support.

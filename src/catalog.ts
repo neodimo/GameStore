@@ -1,7 +1,8 @@
+import type { PlatformId } from "./platforms";
 export type LinkState = "verified" | "unverified" | "stale" | "dead";
 export type Game = {
   id: string;
-  platform: "PS1" | "N64";
+  platform: PlatformId;
   title: string;
   year: number;
   region: "USA" | "Europe" | "Japan";

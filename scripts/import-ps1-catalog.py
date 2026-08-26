@@ -41,6 +41,27 @@ NON_RETAIL = re.compile(
 )
 DISC_AFTER_FIRST = re.compile(r"\(Disc [2-9](?:\)|,)", re.I)
 
+# OpenVGDB publishes the dump filename with its extension; Libretro names each
+# thumbnail after the release itself, without one. Stripping only `.cue`
+# happened to work for PlayStation, because every Redump disc name ends that
+# way, and silently produced `... (USA).n64.png` for every cartridge system —
+# a URL that 404s for the whole catalog rather than for a few odd titles.
+#
+# The set is explicit and `cover_name` reports anything it does not recognise,
+# because guessing at "strip whatever follows the last dot" would eat a title
+# that legitimately ends in one.
+ROM_EXTENSIONS = {
+    # Optical
+    "cue", "chd", "iso", "bin", "gdi", "ccd", "img",
+    # Nintendo
+    "n64", "z64", "v64", "nes", "fds", "sfc", "smc", "gb", "gbc", "gba", "nds",
+    # Sega
+    "md", "gen", "smd", "sms", "gg", "32x",
+    # Other cartridge families the catalog could plausibly grow into
+    "pce", "sgx", "a26", "a78", "lnx", "ngp", "ngc", "ws", "wsc", "col", "int",
+}
+SUFFIX = re.compile(r"\.([A-Za-z0-9]{1,4})$")
+
 # Discs that are not a game to play. Redump lists them because they are real
 # PlayStation discs; a catalog for finding something to play should not.
 #
@@ -150,6 +171,27 @@ def year(value: str | None) -> int:
     return int(match.group()) if match else 0
 
 
+unrecognized_suffixes: dict[str, int] = {}
+
+
+def cover_name(filename: str) -> str:
+    """The release name a Libretro thumbnail is published under.
+
+    That is the dump filename with its ROM/disc extension removed. An
+    unrecognised suffix is counted and left in place rather than guessed at, so
+    a new system announces itself in the import summary instead of quietly
+    emitting cover URLs that all 404.
+    """
+    match = SUFFIX.search(filename)
+    if not match:
+        return filename
+    if match.group(1).lower() not in ROM_EXTENSIONS:
+        suffix = match.group(1).lower()
+        unrecognized_suffixes[suffix] = unrecognized_suffixes.get(suffix, 0) + 1
+        return filename
+    return filename[: match.start()]
+
+
 def genres(value: str | None, separator: str) -> list[str]:
     if not value:
         return []
@@ -248,7 +290,7 @@ def load_openvgdb(
             "description": description,
             "descriptionSource": row["releaseReferenceURL"] if description else None,
             "developer": (row["releaseDeveloper"] or "").strip() or None,
-            "coverName": re.sub(r"\.cue$", "", row["romFileName"], flags=re.I),
+            "coverName": cover_name(row["romFileName"] or ""),
         })
     return output, excluded
 
@@ -393,6 +435,10 @@ def main() -> None:
     print("  Excluded as not a game: " + " · ".join(
         f"{label} {count}" for label, count in sorted(excluded.items())) )
     print(f"  LaunchBox matched {matched}/{total}")
+    if unrecognized_suffixes:
+        print("  Unrecognized dump suffixes left on coverName: " + " · ".join(
+            f".{suffix} {count}" for suffix, count in sorted(unrecognized_suffixes.items())))
+        print("  Add them to ROM_EXTENSIONS; their artwork URLs will not resolve.")
     print("  " + " · ".join(
         filled(field)
         for field in ("year", "genres", "description", "developer", "players", "esrb", "rating")

@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { games } from "./catalog";
 import { thumbnailIndexSample } from "./artMatch.fixture";
+
+/**
+ * The fixture is a PlayStation box-art listing, so every call names that
+ * source. It is passed explicitly rather than defaulted, because a default is
+ * what previously let one console's identity stand in for all of them.
+ */
+const PSX_BOXARTS = {
+  system: "Sony%20-%20PlayStation",
+  folder: "Named_Boxarts",
+} as const;
 import {
   BROWSE_FLOOR,
   exactArtMatch,
@@ -75,7 +85,7 @@ describe("art filename parsing", () => {
  */
 describe("seeded exact cover lookup", () => {
   it("resolves a seeded No-Intro name straight out of the index", () => {
-    const match = exactArtMatch("Incredible Crisis (USA)", thumbnailIndexSample);
+    const match = exactArtMatch("Incredible Crisis (USA)", thumbnailIndexSample, PSX_BOXARTS);
     expect(match?.file).toBe("Incredible Crisis (USA).png");
     expect(match?.confidence).toBe("high");
   });
@@ -87,14 +97,18 @@ describe("seeded exact cover lookup", () => {
     );
     // A seed naming a printing the index does not carry still finds the cover.
     expect(
-      exactArtMatch("Devil Dice (USA) (v1.1)", thumbnailIndexSample)?.file,
+      exactArtMatch("Devil Dice (USA) (v1.1)", thumbnailIndexSample, PSX_BOXARTS)?.file,
     ).toBe("Devil Dice (USA).png");
   });
 
   it("declines rather than inventing a cover for unknown or absent names", () => {
-    expect(exactArtMatch(undefined, thumbnailIndexSample)).toBeNull();
+    expect(exactArtMatch(undefined, thumbnailIndexSample, PSX_BOXARTS)).toBeNull();
     expect(
-      exactArtMatch("Totally Fictional Game 9000 (USA)", thumbnailIndexSample),
+      exactArtMatch(
+        "Totally Fictional Game 9000 (USA)",
+        thumbnailIndexSample,
+        PSX_BOXARTS,
+      ),
     ).toBeNull();
   });
 
@@ -102,10 +116,10 @@ describe("seeded exact cover lookup", () => {
     const conflicts: string[] = [];
     let checked = 0;
     for (const game of games) {
-      const exact = exactArtMatch(game.coverName, thumbnailIndexSample);
+      const exact = exactArtMatch(game.coverName, thumbnailIndexSample, PSX_BOXARTS);
       if (!exact) continue;
       checked += 1;
-      const fuzzy = resolveArt(game.title, game.region, thumbnailIndexSample);
+      const fuzzy = resolveArt(game.title, game.region, thumbnailIndexSample, PSX_BOXARTS);
       if (fuzzy?.file !== exact.file)
         conflicts.push(`${game.title}: ${exact.file} vs ${fuzzy?.file}`);
     }
@@ -118,7 +132,7 @@ describe("automatic box-art resolution", () => {
   it("resolves every catalog game to its correct release artwork", () => {
     const wrong: string[] = [];
     for (const game of games.filter((game) => expected[game.id])) {
-      const match = resolveArt(game.title, game.region, thumbnailIndexSample);
+      const match = resolveArt(game.title, game.region, thumbnailIndexSample, PSX_BOXARTS);
       const accepted = [expected[game.id]].flat();
       if (!match || !accepted.includes(match.file))
         wrong.push(`${game.title}: ${match?.file ?? "no match"}`);
@@ -129,16 +143,17 @@ describe("automatic box-art resolution", () => {
   it("covers the hand-verified adversarial catalog with no holes", () => {
     for (const game of games.filter((game) => expected[game.id]))
       expect(
-        resolveArt(game.title, game.region, thumbnailIndexSample),
+        resolveArt(game.title, game.region, thumbnailIndexSample, PSX_BOXARTS),
       ).not.toBeNull();
   });
 
   it("prefers the catalog region but still matches across regions", () => {
-    const usa = resolveArt("Incredible Crisis", "USA", thumbnailIndexSample);
+    const usa = resolveArt("Incredible Crisis", "USA", thumbnailIndexSample, PSX_BOXARTS);
     const europe = resolveArt(
       "Incredible Crisis",
       "Europe",
       thumbnailIndexSample,
+      PSX_BOXARTS,
     );
     expect(usa?.file).toContain("(USA)");
     expect(europe?.file).toContain("(Europe)");
@@ -146,7 +161,7 @@ describe("automatic box-art resolution", () => {
 
   it("rejects unrelated titles instead of inventing a cover", () => {
     expect(
-      resolveArt("Totally Fictional Game 9000", "USA", thumbnailIndexSample),
+      resolveArt("Totally Fictional Game 9000", "USA", thumbnailIndexSample, PSX_BOXARTS),
     ).toBeNull();
   });
 
@@ -155,6 +170,7 @@ describe("automatic box-art resolution", () => {
       "Kowloon's Gate",
       "Japan",
       thumbnailIndexSample,
+      PSX_BOXARTS,
     );
     const top = ranked[0];
     expect(top.file).not.toMatch(/Disc [2-9]/);
@@ -163,7 +179,7 @@ describe("automatic box-art resolution", () => {
   });
 
   it("offers alternate regional printings for a deeper search", () => {
-    const ranked = rankArtCandidates("Devil Dice", "USA", thumbnailIndexSample);
+    const ranked = rankArtCandidates("Devil Dice", "USA", thumbnailIndexSample, PSX_BOXARTS);
     expect(ranked.length).toBeGreaterThan(1);
     expect(ranked.map((c) => c.file).join(" ")).toContain("(Europe)");
   });
@@ -174,14 +190,14 @@ describe("automatic box-art resolution", () => {
       title,
       "Japan",
       thumbnailIndexSample,
-      "Named_Boxarts",
+      PSX_BOXARTS,
       36,
     );
     const browse = rankArtCandidates(
       title,
       "Japan",
       thumbnailIndexSample,
-      "Named_Boxarts",
+      PSX_BOXARTS,
       36,
       BROWSE_FLOOR,
     );
@@ -189,7 +205,7 @@ describe("automatic box-art resolution", () => {
     expect(browse.length).toBeGreaterThan(strict.length);
     // ...while the top pick and the automatic resolver are unchanged.
     expect(browse[0].file).toBe(strict[0].file);
-    expect(resolveArt(title, "Japan", thumbnailIndexSample)?.file).toBe(
+    expect(resolveArt(title, "Japan", thumbnailIndexSample, PSX_BOXARTS)?.file).toBe(
       strict[0].file,
     );
     for (const candidate of strict)

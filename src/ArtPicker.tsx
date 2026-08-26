@@ -9,6 +9,7 @@ import {
   type ArtFolder,
 } from "./artMatch";
 import { useArtwork } from "./artwork";
+import { platformOf } from "./platforms";
 
 type Candidate = {
   url: string;
@@ -42,10 +43,15 @@ export function ArtPicker({
 }) {
   const artwork = useArtwork();
   const current = artwork.artFor(game);
+  // Every folder browsed here belongs to this game's own console. Searching a
+  // Nintendo 64 title against the PlayStation pack is what the shared index
+  // used to do, and it is why non-PlayStation art never resolved.
+  const platform = platformOf(game.platform);
+  const boxarts = artwork.indexFor(game.platform).files;
   const [tab, setTab] = useState<Tab>("Named_Boxarts");
   const [query, setQuery] = useState(game.title);
   const [indexes, setIndexes] = useState<Record<string, string[]>>({
-    Named_Boxarts: artwork.index.files,
+    Named_Boxarts: boxarts,
   });
   const [remote, setRemote] = useState<Candidate[]>([]);
   const [busy, setBusy] = useState(false);
@@ -53,8 +59,8 @@ export function ArtPicker({
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setIndexes((prev) => ({ ...prev, Named_Boxarts: artwork.index.files }));
-  }, [artwork.index.files]);
+    setIndexes({ Named_Boxarts: boxarts });
+  }, [boxarts]);
   useEffect(() => searchRef.current?.focus(), []);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
@@ -70,7 +76,7 @@ export function ArtPicker({
     setBusy(true);
     setError("");
     window.gameStore
-      ?.getArtIndex(tab)
+      ?.getArtIndex(platform.thumbnailSystem, tab)
       .then((loaded) => {
         if (!cancelled)
           setIndexes((prev) => ({ ...prev, [tab]: loaded.files }));
@@ -82,7 +88,7 @@ export function ArtPicker({
     return () => {
       cancelled = true;
     };
-  }, [tab, indexes]);
+  }, [tab, indexes, platform.thumbnailSystem]);
 
   const searchTheGamesDb = async () => {
     setBusy(true);
@@ -117,7 +123,7 @@ export function ArtPicker({
       query,
       game.region,
       files,
-      tab,
+      { system: platform.thumbnailSystem, folder: tab },
       36,
       BROWSE_FLOOR,
     ).map((m) => ({
@@ -127,7 +133,7 @@ export function ArtPicker({
       source: m.confidence,
       score: m.score,
     }));
-  }, [tab, remote, indexes, query, game.region]);
+  }, [tab, remote, indexes, query, game.region, platform.thumbnailSystem]);
 
   const apply = (candidate: Candidate) => {
     artwork.setOverride(game, {

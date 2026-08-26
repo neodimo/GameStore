@@ -10,6 +10,27 @@ describe('catalog invariants',()=>{
   expect(n64.every(g=>Boolean(g.cover)&&g.cover!.includes('Nintendo%20-%20Nintendo%2064'))).toBe(true);
  });
  /**
+  * Every N64 cover URL 404'd while the assertion above passed, because that
+  * assertion checks the thumbnail folder and the defect was in the filename.
+  * The importer stripped only `.cue` from the dump name, which is right for a
+  * Redump disc and leaves `... (USA).n64` on every cartridge, producing
+  * `... (USA).n64.png`. Libretro names a thumbnail after the release, never
+  * after the ROM file, so a cover name carrying an image extension is broken
+  * for a whole platform rather than for a few odd titles.
+  */
+ it('never carries a ROM or disc extension in a cover name',()=>{
+  const carrying=games.filter(g=>/\.(cue|chd|iso|bin|n64|z64|v64|nes|sfc|smc|md|gen|gg|sms|gb|gbc|gba|pce|32x)$/i.test(g.coverName??''));
+  expect(carrying.map(g=>`${g.platform} ${g.coverName}`)).toEqual([]);
+ });
+ /** A seeded cover URL must be built from the game's own console. */
+ it('seeds each platform its own Libretro thumbnail system',()=>{
+  const systems:Record<string,string>={PS1:'Sony%20-%20PlayStation',N64:'Nintendo%20-%20Nintendo%2064',SAT:'Sega%20-%20Saturn'};
+  for(const g of games){
+   if(!g.cover?.startsWith('https://thumbnails.libretro.com/')) continue;
+   expect(g.cover,`${g.platform} ${g.title}`).toContain(`/${systems[g.platform]}/`);
+  }
+ });
+ /**
   * Redump lists cheat cartridges, magazine cover discs and bonus albums because
   * they are real PlayStation discs. A catalog for finding something to play
   * should not: one of them was surfacing inside a curator shelf.

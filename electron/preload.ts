@@ -7,8 +7,8 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.invoke("provider-key-set", key),
   findTheGamesDbArt: (title: string) =>
     ipcRenderer.invoke("thegamesdb-art", title),
-  getArtIndex: (folder: string, force?: boolean) =>
-    ipcRenderer.invoke("art-index-get", folder, force),
+  getArtIndex: (system: string, folder: string, force?: boolean) =>
+    ipcRenderer.invoke("art-index-get", system, folder, force),
   cacheCover: (url: string) => ipcRenderer.invoke("art-cover-cache", url),
   getLongplays: (force?: boolean) =>
     ipcRenderer.invoke("media-longplays-get", force),
@@ -34,8 +34,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   getFpgaInventory: (catalog: { id: string; title: string }[]) => ipcRenderer.invoke("fpga-inventory-get", catalog),
   refreshFpgaInventory: () => ipcRenderer.invoke("fpga-inventory-refresh"),
   getFpgaDeviceLibrary: () => ipcRenderer.invoke("fpga-device-library"),
-  installFpgaBios: (platform: "PSX" | "N64") => ipcRenderer.invoke("fpga-bios-install", platform),
-  deleteFpgaDeviceGame: (platform: "PSX" | "N64", folder: string) => ipcRenderer.invoke("fpga-device-delete", platform, folder),
+  installFpgaBios: (platform: string) => ipcRenderer.invoke("fpga-bios-install", platform),
+  deleteFpgaDeviceGame: (platform: string, folder: string) => ipcRenderer.invoke("fpga-device-delete", platform, folder),
   onFpgaInventoryChanged: (listener: () => void) => {
     const wrapped = () => listener();
     ipcRenderer.on("fpga-inventory-changed", wrapped);

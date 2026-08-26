@@ -255,8 +255,18 @@ export const titleSimilarity = (a: string, b: string) => {
 export const confidenceOf = (score: number): Confidence =>
   score >= HIGH ? "high" : score >= MEDIUM ? "medium" : "low";
 
-export const libretroArtUrl = (folder: ArtFolder, file: string) =>
-  `https://thumbnails.libretro.com/Sony%20-%20PlayStation/${folder}/${encodeURIComponent(file)}`;
+/**
+ * Which Libretro thumbnail pack a set of filenames came from.
+ *
+ * The system used to be baked into the URL builder as `Sony - PlayStation`, so
+ * every non-PlayStation cover resolved to an address that does not exist. It is
+ * now carried alongside the folder and has no default, because a default is
+ * exactly what let one console's identity stand in for every other console's.
+ */
+export type ArtSource = { system: string; folder: ArtFolder };
+
+export const libretroArtUrl = (source: ArtSource, file: string) =>
+  `https://thumbnails.libretro.com/${source.system}/${source.folder}/${encodeURIComponent(file)}`;
 
 /**
  * Ranks an entire thumbnail index for one title. `limit` keeps the deep-search
@@ -266,7 +276,7 @@ export const rankArtCandidates = (
   title: string,
   region: Region,
   files: string[],
-  folder: ArtFolder = "Named_Boxarts",
+  source: ArtSource,
   limit = 24,
   floor = MATCH_FLOOR,
 ): ArtMatch[] => {
@@ -277,12 +287,12 @@ export const rankArtCandidates = (
     if (score < floor) continue;
     scored.push({
       file: entry.file,
-      url: libretroArtUrl(folder, entry.file),
+      url: libretroArtUrl(source, entry.file),
       label: entry.core,
       tags: entry.tags,
       score,
       confidence: confidenceOf(score),
-      source: `Libretro · ${artFolders[folder]}`,
+      source: `Libretro · ${artFolders[source.folder]}`,
     });
   }
   scored.sort((a, b) => b.score - a.score || a.file.localeCompare(b.file));
@@ -294,8 +304,8 @@ export const resolveArt = (
   title: string,
   region: Region,
   files: string[],
-  folder: ArtFolder = "Named_Boxarts",
-): ArtMatch | null => rankArtCandidates(title, region, files, folder, 1)[0] ?? null;
+  source: ArtSource,
+): ArtMatch | null => rankArtCandidates(title, region, files, source, 1)[0] ?? null;
 
 /**
  * The catalog importer already records each game's No-Intro cover name, so most
@@ -307,7 +317,7 @@ export const resolveArt = (
 export const exactArtMatch = (
   coverName: string | undefined,
   files: string[],
-  folder: ArtFolder = "Named_Boxarts",
+  source: ArtSource,
 ): ArtMatch | null => {
   if (!coverName) return null;
   const index = artIndexFor(files);
@@ -318,11 +328,11 @@ export const exactArtMatch = (
   const { core, tags } = parseArtFilename(file);
   return {
     file,
-    url: libretroArtUrl(folder, file),
+    url: libretroArtUrl(source, file),
     label: core,
     tags,
     score: EXACT_SCORE,
     confidence: "high",
-    source: `Libretro · ${artFolders[folder]}`,
+    source: `Libretro · ${artFolders[source.folder]}`,
   };
 };
