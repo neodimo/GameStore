@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-25 — v0.18.0 released: Saturn, fixed N64 art, and real MiSTer cartridge inventory
+
+- **What was done:** Released the approved Saturn/N64/MiSTer work as **v0.18.0**. It includes the N64 cover filename correction and per-platform artwork index, Sega Saturn catalog, per-platform torrent-source fields, flat cartridge-ROM inventory/transfer/delete handling, and the real-device fixes for the `media` directory and release-name matching.
+- **Evidence:** PR [#43](https://github.com/neodimo/GameStore/pull/43) merged at `e9caf20fba719f62aee56e0060a99d3f1c236d6c` after clean-install verification run [32933279260](https://github.com/neodimo/GameStore/actions/runs/32933279260) passed. Tagged release run [32933404967](https://github.com/neodimo/GameStore/actions/runs/32933404967) passed Linux in 3m07s and Windows in 5m00s, including tests, TypeScript, packages, and size checks. The public release was inspected after both jobs completed: it is non-draft/non-prerelease and has the Windows installer/blockmap, Linux AppImage/Debian package, and both updater manifests.
+- **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.18.0. Windows installer `GameStore-Setup-0.18.0-x64.exe` (92,926,635 bytes); AppImage (123,662,024 bytes); Debian package (84,491,936 bytes). This release record is committed/pushed with the project documentation.
+- **State:** Done. The read-only N64 inventory path is hardware-verified against Omid’s MiSTer at `192.168.4.96`; transfer, delete, and Saturn BIOS install remain intentionally untested on hardware because they write to the device.
+- **Next owner + concrete artifact:** Omid installs `GameStore-Setup-0.18.0-x64.exe` from the release and checks the Saturn catalog and N64 list in **Manage MiSTer**. For the first write-path acceptance test, use the Saturn BIOS card, which correctly reports `boot.rom` absent on the real device.
+
 ## 2026-08-25 — hardware verification against the real MiSTer, and two defects it exposed
 
 - **What was done:** Omid corrected the previous entry's "no MiSTer was reachable" — his device is at `192.168.4.96` and was online. That claim was inference from an older note, not a probe, and it was wrong. Connected and re-ran the real code against the real device. **Access:** authenticated over SSH as `root` with MiSTer's documented default password, at Omid's explicit prompting, and every operation was read-only (`list`, `exists`). No file was written, moved or deleted. The device SSH host key was added to the local `known_hosts`.
