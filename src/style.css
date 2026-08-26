@@ -1742,28 +1742,40 @@ footer {
 }
 .settings-tabs {
   display: flex;
+  flex-direction: column;
   gap: 4px;
-  margin: 18px 0 0;
-  border-bottom: 1px solid #34383a;
+  width: 140px;
+  flex: 0 0 140px;
+  padding: 18px 16px 0 0;
+  border-right: 1px solid #34383a;
 }
 .settings-tabs button {
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-left: 2px solid transparent;
   background: transparent;
   color: #8f9699;
-  padding: 10px 14px;
+  padding: 11px 12px;
+  text-align: left;
   cursor: pointer;
   font: 600 12px "Space Grotesk";
 }
 .settings-tabs button:hover { color: #e8e8e6; }
 .settings-tabs button.active {
   color: var(--amber);
-  border-bottom-color: var(--amber);
+  border-left-color: var(--amber);
+  background: #ffffff08;
+}
+.settings-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  margin-top: 18px;
 }
 .settings-panel {
   min-height: 0;
+  flex: 1;
   overflow: auto;
-  padding: 24px 4px 8px 0;
+  padding: 18px 4px 8px 24px;
 }
 .settings-footer {
   display: flex;
