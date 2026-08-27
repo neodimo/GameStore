@@ -259,6 +259,40 @@ describe("EmuMovies FTP layout discovery", () => {
     expect(folders.folders).toEqual([{ path: root, quality: "HQ480" }]);
   });
 
+  it("queries known N64 roots directly without opening unrelated HD systems", async () => {
+    const visited: string[] = [];
+    const root = "/Official/Video Snaps (HQ)/Nintendo 64 (Video Snaps)(HQ)(EM 1.7)";
+    const tree: Record<string, FileInfo[]> = {
+      "/Official/Video Snaps (HD)": [
+        directory("Nintendo 3DS (Video Snaps)(HD)(EM 1.1)"),
+        directory("Nintendo GameCube (Video Snaps)(HD)(EM WIP)"),
+        directory("Sony PlayStation 2 (Video Snaps)(HD)(EM WIP)"),
+      ],
+      "/Official/Video Snaps (HQ)": [
+        directory("Nintendo 64 (Video Snaps)(HQ)(EM 1.7)"),
+        directory("Nintendo 64DD (Video Snaps)(HQ)(EM 1.0)"),
+        directory("Nintendo GameCube (Video Snaps)(HQ)(EM WIP)"),
+      ],
+      "/Official/Video Snaps (SQ)": [directory("Nintendo GameCube (Video Snaps)(SQ)(EM WIP)")],
+      [root]: [video("Super Mario 64 (USA).mp4")],
+    };
+    const client = {
+      list: async (remote = "/") => {
+        visited.push(remote);
+        return tree[remote] ?? [];
+      },
+    } as never;
+    expect((await findSnapFolders(client, "N64")).folders).toEqual([
+      { path: root, quality: "HQ480" },
+    ]);
+    expect(visited).toEqual([
+      "/Official/Video Snaps (HD)",
+      "/Official/Video Snaps (HQ)",
+      root,
+      "/Official/Video Snaps (SQ)",
+    ]);
+  });
+
   it("also finds a system-first quality layout", async () => {
     const root = "/Sony PlayStation/Video_Snaps_HD";
     const folders = await findSnapFolders(

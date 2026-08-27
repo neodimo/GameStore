@@ -133,7 +133,7 @@ const LATER_SONY = /\b(2|3|4|5|portable|psp|vita)\b/i;
 
 const SYSTEM_ALIASES: Record<string, RegExp> = {
   PS1: /sony|playstation|psx/i,
-  N64: /nintendo\W*(?:64|n64)|\bn64\b/i,
+  N64: /nintendo\W*(?:64|n64)\b|\bn64\b/i,
   SAT: /sega\s*saturn|\bsaturn\b/i,
 };
 
@@ -148,6 +148,19 @@ const SYSTEM_GROUP_ALIASES: Record<string, RegExp> = {
   N64: /\bnintendo\b/i,
   SAT: /\bsega\b/i,
 };
+
+/**
+ * The member FTP's current published layout. These are deliberately concrete
+ * paths, rather than hints for a crawler: the normal scrape should take a few
+ * listings for the requested console, not inspect every console in a quality
+ * library. The generic resolver below remains a last-resort compatibility
+ * path if EmuMovies reorganises this known layout again.
+ */
+const OFFICIAL_VIDEO_ROOTS = [
+  "/Official/Video Snaps (HD)",
+  "/Official/Video Snaps (HQ)",
+  "/Official/Video Snaps (SQ)",
+];
 
 const connect = async (credentials: EmuMoviesCredentials, secure: boolean) => {
   const client = new Client(TIMEOUT);
@@ -253,6 +266,55 @@ const discoveryScore = (remote: string, alias: RegExp, groupAlias: RegExp) => {
     (system ? 80 : group ? 30 : 0) + qualityScore + (/official/i.test(remote) ? 20 : 0);
 };
 
+/**
+ * Query EmuMovies' published quality roots directly. A complete current N64
+ * discovery is three root listings plus up to one console listing per tier.
+ * In particular, never open every HD console merely because that root sorts
+ * ahead of HQ: a requested N64 HQ folder is more useful than every unrelated
+ * HD library combined.
+ */
+const findOfficialSnapFolders = async (
+  client: Pick<Client, "list">,
+  alias: RegExp,
+  deadline: ProbeDeadline,
+  onProgress?: ProbeProgress,
+) => {
+  const folders: SnapFolder[] = [];
+  let listed = 0;
+  let failures = 0;
+  for (const root of OFFICIAL_VIDEO_ROOTS) {
+    if (deadline.expired) return { folders, listed, failures, truncated: true };
+    onProgress?.(`Scanning the known ${root.split("/").at(-1)} video set…`);
+    let systems: FileInfo[];
+    try {
+      systems = await deadline.guard(`listing ${root}`, Promise.resolve(client.list(root)));
+      listed += 1;
+    } catch {
+      failures += 1;
+      continue;
+    }
+    const systemFolders = directories(systems).filter((name) =>
+      alias.test(name) && !LATER_SONY.test(name),
+    );
+    for (const name of systemFolders) {
+      const candidate = joinRemote(root, name);
+      if (deadline.expired) return { folders, listed, failures, truncated: true };
+      try {
+        const entries = await deadline.guard(
+          `listing ${candidate}`,
+          Promise.resolve(client.list(candidate)),
+        );
+        listed += 1;
+        if (videoFiles(entries).length)
+          folders.push({ path: candidate, quality: qualityOf(root) });
+      } catch {
+        failures += 1;
+      }
+    }
+  }
+  return { folders, listed, failures, truncated: false };
+};
+
 export const findSnapFolders = async (
   client: Pick<Client, "list">,
   system: string,
@@ -261,6 +323,14 @@ export const findSnapFolders = async (
 ): Promise<SnapScan> => {
   const alias = SYSTEM_ALIASES[system] ?? new RegExp(system, "i");
   const groupAlias = SYSTEM_GROUP_ALIASES[system] ?? alias;
+  const direct = await findOfficialSnapFolders(client, alias, deadline, onProgress);
+  if (direct.folders.length) {
+    return {
+      folders: direct.folders,
+      truncated: direct.truncated,
+    };
+  }
+  if (direct.truncated) return { folders: [], truncated: true };
   const useful = /official|video|snap|media|download/i;
   const queue = [{ path: "/", depth: 0, score: Number.MAX_SAFE_INTEGER }];
   const visited = new Set<string>();
@@ -465,7 +535,11 @@ export async function indexSnaps(
         );
     }
     onProgress?.(`Comparing ${system} video sets with the catalog…`);
-    const choices = await Promise.all(folders.map(async (candidate) => {
+    // basic-ftp has one command queue per control connection. The directed
+    // resolver can legitimately return HD/HQ/SQ together, so list those few
+    // folders serially instead of racing commands on a single session.
+    const choices: { candidate: SnapFolder; files: SnapFile[]; coverage?: SnapCoverage }[] = [];
+    for (const candidate of folders) {
       const entries = cachedEntries && candidate.path === cached?.folder
         ? cachedEntries
         : await session!.client.list(candidate.path);
@@ -476,8 +550,8 @@ export async function indexSnaps(
         quality: candidate.quality,
       }));
       const coverage = catalog.length ? auditSnapCoverage(files, catalog) : undefined;
-      return { candidate, files, coverage };
-    }));
+      choices.push({ candidate, files, coverage });
+    }
     choices.sort((a, b) => rankFolders([a.candidate, b.candidate]).indexOf(a.candidate) -
       rankFolders([a.candidate, b.candidate]).indexOf(b.candidate));
     const selected = choices[0].candidate;

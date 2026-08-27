@@ -1,5 +1,23 @@
 # GameStore task log
 
+## 2026-08-26 — v0.18.6 directed EmuMovies N64 resolver
+
+- **What was done:** Replaced the normal EmuMovies video-folder crawl with direct queries to the provider's published `/Official/Video Snaps (HD|HQ|SQ)` roots, listing only the requested console's exact directory beneath each. Retained the bounded generic resolver solely as a compatibility fallback if the provider reorganises. Serialised per-tier file listings on the single FTP control connection and excluded `Nintendo 64DD` from N64 matching.
+- **Evidence:** New regression test proves N64 discovery does not open unrelated HD systems. Full verification passed: `npm test` (**14 files / 209 tests**), `npm run lint`, `npm run build`, and `git diff --check`. Authenticated live acceptance with the user-authorized Proton credential completed the N64 index in the current provider layout: HQ + SQ only, **826 files**, with **4/4** representative USA catalog titles matched. Direct folder: `/Official/Video Snaps (HQ)/Nintendo 64 (Video Snaps)(HQ)(EM 1.7)`.
+- **Artifacts:** `electron/emuMovies.ts`, `electron/emuMovies.test.ts`, `package.json`, and `package-lock.json`; temporary live-test cache at `/tmp/gamestore-emumovies-*` was removed. These changes are ready for commit/release as `v0.18.6`.
+- **State:** Done locally and live-account accepted; release publication is the remaining step.
+- **Next owner + concrete artifact:** Gonzo publishes tag `v0.18.6` and the generated installer. Omid installs `GameStore-Setup-0.18.6-x64.exe`, then runs Settings → Media → Scrape **Nintendo 64**; expected status is a nonzero matched manifest without an extended broad scan.
+- **Failure mode:** A priority crawl that reaches generic HD before an unlisted requested-console HQ root can exhaust its listing/time budget on unrelated systems. FTP commands for multiple quality tiers must also be serialised on one `basic-ftp` session.
+
+## 2026-08-26 — Live EmuMovies N64 account acceptance diagnosis
+
+- **What was done:** Retrieved the user-authorized `emumovies.com` login from the Gonzo Proton vault for a one-time FTP test, without printing or persisting its secret fields. TLS authentication to `files.emumovies.com:21` succeeds. The live provider path `/Official/Video Snaps (HQ)/Nintendo 64 (Video Snaps)(HQ)(EM 1.7)` lists **413 MP4** files, so availability, entitlement, and the N64 media set are confirmed.
+- **Evidence:** A trace of the current `findSnapFolders(..., "N64")` resolver enters `/Official/Video Snaps (HD)` first, then lists unrelated HD systems (`Nintendo 3DS`, GameCube, Switch, Wii, Sony PS2, etc.) before it selects the queued N64 HQ path. The scan exceeded the runtime's 30-second command ceiling at 32 listings, reproducing the user-visible bounded-crawl failure. The scheduler gives every child named `Video Snaps` a score of 220, which outranks the queued HQ root (170); the exact N64 candidate would score 430 only after its parent is listed.
+- **Artifacts:** No application source was changed. Temporary test cache at `/tmp/gamestore-emumovies-*` was removed. `npm run build` passed; generated build output is ignored/uncommitted. This durable log is local, uncommitted.
+- **State:** Diagnosed. The N64 folder is valid; the remaining defect is path-queue priority in `electron/emuMovies.ts`, not credentials or FTP access.
+- **Next owner + concrete artifact:** Gonzo can repair the scoring/queue policy in `electron/emuMovies.ts` so console-matching candidate roots outrank generic HD trees, add the live hierarchy regression fixture to `electron/emuMovies.test.ts`, then rerun the authenticated N64 index and publish a patch release once authorized.
+- **Failure mode:** A priority crawler must rank a parent that contains the requested console above generic higher-quality media roots. Ranking only the child after opening the generic root lets unrelated systems consume the listing budget first.
+
 ## 2026-08-26 — v0.18.5 published and CI-verified
 
 - **What was done:** Published GameStore `v0.18.5`, carrying the N64 EmuMovies nested-layout discovery repair.
