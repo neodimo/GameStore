@@ -240,12 +240,16 @@ type VideoPreview = {
    */
   source?: "archive" | "emumovies";
 };
-type MiSTerCoreCategory = "arcade" | "computer" | "console" | "other";
+type MiSTerCoreCategory = "arcade" | "computer" | "console" | "llapi" | "other";
+type MiSTerCoreTier = "official" | "unofficial";
 type MiSTerCoreFile = { path: string; hash: string; size: number };
 type MiSTerCoreCatalogEntry = {
   id: string;
   name: string;
   category: MiSTerCoreCategory;
+  source: string;
+  tier: MiSTerCoreTier;
+  baseFilesUrl: string;
   rbfPath: string;
   rbfHash: string;
   rbfSize: number;

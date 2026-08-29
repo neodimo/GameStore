@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Download, HardDrive, LoaderCircle, RefreshCw, Search } from "lucide-react";
 
-type Filter = "all" | MiSTerCoreCategory;
+type CategoryFilter = "all" | MiSTerCoreCategory;
+type TierFilter = "all" | MiSTerCoreTier;
+type InstalledFilter = "all" | "installed" | "not-installed";
 
 const CATEGORY_LABELS: Record<MiSTerCoreCategory, string> = {
   arcade: "Arcade board recreations",
   computer: "Home computers",
   console: "Consoles",
+  llapi: "Low-latency (LLAPI)",
   other: "Other",
 };
 
@@ -14,18 +17,23 @@ const formatBytes = (value: number) =>
   value >= 1024 ** 2 ? `${(value / 1024 ** 2).toFixed(1)} MB` : `${(value / 1024).toFixed(0)} KB`;
 
 /**
- * The MiSTer Core Cabinet: browse every core the official MiSTer distribution
- * currently publishes, and install one to the connected device.
+ * The MiSTer Core Cabinet: browse every core in the catalogs `update_all.sh`
+ * (theypsilon/Update_All_MiSTer) itself reads, and install one to the
+ * connected device.
  *
  * The catalog is fetched from the main process (`mister-core-catalog-get`),
  * which derives it from the real `MiSTer-devel/Distribution_MiSTer` manifest
- * rather than a hand-picked list — a hand-picked list is exactly what missed
- * a real device's PSX/N64/Saturn cores the first time this page shipped.
+ * plus the handful of other core-bearing manifests `update_all.sh`'s own
+ * `databases.py` names as "unofficial cores" — never from a hand-picked list,
+ * which is exactly what missed a real device's PSX/N64/Saturn cores the first
+ * time this page shipped.
  */
 export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => void }) {
   const [catalog, setCatalog] = useState<MiSTerCoreCatalogEntry[] | null>(null);
   const [catalogError, setCatalogError] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [category, setCategory] = useState<CategoryFilter>("all");
+  const [tier, setTier] = useState<TierFilter>("all");
+  const [installedFilter, setInstalledFilter] = useState<InstalledFilter>("all");
   const [query, setQuery] = useState("");
   const [installed, setInstalled] = useState<Record<string, boolean> | null>(null);
   const [status, setStatus] = useState("Checking your connected MiSTer…");
@@ -80,18 +88,34 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
     }
   };
 
-  const counts = useMemo(() => {
-    const byCategory: Record<Filter, number> = { all: 0, arcade: 0, computer: 0, console: 0, other: 0 };
-    for (const core of catalog ?? []) { byCategory.all++; byCategory[core.category]++; }
+  const categoryCounts = useMemo(() => {
+    const byCategory: Record<CategoryFilter, number> = { all: 0, arcade: 0, computer: 0, console: 0, llapi: 0, other: 0 };
+    for (const core of catalog ?? []) {
+      if (tier !== "all" && core.tier !== tier) continue;
+      byCategory.all++;
+      byCategory[core.category]++;
+    }
     return byCategory;
+  }, [catalog, tier]);
+
+  const tierCounts = useMemo(() => {
+    const counts = { all: 0, official: 0, unofficial: 0 };
+    for (const core of catalog ?? []) { counts.all++; counts[core.tier]++; }
+    return counts;
   }, [catalog]);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return (catalog ?? [])
-      .filter((core) => filter === "all" || core.category === filter)
-      .filter((core) => !needle || core.name.toLowerCase().includes(needle));
-  }, [catalog, filter, query]);
+      .filter((core) => category === "all" || core.category === category)
+      .filter((core) => tier === "all" || core.tier === tier)
+      .filter((core) => !needle || core.name.toLowerCase().includes(needle))
+      .filter((core) => {
+        if (installedFilter === "all" || !installed) return true;
+        const isInstalled = !!installed[core.id];
+        return installedFilter === "installed" ? isInstalled : !isInstalled;
+      });
+  }, [catalog, category, tier, query, installedFilter, installed]);
 
   const installedCount = installed ? Object.values(installed).filter(Boolean).length : 0;
   const deviceReady = installed !== null;
@@ -102,7 +126,7 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
         <div>
           <p className="eyebrow">MISTER / CORE CABINET</p>
           <h1>MiSTer Cores</h1>
-          <p>Every core in the official MiSTer distribution — arcade board recreations, home computers, consoles, and small extras.</p>
+          <p>Every core in the manifests the official Update All tool reads — arcade board recreations, home computers, consoles, LLAPI variants, and small extras.</p>
         </div>
         <button className="export" onClick={() => { void loadCatalog(true); void loadInstallState(); }}>
           <RefreshCw /> Refresh
@@ -115,7 +139,7 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
           <p>{catalogError}</p>
         </div>
       ) : !catalog ? (
-        <p className="device-status"><LoaderCircle className="spin" /> Loading the official MiSTer core catalog…</p>
+        <p className="device-status"><LoaderCircle className="spin" /> Loading the MiSTer core catalogs…</p>
       ) : (
         <>
           <p className="device-status">
@@ -129,18 +153,32 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
             </div>
           )}
           <div className="core-toolbar">
-            <div className="platforms">
-              <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>All cores ({counts.all})</button>
-              {(Object.keys(CATEGORY_LABELS) as MiSTerCoreCategory[]).map((category) => (
-                <button key={category} className={filter === category ? "active" : ""} onClick={() => setFilter(category)}>
-                  {CATEGORY_LABELS[category]} ({counts[category]})
-                </button>
-              ))}
+            <div className="platforms core-tier-tabs">
+              <button className={tier === "all" ? "active" : ""} onClick={() => setTier("all")}>All sources ({tierCounts.all})</button>
+              <button className={tier === "official" ? "active" : ""} onClick={() => setTier("official")}>Official ({tierCounts.official})</button>
+              <button className={tier === "unofficial" ? "active" : ""} onClick={() => setTier("unofficial")}>Unofficial ({tierCounts.unofficial})</button>
             </div>
             <div className="core-search">
               <Search />
               <input placeholder="Search cores…" value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
+          </div>
+          <div className="core-toolbar">
+            <div className="platforms">
+              <button className={category === "all" ? "active" : ""} onClick={() => setCategory("all")}>All cores ({categoryCounts.all})</button>
+              {(Object.keys(CATEGORY_LABELS) as MiSTerCoreCategory[]).map((c) => (
+                <button key={c} className={category === c ? "active" : ""} onClick={() => setCategory(c)}>
+                  {CATEGORY_LABELS[c]} ({categoryCounts[c]})
+                </button>
+              ))}
+            </div>
+            {deviceReady && (
+              <div className="platforms core-installed-tabs">
+                <button className={installedFilter === "all" ? "active" : ""} onClick={() => setInstalledFilter("all")}>All</button>
+                <button className={installedFilter === "installed" ? "active" : ""} onClick={() => setInstalledFilter("installed")}>Installed</button>
+                <button className={installedFilter === "not-installed" ? "active" : ""} onClick={() => setInstalledFilter("not-installed")}>Not installed</button>
+              </div>
+            )}
           </div>
           <div className="core-grid">
             {visible.map((core) => {
@@ -153,7 +191,9 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
                     <b>{core.name}</b>
                     {isInstalled && <span><CheckCircle2 /> Installed</span>}
                   </div>
-                  <p className="core-category">{CATEGORY_LABELS[core.category]}</p>
+                  <p className="core-category">
+                    {CATEGORY_LABELS[core.category]} <em className={`core-tier ${core.tier}`}>{core.tier}</em>
+                  </p>
                   <p>
                     {core.category === "arcade"
                       ? `${core.mraFiles.length || 1} romset${core.mraFiles.length === 1 || !core.mraFiles.length ? "" : "s"} · ${formatBytes(core.rbfSize)}`
@@ -167,11 +207,11 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
                   <button disabled={busy || !deviceReady} onClick={() => void install(core)}>
                     {busy ? (<><LoaderCircle className="spin" /> Installing…</>) : (<><Download /> {isInstalled ? "Reinstall latest" : "Install to MiSTer"}</>)}
                   </button>
-                  <span className="core-source">Official MiSTer distribution</span>
+                  <span className="core-source">{core.source}</span>
                 </section>
               );
             })}
-            {!visible.length && <p className="core-empty">No cores match “{query}”.</p>}
+            {!visible.length && <p className="core-empty">No cores match the current filters.</p>}
           </div>
         </>
       )}

@@ -49,10 +49,10 @@ import {
   type DeviceFolder,
 } from "./devicePlatforms";
 import {
+  buildDownloadUrl,
   fetchCoreCatalog,
   findCoreById,
   matchesInstalledRbf,
-  resolveDownloadUrl,
   type CoreCategory,
 } from "./misterCoreCatalog";
 import {
@@ -822,6 +822,7 @@ const CORE_LIST_FOLDERS: Record<CoreCategory, string> = {
   arcade: "_Arcade/cores",
   computer: "_Computer",
   console: "_Console",
+  llapi: "_LLAPI",
   other: "_Other",
 };
 ipcMain.handle("mister-cores-install-state", async () => {
@@ -844,10 +845,10 @@ ipcMain.handle("mister-cores-install-state", async () => {
     await client.end();
   }
 });
-const fetchDistributionFile = async (relativePath: string, expectedHash: string) => {
-  const url = await resolveDownloadUrl(relativePath);
+const fetchDistributionFile = async (baseFilesUrl: string, relativePath: string, expectedHash: string) => {
+  const url = buildDownloadUrl(baseFilesUrl, relativePath);
   const response = await fetch(url, { headers: { "User-Agent": `GameStore/${app.getVersion()}` } });
-  if (!response.ok) throw new Error(`MiSTer distribution returned ${response.status} for ${relativePath}.`);
+  if (!response.ok) throw new Error(`MiSTer core source returned ${response.status} for ${relativePath}.`);
   const bytes = Buffer.from(await response.arrayBuffer());
   if (createHash("md5").update(bytes).digest("hex") !== expectedHash)
     throw new Error(`Checksum mismatch downloading ${relativePath}; nothing was installed.`);
@@ -864,7 +865,7 @@ ipcMain.handle("mister-core-install", async (_e, coreId: string) => {
       const root = fatRoot(f.root);
       const rbfFileName = core.rbfPath.slice(core.rbfPath.lastIndexOf("/") + 1);
       send("downloading", `Downloading ${rbfFileName}…`);
-      const rbfBytes = await fetchDistributionFile(core.rbfPath, core.rbfHash);
+      const rbfBytes = await fetchDistributionFile(core.baseFilesUrl, core.rbfPath, core.rbfHash);
       const rbfDestination = `${root}/${CORE_LIST_FOLDERS[core.category]}`;
       await client.mkdir(rbfDestination, true);
       send("uploading", `Sending ${rbfFileName} to MiSTer…`);
@@ -874,7 +875,7 @@ ipcMain.handle("mister-core-install", async (_e, coreId: string) => {
         for (const mra of core.mraFiles) {
           const mraFileName = mra.path.slice(mra.path.lastIndexOf("/") + 1);
           send("uploading", `Sending ${mraFileName}…`);
-          const mraBytes = await fetchDistributionFile(mra.path, mra.hash);
+          const mraBytes = await fetchDistributionFile(core.baseFilesUrl, mra.path, mra.hash);
           await client.put(mraBytes, `${root}/_Arcade/${mraFileName}`);
         }
       }

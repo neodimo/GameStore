@@ -322,7 +322,11 @@ main {
 .core-card-head span { display: flex; align-items: center; gap: 4px; color: #ffb74b; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 .core-card.installed .core-card-head span { color: #8dd36e; }
 .core-card-head span svg { width: 13px; }
-.core-category { color: #8dd3ff; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin: -4px 0 0; }
+.core-category { display: flex; align-items: center; gap: 6px; color: #8dd3ff; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin: -4px 0 0; }
+.core-tier { font-style: normal; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.5px; }
+.core-tier.official { color: #8dd36e; background: rgba(141, 211, 110, 0.12); }
+.core-tier.unofficial { color: #ffb74b; background: rgba(255, 183, 75, 0.12); }
+.core-tier-tabs, .core-installed-tabs { margin: 0; }
 .core-card > p { color: #b7bcbe; font-size: 12px; margin: 0; }
 .core-progress { display: flex; align-items: center; gap: 6px; color: #8c9295; font-size: 11px; margin: 0; }
 .core-progress svg { width: 13px; }
