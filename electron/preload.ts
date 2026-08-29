@@ -41,6 +41,13 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.on("fpga-inventory-changed", wrapped);
     return () => ipcRenderer.removeListener("fpga-inventory-changed", wrapped);
   },
+  getMisterCoresInstallState: () => ipcRenderer.invoke("mister-cores-install-state"),
+  installMisterCore: (coreId: string) => ipcRenderer.invoke("mister-core-install", coreId),
+  onMisterCoreInstallProgress: (listener: (progress: unknown) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);
+    ipcRenderer.on("mister-core-install-progress", wrapped);
+    return () => ipcRenderer.removeListener("mister-core-install-progress", wrapped);
+  },
   discoverFpga: () => ipcRenderer.invoke("fpga-discover"),
   /** Progress while the app re-finds a device whose address changed. */
   onFpgaLocating: (listener: (state: { stage: string }) => void) => {

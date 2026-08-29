@@ -24,6 +24,7 @@ GameStore is a Windows and Linux retro-game discovery catalog inspired by the br
 ## Current implementation
 
 - Local, unreleased implementation: persistent genre exclusions, compact icon sidebar, PSX/N64/Saturn MiSTer device manager, Update All BIOS readiness/install, and generated N64 and Sega Saturn USA-first catalogs. `TASKLOG.md` records the source evidence and hardware acceptance scope.
+- **MiSTer Cores** is a real navigation section (`electron/misterCores.ts`, `src/MiSTerCoreCabinet.tsx`) rather than the earlier `mister-core-cabinet-v006.html` mockup. It browses a curated registry of arcade board recreations, home computers, consoles, and console add-ons; checks the connected device's actual `_Arcade/cores`, `_Computer`, and `_Console` folders over SFTP for installed state; and installs a core by fetching its latest dated `.rbf` (and, for arcade, its `.mra`) directly from the core's own MiSTer-devel GitHub repository. Repository and installed filenames are tracked as two separate facts per core, because they are not always the same file: an arcade core's installed `.rbf` drops the repo's `Arcade-` prefix, and `Genesis_MiSTer` still publishes `Genesis_<date>.rbf` while the official distribution installs it as `MegaDrive_<date>.rbf`. A per-core game library shelf (the companion `mister-core-library-v007.html` mockup) is not built yet.
 
 ## Consoles are a registry, not a series of special cases
 

@@ -41,6 +41,7 @@ import {
 import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
 import { restartMediaAudit } from "./mediaLibrary";
+import { MiSTerCoreCabinet } from "./MiSTerCoreCabinet";
 
 type Sort = "title" | "rating";
 type PlatformFilter = "All" | Game["platform"];
@@ -82,6 +83,7 @@ function Catalog() {
   const [platform, setPlatform] = useState<PlatformFilter>("All");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("gamestore:sidebar-collapsed") === "true");
   const [deviceManager, setDeviceManager] = useState(false);
+  const [coreCabinet, setCoreCabinet] = useState(false);
   const [platformDirectory, setPlatformDirectory] = useState(false);
   const [facet, setFacet] = useState("All flavors");
   const [translation, setTranslation] = useState(false);
@@ -207,6 +209,7 @@ function Catalog() {
     setTranslation(false);
     setFavoriteOnly(false);
     setDeviceManager(false);
+    setCoreCabinet(false);
     setPlatformDirectory(false);
   };
   const browsing =
@@ -244,11 +247,11 @@ function Catalog() {
           })}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button>
         </div>
         <nav>
-          <button className={!favoriteOnly && !deviceManager && !platformDirectory ? "active" : ""} onClick={reset} title="Discover">
+          <button className={!favoriteOnly && !deviceManager && !coreCabinet && !platformDirectory ? "active" : ""} onClick={reset} title="Discover">
             <Compass />
             <span>Discover</span>
           </button>
-          <button className={platformDirectory ? "active" : ""} onClick={() => { setDeviceManager(false); setPlatformDirectory(true); }} title="Platforms">
+          <button className={platformDirectory ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setPlatformDirectory(true); }} title="Platforms">
             <Gamepad2 />
             <span>Platforms</span>
           </button>
@@ -267,9 +270,13 @@ function Catalog() {
             <Heart />
             <span>Favorites</span>
           </button>
-          <button className={deviceManager ? "active" : ""} onClick={() => setDeviceManager(true)} title="Manage MiSTer">
+          <button className={deviceManager ? "active" : ""} onClick={() => { setCoreCabinet(false); setDeviceManager(true); }} title="Manage MiSTer">
             <HardDrive />
             <span>Manage MiSTer</span>
+          </button>
+          <button className={coreCabinet ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(true); }} title="MiSTer Cores">
+            <Grid2X2 />
+            <span>MiSTer Cores</span>
           </button>
         </nav>
         <button className="settings-link" onClick={() => setSettings(true)} title="Settings">
@@ -297,7 +304,7 @@ function Catalog() {
           <LibraryCart />
         </header>
         <main>
-          {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : platformDirectory ? <PlatformDirectory onChoose={(next) => { choosePlatform(next); setPlatformDirectory(false); }} /> : <>
+          {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : coreCabinet ? <MiSTerCoreCabinet onOpenSettings={() => setSettings(true)} /> : platformDirectory ? <PlatformDirectory onChoose={(next) => { choosePlatform(next); setPlatformDirectory(false); }} /> : <>
           <div className="platforms">
             <button className={platform === "All" ? "active" : ""} onClick={() => choosePlatform("All")}>All</button>
             {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => choosePlatform(definition.id)}>{definition.shortLabel}</button>)}

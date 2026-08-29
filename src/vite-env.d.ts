@@ -46,6 +46,9 @@ interface Window {
     installFpgaBios(platform: DeviceFolderId): Promise<BiosStatus>;
     deleteFpgaDeviceGame(platform: DeviceFolderId, folder: string): Promise<{ deleted: string }>;
     onFpgaInventoryChanged(listener: () => void): () => void;
+    getMisterCoresInstallState(): Promise<{ host: string; installed: Record<string, boolean> }>;
+    installMisterCore(coreId: string): Promise<{ coreId: string; installedFile: string }>;
+    onMisterCoreInstallProgress(listener: (progress: MiSTerCoreInstallProgress) => void): () => void;
     discoverFpga(): Promise<NetworkCandidate[]>;
     onFpgaDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
     onFpgaLocating(listener: (state: { stage: string }) => void): () => void;
@@ -235,6 +238,11 @@ type VideoPreview = {
    * the origin travels with the preview rather than being inferred from it.
    */
   source?: "archive" | "emumovies";
+};
+type MiSTerCoreInstallProgress = {
+  coreId: string;
+  stage: "checking" | "downloading" | "uploading" | "done" | "error";
+  message: string;
 };
 type MediaCacheStats = { bytes: number; path: string };
 type VideoProgress = {

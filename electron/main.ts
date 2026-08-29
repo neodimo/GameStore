@@ -49,6 +49,13 @@ import {
   type DeviceFolder,
 } from "./devicePlatforms";
 import {
+  coreById,
+  coreCategoryFolder,
+  matchesInstalledRbf,
+  MISTER_CORES,
+  type MiSTerCoreDefinition,
+} from "./misterCores";
+import {
   ensureCollectionManifest,
   fetchTorrent,
   indexCollection,
@@ -799,6 +806,98 @@ ipcMain.handle("fpga-device-delete", async (_e, platform: DevicePlatform, folder
     await refreshFpgaInventory().catch(() => undefined);
     return { deleted: folder };
   } finally { await client.end(); }
+});
+/** `/media/fat` given the configured games root (default `/media/fat/games`). */
+const fatRoot = (gamesRoot: string) => {
+  const trimmed = gamesRoot.replace(/\/+$/, "");
+  return trimmed.endsWith("/games") ? trimmed.slice(0, -"/games".length) || "/media/fat" : "/media/fat";
+};
+const listCoreFiles = async (client: SftpClient, folder: string) =>
+  (await client.list(folder).catch(() => [])).filter((entry) => entry.type !== "d").map((entry) => entry.name);
+ipcMain.handle("mister-cores-install-state", async () => {
+  const { client, f } = await connectFpga();
+  try {
+    const root = fatRoot(f.root);
+    const [arcadeCoreFiles, computerFiles, consoleFiles] = await Promise.all([
+      listCoreFiles(client, `${root}/_Arcade/cores`),
+      listCoreFiles(client, `${root}/_Computer`),
+      listCoreFiles(client, `${root}/_Console`),
+    ]);
+    const installed: Record<string, boolean> = {};
+    for (const core of MISTER_CORES) {
+      const files = core.category === "arcade" ? arcadeCoreFiles : core.category === "computer" ? computerFiles : consoleFiles;
+      installed[core.id] = files.some((name) => matchesInstalledRbf(core, name));
+    }
+    return { host: f.host, installed };
+  } finally {
+    await client.end();
+  }
+});
+const githubHeaders = { "User-Agent": `GameStore/${app.getVersion()}`, Accept: "application/vnd.github+json" };
+type GithubContentEntry = { name: string; type: string; download_url: string | null };
+const fetchGithubJson = async (url: string): Promise<GithubContentEntry[]> => {
+  const response = await fetch(url, { headers: githubHeaders });
+  if (!response.ok) throw new Error(`GitHub returned ${response.status} for ${url}.`);
+  return response.json();
+};
+const fetchGithubFile = async (url: string) => {
+  const response = await fetch(url, { headers: githubHeaders });
+  if (!response.ok) throw new Error(`GitHub returned ${response.status} fetching ${url}.`);
+  return Buffer.from(await response.arrayBuffer());
+};
+/**
+ * The latest published `.rbf` in a core's own `releases/` folder, dated
+ * filenames sort correctly by name, plus the arcade `.mra` when the core
+ * carries one. Neither is cached: an install is an explicit, occasional user
+ * action, not a background poll of GitHub.
+ */
+const latestCoreRelease = async (core: MiSTerCoreDefinition) => {
+  const entries = await fetchGithubJson(`https://api.github.com/repos/${core.repo}/contents/releases`);
+  const prefix = `${core.repoRbfPrefix.toLowerCase()}_`;
+  const rbfs = entries
+    .filter((entry) => entry.type === "file" && entry.name.toLowerCase().endsWith(".rbf") && entry.name.toLowerCase().startsWith(prefix))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const rbf = rbfs[rbfs.length - 1];
+  if (!rbf?.download_url) throw new Error(`No published .rbf found for ${core.name} in ${core.repo}.`);
+  const mra = core.mraFile ? entries.find((entry) => entry.name === core.mraFile) : undefined;
+  if (core.mraFile && !mra?.download_url)
+    throw new Error(`Expected .mra "${core.mraFile}" was not found in ${core.repo}.`);
+  return { rbf, mra };
+};
+ipcMain.handle("mister-core-install", async (_e, coreId: string) => {
+  const core = coreById(coreId);
+  if (!core) throw new Error("Unknown MiSTer core.");
+  const send = (stage: string, message: string) =>
+    win?.webContents.send("mister-core-install-progress", { coreId, stage, message });
+  try {
+    send("checking", `Checking the latest ${core.name} release…`);
+    const { rbf, mra } = await latestCoreRelease(core);
+    const { client, f } = await connectFpga();
+    try {
+      const root = fatRoot(f.root);
+      const destination = core.category === "arcade" ? `${root}/_Arcade/cores` : `${root}/${coreCategoryFolder(core.category)}`;
+      send("downloading", `Downloading ${rbf.name}…`);
+      const rbfBytes = await fetchGithubFile(rbf.download_url!);
+      // A repo's own filename is not always the installed one — Genesis_MiSTer
+      // still publishes Genesis_<date>.rbf, installed as MegaDrive_<date>.rbf.
+      const installedName = rbf.name.replace(new RegExp(`^${core.repoRbfPrefix}`, "i"), core.installedRbfPrefix);
+      await client.mkdir(destination, true);
+      send("uploading", `Sending ${installedName} to MiSTer…`);
+      await client.put(rbfBytes, `${destination}/${installedName}`);
+      if (mra?.download_url) {
+        const mraBytes = await fetchGithubFile(mra.download_url);
+        await client.mkdir(`${root}/_Arcade`, true);
+        await client.put(mraBytes, `${root}/_Arcade/${mra.name}`);
+      }
+      send("done", `${core.name} installed.`);
+      return { coreId, installedFile: installedName };
+    } finally {
+      await client.end();
+    }
+  } catch (error) {
+    send("error", error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 });
 ipcMain.handle("fpga-discover", async () =>
   discoverFpgaDevices((done, total) =>

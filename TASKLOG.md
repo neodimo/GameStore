@@ -1,5 +1,54 @@
 # GameStore task log
 
+## 2026-08-28 — MiSTer Core Cabinet: real implementation, not a mockup
+
+- **What was done:** Built the MiSTer Core Cabinet as a real feature after DiMo said to stop iterating mockups and build it. New registry `electron/misterCores.ts` holds 16 curated cores across arcade board recreations, home computers, consoles, and console add-ons (mirroring `devicePlatforms.ts`'s "registry, not special cases" shape). A new sidebar section (`src/MiSTerCoreCabinet.tsx`) lists them with category filters, checks the connected device's real `_Arcade/cores`, `_Computer`, and `_Console` folders over SFTP for installed state, and installs a core by fetching its latest dated `.rbf` (plus `.mra` for arcade) straight from the core's own MiSTer-devel GitHub repository and writing it to the correct folder.
+- **Evidence:** Every folder/filename convention in the registry was read live from GitHub rather than assumed: `gh api` against `MiSTer-devel/Distribution_MiSTer` (the official base image) confirmed `_Arcade`, `_Computer`, and `_Console` as the real top-level folders, that arcade `.rbf` files live in `_Arcade/cores/` separately from their `_Arcade/<title>.mra`, and that a repo's own release filename is not always the installed one — `Genesis_MiSTer` still publishes `Genesis_<date>.rbf`, but the shipped device file is `MegaDrive_<date>.rbf`. New `electron/misterCores.test.ts` (7 tests) pins that exact mismatch plus the arcade `Arcade-`-prefix rename so a future edit can't silently reintroduce it. Full suite passed: `npm run lint`, `npm test` (**15 files / 216 tests**), `npm run build`. A headless Chromium check of the running dev server confirmed the new "MiSTer Cores" nav entry, breadcrumb, and heading render, and that the no-device fallback state (identical in shape to Manage MiSTer's) shows with zero core cards and no console errors, since this sandbox has no Electron shell or MiSTer to connect to.
+- **Artifacts:** `electron/misterCores.ts`, `electron/misterCores.test.ts`, `electron/main.ts` (two new IPC handlers: `mister-cores-install-state`, `mister-core-install`), `electron/preload.ts`, `src/vite-env.d.ts`, `src/MiSTerCoreCabinet.tsx`, `src/App.tsx` (nav item + routing), `src/style.css`, `CONTEXT.md`. All local and uncommitted at this entry.
+- **State:** Done and verified short of hardware. Real device-write acceptance — actually installing a core to a connected MiSTer and confirming it boots — is untested here for the same reason every prior MiSTer-write feature in this log left it as the next step: it writes to Omid's physical device. Two things are deliberately not built yet: an "update available" badge (would need real version comparison against what's installed, which this pass does not attempt) and the companion Core Library per-core game shelf from `mockups/mister-core-library-v007.html`.
+- **Next owner + concrete artifact:** Gonzo owns committing, tagging, and releasing once Omid has seen this note. Omid's acceptance artifact is opening **MiSTer Cores** in a build with a configured device, confirming the installed/not-installed badges match what's actually on the SD card, and installing one core (Donkey Kong is the smallest) to confirm the `.rbf`/`.mra` land in the right folders and the core boots from the MiSTer menu.
+- **Failure mode:** A registry that assumes a core's repository filename equals its installed filename would report every Genesis-family core as permanently "not installed" on a real device, and would silently overwrite nothing while claiming success. Tracking `repoRbfPrefix` and `installedRbfPrefix` as separate fields, pinned by test, is what a device-level rename requires.
+
+## 2026-08-28 — MiSTer Core Library v007: artwork-led games and details
+
+- **What was done:** Added the companion Core Library mockup so specialty cores do not become a text-only utility surface. It shows an art-led cartridge selection shelf and an inline game-detail treatment with a large cover, screenshots/title art, game facts, core readiness, and explicit cart/setup actions consistent with the main GameStore experience.
+- **Evidence:** Rendered `mister-core-library-v007.html` in Chromium at 1440×1360 and visually checked that covers, details, and media appear in the composition. Remote images are mockup references only and are not bundled app media.
+- **Artifacts:** `mockups/mister-core-library-v007.html` and `mockups/mister-core-library-v007.png`; local and uncommitted. Planning-only; no device or production application behavior changed.
+- **State:** Done for review. The selected example is Super Game Boy; the approved product model should apply this art-led selection/detail pattern to every core that has a game/software library.
+- **Next owner + concrete artifact:** DiMo/Omid reviews `mockups/mister-core-library-v007.png` together with `mockups/mister-core-cabinet-v006.png` to approve the specialty-core interaction direction.
+
+## 2026-08-28 — MiSTer Core Cabinet v006 planning mockup
+
+- **What was done:** Added a standalone planning surface for browsing MiSTer specialty cores: arcade boards, home computers, console add-ons, and game-specific ports. The Core Cabinet shows installed/ready/update state, publisher/provenance, version and BIOS/ROM requirements, filters, an explicit installation queue, and a review-before-send device action.
+- **Evidence:** Rendered `mister-core-cabinet-v006.html` in Chromium at 1440×1120 and visually checked the complete layout. The mockup explicitly labels all displayed installation state as non-real.
+- **Artifacts:** `mockups/mister-core-cabinet-v006.html` and `mockups/mister-core-cabinet-v006.png`; local and uncommitted. Planning-only: no production code, device connection, download, or MiSTer write occurred.
+- **State:** Done for review. Exact core sources, package manifests, and installation/update mechanics remain implementation design work after mockup approval.
+- **Next owner + concrete artifact:** DiMo/Omid reviews `mockups/mister-core-cabinet-v006.png` and directs any visual or product-flow adjustment before implementation begins.
+
+## 2026-08-27 — Time Capsule v005: photographic counter backdrop
+
+- **What was done:** Replaced v004's top-right CSS stand-ins with one generated photographic late-1990s game-store counter scene, faded under the hero. It contains the requested consoles, controllers, jewel cases, trading-card rack, and glass counter while preserving the hero copy's legibility.
+- **Evidence:** Generated the landscape source image with the built-in image generator, placed it as the local mockup background, rendered v005 in Chromium at 1440×1080, and visually checked the complete composition.
+- **Artifacts:** `mockups/assets/behind-counter-photo-v001.png`, `mockups/time-capsule-v005.html`, and `mockups/time-capsule-v005.png`; all local and uncommitted. The generated photo is a mockup-only asset, not an app-media proposal.
+- **State:** Done for review. Visual texture is photographic rather than a claim about final asset sourcing.
+- **Next owner + concrete artifact:** DiMo/Omid reviews `mockups/time-capsule-v005.png` for direction approval or a further directed adjustment.
+
+## 2026-08-27 — Time Capsule v004: physical store environment
+
+- **What was done:** Extended the approved-for-review v003 direction with the requested environmental graphics: a behind-the-counter shelf with PS/N64 display consoles, controller, trading-card rack, stylized worn used-price tags, and a glass-counter reflection layer. Each game card now also carries a crooked price sticker.
+- **Evidence:** Rendered and visually checked the standalone mockup in Chromium at 1440×1080. The final render has no missing artwork and keeps the cover wall readable beneath the added store texture.
+- **Artifacts:** `mockups/time-capsule-v004.html` and `mockups/time-capsule-v004.png`, local and uncommitted. This remains planning-only; no application implementation or packaged media changed.
+- **State:** Done for review.
+- **Next owner + concrete artifact:** DiMo/Omid reviews `mockups/time-capsule-v004.png` to approve the direction or name the next adjustment.
+
+## 2026-08-27 — Time Capsule v003: louder, box-art-led direction
+
+- **What was done:** Created a third Time Capsule mockup in response to the request for a more forceful storefront presentation and box art. The hero now has a high-contrast release-strip, oversized seasonal headline, featured GoldenEye cover, price-sticker treatment, and an art-led six-title wall using real cover/key art rather than the v002 typographic stand-ins.
+- **Evidence:** Rendered the standalone HTML in Chromium at 1440×1080 and visually checked the resulting image. All six cards render artwork; the Fallout card uses its official Steam vertical library key art because the attempted Libretro Windows thumbnail returned 404.
+- **Artifacts:** `mockups/time-capsule-v003.html` and `mockups/time-capsule-v003.png`. Both are local, uncommitted mockup artifacts; no product implementation or bundled game media changed.
+- **State:** Done as a planning/mockup iteration. The external art is intentionally remote for this visual exploration and must not imply shipping per-game art with the application.
+- **Next owner + concrete artifact:** DiMo/Omid reviews `mockups/time-capsule-v003.png`; approval or a directed adjustment determines the final planning direction before implementation.
+
 ## 2026-08-26 — v0.18.6 directed EmuMovies N64 resolver
 
 - **What was done:** Replaced the normal EmuMovies video-folder crawl with direct queries to the provider's published `/Official/Video Snaps (HD|HQ|SQ)` roots, listing only the requested console's exact directory beneath each. Retained the bounded generic resolver solely as a compatibility fallback if the provider reorganises. Serialised per-tier file listings on the single FTP control connection and excluded `Nintendo 64DD` from N64 matching.
@@ -599,3 +648,9 @@
 - **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.18.4. Windows installer: `GameStore-Setup-0.18.4-x64.exe` (93,098,424 bytes), accompanied by Windows/Linux updater metadata and Linux AppImage/deb packages.
 - **State:** Released and CI-verified. Live authenticated N64 scrape acceptance remains on Omid's installed account because EmuMovies credentials stay local to his machine.
 - **Next owner + concrete artifact:** DiMo updates to v0.18.4 and runs the N64 EmuMovies scrape once; the expected artifact is an N64 manifest with matched snap coverage rather than a missing-folder result.
+# 2026-08-26 — Time Capsule curation mockup (v002 planning)
+
+- **What was done:** Built an executable, standalone mockup for a curated retro release-season surface: **Fall ’97: The Good Weird One**. It preserves GameStore’s dark shell/navigation and makes the editorial module deliberately period-specific through a store marquee, clerk note, context cards, era switching, authored game selection, and short “why it belongs” tags. This is planning-only; no production application behavior was changed.
+- **Artifacts:** `mockups/time-capsule-v002.html` is the source of truth and can be opened locally in any browser. `mockups/time-capsule-v002.png` is a Chromium-rendered 1440×1120 review image. Both are local, uncommitted planning artifacts.
+- **State:** Awaiting Omid’s visual/product decision. The interactive era controls show an explicit prototype response; only Fall ’97 is populated. The app implementation is intentionally held until v002 is approved.
+- **Next owner + concrete artifact:** Omid reviews `mockups/time-capsule-v002.png` and selects/adjusts the visual direction. Gonzo then ports the approved HTML structure into the GameStore React surface, retaining the same layout and interaction affordances rather than substituting a separate design.
