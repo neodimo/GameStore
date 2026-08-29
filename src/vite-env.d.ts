@@ -46,6 +46,7 @@ interface Window {
     installFpgaBios(platform: DeviceFolderId): Promise<BiosStatus>;
     deleteFpgaDeviceGame(platform: DeviceFolderId, folder: string): Promise<{ deleted: string }>;
     onFpgaInventoryChanged(listener: () => void): () => void;
+    getMisterCoreCatalog(force?: boolean): Promise<{ entries: MiSTerCoreCatalogEntry[] }>;
     getMisterCoresInstallState(): Promise<{ host: string; installed: Record<string, boolean> }>;
     installMisterCore(coreId: string): Promise<{ coreId: string; installedFile: string }>;
     onMisterCoreInstallProgress(listener: (progress: MiSTerCoreInstallProgress) => void): () => void;
@@ -238,6 +239,18 @@ type VideoPreview = {
    * the origin travels with the preview rather than being inferred from it.
    */
   source?: "archive" | "emumovies";
+};
+type MiSTerCoreCategory = "arcade" | "computer" | "console" | "other";
+type MiSTerCoreFile = { path: string; hash: string; size: number };
+type MiSTerCoreCatalogEntry = {
+  id: string;
+  name: string;
+  category: MiSTerCoreCategory;
+  rbfPath: string;
+  rbfHash: string;
+  rbfSize: number;
+  /** Arcade only: every `.mra` romset this board core plays. */
+  mraFiles: MiSTerCoreFile[];
 };
 type MiSTerCoreInstallProgress = {
   coreId: string;

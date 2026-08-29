@@ -303,7 +303,17 @@ main {
 .device-empty svg { width: 32px; color: var(--amber); }
 .device-empty h2 { color: #eee; font: 600 21px "Space Grotesk"; }
 @media (max-width: 760px) { .bios-grid, .device-library-grid { grid-template-columns: 1fr; } .mister-heading { align-items: stretch; flex-direction: column; } }
-.core-cabinet .platforms { margin: 16px 0; }
+.core-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 16px 0; flex-wrap: wrap; }
+.core-toolbar .platforms { margin: 0; }
+.core-search { display: flex; align-items: center; gap: 8px; border: 1px solid #33383a; border-radius: 7px; padding: 8px 12px; background: #15181a; min-width: 220px; }
+.core-search svg { width: 15px; color: #7d8386; }
+.core-search input { background: transparent; border: 0; color: #e8e9ea; font-size: 12px; width: 100%; }
+.core-search input:focus { outline: none; }
+.core-cabinet-device-empty { margin: 16px 0; padding: 14px 17px; text-align: left; display: flex; align-items: center; gap: 14px; }
+.core-cabinet-device-empty svg { width: 22px; flex-shrink: 0; }
+.core-cabinet-device-empty p { margin: 0; flex: 1; color: #b7bcbe; font-size: 12px; }
+.core-cabinet-device-empty button { border: 1px solid #b47817; border-radius: 6px; padding: 7px 10px; color: #111; background: var(--amber); cursor: pointer; font-weight: 700; font-size: 11px; white-space: nowrap; }
+.core-empty { grid-column: 1 / -1; color: #858b8e; font-size: 12px; text-align: center; padding: 30px 0; }
 .core-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .core-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid #3b4042; border-radius: 8px; background: #15181a; padding: 17px; }
 .core-card.installed { border-color: #527c42; }
@@ -314,16 +324,13 @@ main {
 .core-card-head span svg { width: 13px; }
 .core-category { color: #8dd3ff; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin: -4px 0 0; }
 .core-card > p { color: #b7bcbe; font-size: 12px; margin: 0; }
-.core-requirements { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.core-requirements li { border: 1px solid #33383a; border-radius: 5px; padding: 3px 7px; color: #9ca1a3; font-size: 10px; }
 .core-progress { display: flex; align-items: center; gap: 6px; color: #8c9295; font-size: 11px; margin: 0; }
 .core-progress svg { width: 13px; }
 .core-progress.error { color: #ff8069; }
-.core-card > button:not(.core-source) { margin-top: 4px; border: 1px solid #b47817; border-radius: 6px; padding: 8px 10px; color: #111; background: var(--amber); cursor: pointer; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.core-card > button:not(.core-source):disabled { opacity: 0.7; cursor: default; }
-.core-card > button:not(.core-source) svg { width: 14px; }
-.core-source { border: 0; background: transparent; color: #7d8386; font-size: 10px; text-align: left; cursor: pointer; padding: 0; }
-.core-source:hover { color: #b8bdc0; }
+.core-card > button { margin-top: 4px; border: 1px solid #b47817; border-radius: 6px; padding: 8px 10px; color: #111; background: var(--amber); cursor: pointer; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.core-card > button:disabled { opacity: 0.7; cursor: default; }
+.core-card > button svg { width: 14px; }
+.core-source { color: #7d8386; font-size: 10px; }
 @media (max-width: 1080px) { .core-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .core-grid { grid-template-columns: 1fr; } }
 .platforms {

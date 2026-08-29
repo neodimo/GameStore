@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.on("fpga-inventory-changed", wrapped);
     return () => ipcRenderer.removeListener("fpga-inventory-changed", wrapped);
   },
+  getMisterCoreCatalog: (force?: boolean) => ipcRenderer.invoke("mister-core-catalog-get", force),
   getMisterCoresInstallState: () => ipcRenderer.invoke("mister-cores-install-state"),
   installMisterCore: (coreId: string) => ipcRenderer.invoke("mister-core-install", coreId),
   onMisterCoreInstallProgress: (listener: (progress: unknown) => void) => {
