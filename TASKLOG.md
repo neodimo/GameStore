@@ -1,5 +1,12 @@
 # GameStore task log
 
+## 2026-08-30 — v0.22.0 real-network acceptance confirmed
+
+- **What was done:** DiMo ran the v0.22.0 PC network scan against his real network (Settings → PC/Steam → A remote PC → Scan network) and confirmed his machine was found. This is the acceptance gate the previous entry's "Next owner" step named.
+- **Evidence:** DiMo, in `#gamestore`: "i've successfully found my machine. that worked out."
+- **State:** Discovery accepted on real hardware/network. Connecting with real credentials and confirming OS detection (the v0.21.0 acceptance gate) is presumably next but not yet explicitly confirmed in-channel; RetroArch install and Steam shortcut writing remain unbuilt.
+- **Next owner + concrete artifact:** DiMo (or Gonzo on request) proceeds to Connect & detect OS against the found machine, then scopes the next real slice — RetroArch install or `shortcuts.vdf` writing — now that identify/connect/discover are all real and hardware-verified.
+
 ## 2026-08-30 — Scan the local network for PC deploy targets
 
 - **What was done:** DiMo asked for a network scan that finds candidate PC targets, at a high level distinguishing "a laptop or a PC" from everything else, listing IP and name for the user to pick from with their own credentials, and to release it. Built the real scan, but corrected the framing on the way in: nothing on a network broadcasts physical form factor — a laptop and a desktop tower answer SSH identically, so "laptop vs. PC" isn't a fact a scan can observe. What *is* real and already does most of the practical filtering: printers, routers, smart TVs, and similar embedded/IoT gear essentially never run an SSH server, so gating on SSH reachability (the same probe MiSTer discovery already uses) naturally excludes almost everything that isn't a general-purpose computer. The one exception is a MiSTer itself, which does run SSH and would otherwise show up in its own deploy-target scan, so it — and a short list of other non-PC device-name patterns (router, printer, NAS, smart TV, game consoles, access points) — is explicitly demoted by hostname.
