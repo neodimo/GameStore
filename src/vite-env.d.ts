@@ -47,6 +47,7 @@ interface Window {
     discoverPcTargets(): Promise<PcNetworkCandidate[]>;
     onPcTargetDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
     checkRetroArch(): Promise<RetroArchStatus>;
+    installRetroArch(channel: "stable" | "nightly"): Promise<RetroArchStatus>;
     updateRetroArch(): Promise<RetroArchStatus>;
     getRetroArchCores(): Promise<RetroCorePlatform[]>;
     installRetroArchCore(coreId: string): Promise<RetroCorePlatform[]>;

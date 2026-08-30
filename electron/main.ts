@@ -97,7 +97,7 @@ import {
   type PcTargetKind,
   type RunCommand,
 } from "./pcTarget";
-import { checkRetroArch, updateRetroArch } from "./retroArch";
+import { checkRetroArch, installRetroArch, updateRetroArch, type RetroArchReleaseChannel } from "./retroArch";
 import { installRetroCore, listRetroCores } from "./retroArchCores";
 
 let win: BrowserWindow | null = null;
@@ -1111,6 +1111,17 @@ const runOnPcTarget = async <T,>(handler: (run: RunCommand, os: PcOs) => Promise
   }
 };
 ipcMain.handle("pc-target-retroarch-check", async () => runOnPcTarget((run, os) => checkRetroArch(os, run)));
+ipcMain.handle("pc-target-retroarch-install", async (_event, channel: RetroArchReleaseChannel) => {
+  if (channel !== "stable" && channel !== "nightly") throw new Error("Choose the stable or nightly RetroArch release.");
+  return runOnPcTarget(async (run, os) => {
+    const before = await checkRetroArch(os, run);
+    if (before.installed) throw new Error("RetroArch is already installed on this target.");
+    await installRetroArch(os, channel, run);
+    const after = await checkRetroArch(os, run);
+    if (!after.installed) throw new Error("The installer finished, but GameStore could not detect RetroArch afterward.");
+    return after;
+  });
+});
 ipcMain.handle("pc-target-retroarch-update", async () =>
   runOnPcTarget(async (run, os) => {
     const status = await checkRetroArch(os, run);

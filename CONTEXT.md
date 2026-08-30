@@ -1,5 +1,9 @@
 # GameStore context
 
+## Current PC/Steam deployment state (2026-08-30)
+
+The selected local or remote Windows/Linux target can be discovered, connected, OS-detected, checked for RetroArch, updated when safely package-managed, installed from an explicit stable/nightly choice when absent, and inspected/managed for PS1/N64/Saturn Libretro cores. The actual game/cover transfer, Steam `shortcuts.vdf`/grid-art management, automatic backup, and fullscreen launch command are still pending. v0.25.0 is the prepared RetroArch installer release; real Bazzite installation is its acceptance gate.
+
 ## Product premise
 
 GameStore is a Windows and Linux retro-game discovery catalog inspired by the breadth of CDRomance-style platform browsing. It emphasizes official regional box artwork, English playability, unusually strong filtering, editorial similarity shelves, transparent source provenance, and in-place game details.

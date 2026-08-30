@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-30 — RetroArch stable/nightly installation from the empty state
+
+- **What was done:** Closed the dead end DiMo found on his connected Bazzite target. After **Check RetroArch** reports that RetroArch is absent, Settings → PC/Steam now offers **Install latest stable** and **Install latest nightly**. The action executes on the currently selected local or SSH-connected target and re-runs detection afterward; it refuses to report success unless RetroArch is actually detected. Linux stable installs `org.libretro.RetroArch` from Flathub; Linux nightly adds Flathub Beta for the current user and installs its RetroArch channel. Windows stable uses winget, while Windows nightly downloads and silently runs Libretro's official current x64 nightly installer. The Windows detector now also checks the installer's standard per-user path rather than requiring its executable to be on PATH.
+- **Evidence:** Confirmed HTTP 200 from Libretro's live Windows nightly installer URL before wiring it. Added four installer tests covering exact Linux stable/nightly commands, both Windows sources, and error propagation. Full verification: `npm test` (**18 files / 262 tests**), `npm run lint`, `npm run build`, and `git diff --check`. The source media-light check reports only the deliberate untracked `mockups/` planning folder; those files are absent from git and therefore absent from release CI/packages.
+- **Artifacts:** `electron/retroArch.ts`, `electron/retroArch.test.ts`, IPC wiring in `electron/main.ts` and `electron/preload.ts`, renderer type/UI changes in `src/vite-env.d.ts` and `src/App.tsx`, and version metadata prepared as `0.25.0`. Local source changes pending commit/tag at this entry; `mockups/` remains deliberate untracked planning scratch.
+- **State:** Implemented and locally verified. Real Bazzite installation remains the acceptance gate; no install was attempted on DiMo's machine from this workspace because its credentials are not available here. Game transfer, Steam shortcut/artwork writing, and forced-fullscreen launch remain the next unfinished slice.
+- **Next owner + concrete artifact:** Gonzo publishes v0.25.0 and verifies release CI. DiMo installs it, selects the connected Bazzite target, checks RetroArch, chooses **Install latest stable** (or nightly), and confirms the UI returns an installed version. That refreshed status is the real-machine acceptance artifact.
+- **Failure mode:** A detector with no recovery action strands the user precisely when setup is needed. Also, a successful child installer exit is weaker evidence than a detected installation, so the IPC handler always checks the target again before claiming success.
+
 ## 2026-08-30 — v0.24.0 published and CI-verified
 
 - **What was done:** Published the per-console RetroArch core-management batch as GameStore v0.24.0.

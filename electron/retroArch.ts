@@ -14,6 +14,7 @@
 import type { CommandResult, PcOs, RunCommand } from "./pcTarget";
 
 export type RetroArchInstallMethod = "flatpak" | "winget" | "path";
+export type RetroArchReleaseChannel = "stable" | "nightly";
 
 export type RetroArchStatus = {
   installed: boolean;
@@ -34,6 +35,9 @@ export type RetroArchStatus = {
 const FLATPAK_APP_ID = "org.libretro.RetroArch";
 const FLATPAK_REMOTE = "flathub";
 const WINGET_ID = "Libretro.RetroArch";
+const FLATHUB_BETA_REPO = "https://flathub.org/beta-repo/flathub-beta.flatpakrepo";
+const WINDOWS_NIGHTLY_INSTALLER =
+  "https://buildbot.libretro.com/nightly/windows/x86_64/RetroArch-Win64-setup.exe";
 
 /** Pure parse of `flatpak list --app --columns=application,version`. */
 export const parseFlatpakList = (stdout: string): Map<string, string> => {
@@ -129,7 +133,10 @@ const checkWindowsRetroArch = async (run: RunCommand): Promise<RetroArchStatus> 
     };
   }
 
-  const pathCheck = await runOk(run, "where retroarch.exe");
+  const pathCheck = await runOk(
+    run,
+    'where retroarch.exe 2>nul || if exist "%LOCALAPPDATA%\\Programs\\RetroArch-Win64\\retroarch.exe" echo %LOCALAPPDATA%\\Programs\\RetroArch-Win64\\retroarch.exe',
+  );
   if (!pathCheck.stdout.trim() || pathCheck.code !== 0) return { installed: false };
   return {
     installed: true,
@@ -140,6 +147,43 @@ const checkWindowsRetroArch = async (run: RunCommand): Promise<RetroArchStatus> 
 
 export const checkRetroArch = (os: PcOs, run: RunCommand): Promise<RetroArchStatus> =>
   os === "windows" ? checkWindowsRetroArch(run) : checkLinuxRetroArch(run);
+
+/** Installs the channel the user explicitly chose on the selected PC target. */
+export const installRetroArch = async (
+  os: PcOs,
+  channel: RetroArchReleaseChannel,
+  run: RunCommand,
+): Promise<CommandResult> => {
+  if (os === "mac") throw new Error("Automatic RetroArch installation is not supported on macOS yet.");
+  if (os === "linux") {
+    if (channel === "stable") {
+      const result = await run(
+        `flatpak install -y --noninteractive ${FLATPAK_REMOTE} ${FLATPAK_APP_ID}`,
+      );
+      if (result.code !== 0) throw new Error(result.stderr.trim() || "RetroArch stable installation failed.");
+      return result;
+    }
+    const command = [
+      `flatpak remote-add --if-not-exists --user flathub-beta ${FLATHUB_BETA_REPO}`,
+      `flatpak install -y --noninteractive --user flathub-beta ${FLATPAK_APP_ID}`,
+    ].join(" && ");
+    const result = await run(command);
+    if (result.code !== 0) throw new Error(result.stderr.trim() || "RetroArch nightly installation failed.");
+    return result;
+  }
+  if (channel === "stable") {
+    const result = await run(
+      `winget install --id ${WINGET_ID} --exact --silent --accept-package-agreements --accept-source-agreements`,
+    );
+    if (result.code !== 0) throw new Error(result.stderr.trim() || "RetroArch stable installation failed.");
+    return result;
+  }
+  const command =
+    `powershell -NoProfile -Command "$ErrorActionPreference='Stop'; $p=Join-Path $env:TEMP 'RetroArch-Win64-nightly-setup.exe'; Invoke-WebRequest -UseBasicParsing '${WINDOWS_NIGHTLY_INSTALLER}' -OutFile $p; try { $proc=Start-Process -FilePath $p -ArgumentList '/S' -Wait -PassThru; if ($proc.ExitCode -ne 0) { throw ('Installer exited with code ' + $proc.ExitCode) } } finally { Remove-Item -Force -ErrorAction SilentlyContinue $p }"`;
+  const result = await run(command);
+  if (result.code !== 0) throw new Error(result.stderr.trim() || "RetroArch nightly installation failed.");
+  return result;
+};
 
 /** Applies a previously-detected update. Callers must have just gotten `updateAvailable: true` and a `method` from `checkRetroArch` — this never guesses at how something got installed. */
 export const updateRetroArch = async (os: PcOs, method: RetroArchInstallMethod, run: RunCommand): Promise<CommandResult> => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   checkRetroArch,
+  installRetroArch,
   parseFlatpakList,
   parseFlatpakRemoteInfoVersion,
   parseWingetList,
@@ -189,5 +190,45 @@ describe("updateRetroArch", () => {
     await expect(updateRetroArch("linux", "path" as RetroArchInstallMethod, async () => ({ stdout: "", stderr: "", code: 0 }))).rejects.toThrow(
       /does not know how to update/i,
     );
+  });
+});
+
+describe("installRetroArch", () => {
+  it("installs the Linux stable release from Flathub", async () => {
+    const calls: string[] = [];
+    await installRetroArch("linux", "stable", async (command) => {
+      calls.push(command);
+      return { stdout: "", stderr: "", code: 0 };
+    });
+    expect(calls).toEqual(["flatpak install -y --noninteractive flathub org.libretro.RetroArch"]);
+  });
+
+  it("adds Flathub beta and installs the Linux nightly channel", async () => {
+    const calls: string[] = [];
+    await installRetroArch("linux", "nightly", async (command) => {
+      calls.push(command);
+      return { stdout: "", stderr: "", code: 0 };
+    });
+    expect(calls[0]).toContain("flathub-beta.flatpakrepo");
+    expect(calls[0]).toContain("flatpak install -y --noninteractive --user flathub-beta org.libretro.RetroArch");
+  });
+
+  it("installs Windows stable through winget and nightly through the official buildbot installer", async () => {
+    const calls: string[] = [];
+    const run = async (command: string) => {
+      calls.push(command);
+      return { stdout: "", stderr: "", code: 0 };
+    };
+    await installRetroArch("windows", "stable", run);
+    await installRetroArch("windows", "nightly", run);
+    expect(calls[0]).toContain("winget install --id Libretro.RetroArch --exact");
+    expect(calls[1]).toContain("buildbot.libretro.com/nightly/windows/x86_64/RetroArch-Win64-setup.exe");
+    expect(calls[1]).toContain("'/S'");
+  });
+
+  it("surfaces a failed installer instead of claiming success", async () => {
+    await expect(
+      installRetroArch("linux", "stable", async () => ({ stdout: "", stderr: "no flathub", code: 1 })),
+    ).rejects.toThrow("no flathub");
   });
 });

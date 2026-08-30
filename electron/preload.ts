@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld("gameStore", {
   testPcTarget: () => ipcRenderer.invoke("pc-target-test"),
   discoverPcTargets: () => ipcRenderer.invoke("pc-target-discover"),
   checkRetroArch: () => ipcRenderer.invoke("pc-target-retroarch-check"),
+  installRetroArch: (channel: "stable" | "nightly") => ipcRenderer.invoke("pc-target-retroarch-install", channel),
   updateRetroArch: () => ipcRenderer.invoke("pc-target-retroarch-update"),
   getRetroArchCores: () => ipcRenderer.invoke("pc-target-retroarch-cores"),
   installRetroArchCore: (coreId: string) => ipcRenderer.invoke("pc-target-retroarch-core-install", coreId),

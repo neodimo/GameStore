@@ -1738,6 +1738,20 @@ function ProviderSettings({
       setRaBusy(false);
     }
   };
+
+  const installRetroArchTarget = async (channel: "stable" | "nightly") => {
+    setRaBusy(true);
+    setRaMessage(`Installing the latest ${channel} RetroArch release…`);
+    try {
+      const status = await window.gameStore!.installRetroArch(channel);
+      setRaStatus(status);
+      setRaMessage(`RetroArch ${channel} installed successfully.`);
+    } catch (error) {
+      setRaMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setRaBusy(false);
+    }
+  };
   const checkRetroArchCores = async () => {
     setRaCoreBusy("checking");
     setRaMessage("Checking installed emulator cores…");
@@ -2239,6 +2253,10 @@ function ProviderSettings({
               Update to {raStatus.latestVersion}
             </button>
           )}
+          {raStatus && !raStatus.installed && <>
+            <button disabled={raBusy} onClick={() => installRetroArchTarget("stable")}>Install latest stable</button>
+            <button disabled={raBusy} onClick={() => installRetroArchTarget("nightly")}>Install latest nightly</button>
+          </>}
         </div>
         {raStatus && (
           <p className="test-result">
