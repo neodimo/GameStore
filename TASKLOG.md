@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-30 — v0.25.0 published and CI-verified
+
+- **What was done:** Published the RetroArch stable/nightly empty-state installer as GameStore v0.25.0.
+- **Evidence:** Tagged workflow [33342475303](https://github.com/neodimo/GameStore/actions/runs/33342475303) completed successfully for both Windows and Linux. The public release is neither draft nor prerelease and contains the Windows installer, Linux AppImage/Debian packages, updater manifests, and Windows blockmap.
+- **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.25.0. Windows installer: `GameStore-Setup-0.25.0-x64.exe` (93,114,707 bytes). Source tag `v0.25.0` is commit `c6e822c78ec83b087797fa2e52b293ba895056f1`; this release verification note is committed/pushed immediately after publication. The untracked `mockups/` folder remains deliberate local planning scratch.
+- **State:** Released. Real Bazzite stable/nightly installation acceptance remains with DiMo. Steam game transfer, shortcut/artwork management, and forced-fullscreen launch remain unbuilt.
+- **Next owner + concrete artifact:** DiMo installs v0.25.0, connects to Bazzite, clicks **Check RetroArch**, chooses **Install latest stable** or **Install latest nightly**, and confirms GameStore refreshes to an installed status/version. Gonzo owns any correction surfaced by that real-machine pass and then the Steam deployment slice.
+
+
 ## 2026-08-30 — RetroArch stable/nightly installation from the empty state
 
 - **What was done:** Closed the dead end DiMo found on his connected Bazzite target. After **Check RetroArch** reports that RetroArch is absent, Settings → PC/Steam now offers **Install latest stable** and **Install latest nightly**. The action executes on the currently selected local or SSH-connected target and re-runs detection afterward; it refuses to report success unless RetroArch is actually detected. Linux stable installs `org.libretro.RetroArch` from Flathub; Linux nightly adds Flathub Beta for the current user and installs its RetroArch channel. Windows stable uses winget, while Windows nightly downloads and silently runs Libretro's official current x64 nightly installer. The Windows detector now also checks the installer's standard per-user path rather than requiring its executable to be on PATH.
