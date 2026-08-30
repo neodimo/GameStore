@@ -90,11 +90,14 @@ import {
   connectPcSsh,
   detectOsFromProbe,
   discoverPcTargets,
+  execLocal,
   execRemote,
   localOs,
   type PcOs,
   type PcTargetKind,
+  type RunCommand,
 } from "./pcTarget";
+import { checkRetroArch, updateRetroArch } from "./retroArch";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -1084,6 +1087,39 @@ ipcMain.handle("pc-target-discover", async () =>
   discoverPcTargets((done, total) =>
     win?.webContents.send("pc-target-discovery-progress", { done, total }),
   ),
+);
+
+/**
+ * Runs a command against the configured PC target, connecting first if it is
+ * remote. Shared by every feature that needs to actually do something on the
+ * target — RetroArch detection/update today, core management and the deploy
+ * itself later — so that connect-or-run-locally branch exists in one place.
+ */
+const runOnPcTarget = async <T,>(handler: (run: RunCommand, os: PcOs) => Promise<T>): Promise<T> => {
+  const t = (await readSettings()).pcTarget;
+  if (!t) throw new Error("Configure a PC target in Settings first.");
+  if (!t.os) throw new Error("Detect this machine's OS first — use Connect & detect OS in Settings.");
+  if (t.kind === "local") return handler(execLocal, t.os);
+  const host = (t.host || "").trim();
+  if (!host) throw new Error("Enter this PC's name or address first.");
+  const { client } = await connectPcSsh(host, t.port || 22, t.username || "", t.password, t.hostKey);
+  try {
+    return await handler((command) => execRemote(client, command), t.os);
+  } finally {
+    client.end();
+  }
+};
+ipcMain.handle("pc-target-retroarch-check", async () => runOnPcTarget((run, os) => checkRetroArch(os, run)));
+ipcMain.handle("pc-target-retroarch-update", async () =>
+  runOnPcTarget(async (run, os) => {
+    const status = await checkRetroArch(os, run);
+    if (!status.installed) throw new Error("RetroArch is not installed on this target.");
+    if (status.updateBlockedReason) throw new Error(status.updateBlockedReason);
+    if (!status.updateAvailable) return status;
+    if (!status.method) throw new Error("Could not determine how to update this RetroArch installation.");
+    await updateRetroArch(os, status.method, run);
+    return checkRetroArch(os, run);
+  }),
 );
 
 type FpgaSettingsShape = NonNullable<ProviderSettings["fpga"]>;

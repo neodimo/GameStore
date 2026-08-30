@@ -46,6 +46,8 @@ interface Window {
     testPcTarget(): Promise<PcTargetTestResult>;
     discoverPcTargets(): Promise<PcNetworkCandidate[]>;
     onPcTargetDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
+    checkRetroArch(): Promise<RetroArchStatus>;
+    updateRetroArch(): Promise<RetroArchStatus>;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
@@ -162,6 +164,15 @@ type PcNetworkCandidate = {
   port: number;
   confidence: "likely" | "unknown";
   reason: string;
+};
+type RetroArchInstallMethod = "flatpak" | "winget" | "path";
+type RetroArchStatus = {
+  installed: boolean;
+  method?: RetroArchInstallMethod;
+  version?: string;
+  updateAvailable?: boolean;
+  latestVersion?: string;
+  updateBlockedReason?: string;
 };
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";

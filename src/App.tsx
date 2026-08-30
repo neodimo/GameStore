@@ -1515,6 +1515,9 @@ function ProviderSettings({
   const [pcTesting, setPcTesting] = useState(false);
   const [pcCandidates, setPcCandidates] = useState<PcNetworkCandidate[]>([]);
   const [pcScan, setPcScan] = useState("");
+  const [raStatus, setRaStatus] = useState<RetroArchStatus | null>(null);
+  const [raBusy, setRaBusy] = useState(false);
+  const [raMessage, setRaMessage] = useState("");
   useEffect(() => {
     window.gameStore?.getTheGamesDbKey().then(setKey);
     window.gameStore
@@ -1696,6 +1699,8 @@ function ProviderSettings({
   const testPcConnection = async () => {
     setPcTesting(true);
     setPcTest(pcTarget.kind === "local" ? "Checking this machine…" : "Connecting…");
+    setRaStatus(null);
+    setRaMessage("");
     try {
       await window.gameStore!.setPcTarget(pcTarget);
       const result = await window.gameStore!.testPcTarget();
@@ -1705,6 +1710,30 @@ function ProviderSettings({
       setPcTest(e instanceof Error ? e.message : String(e));
     } finally {
       setPcTesting(false);
+    }
+  };
+  const checkRetroArchStatus = async () => {
+    setRaBusy(true);
+    setRaMessage("Checking RetroArch…");
+    try {
+      setRaStatus(await window.gameStore!.checkRetroArch());
+      setRaMessage("");
+    } catch (e) {
+      setRaMessage(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRaBusy(false);
+    }
+  };
+  const updateRetroArchTarget = async () => {
+    setRaBusy(true);
+    setRaMessage("Updating RetroArch…");
+    try {
+      setRaStatus(await window.gameStore!.updateRetroArch());
+      setRaMessage("");
+    } catch (e) {
+      setRaMessage(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRaBusy(false);
     }
   };
   const exportShelf = async () => {
@@ -2167,6 +2196,37 @@ function ProviderSettings({
           </button>
         </div>
         {pcTest && <p className="test-result">{pcTest}</p>}
+        {pcTarget.os && <>
+        <hr />
+        <h2>RetroArch</h2>
+        <p>
+          Deploying a game to this target launches it through RetroArch.
+          GameStore checks whether it's installed and up to date before it
+          ever tries to send a game.
+        </p>
+        <div className="settings-actions">
+          <button disabled={raBusy} onClick={checkRetroArchStatus}>
+            {raBusy ? "Working…" : "Check RetroArch"}
+          </button>
+          {raStatus?.installed && raStatus.updateAvailable && (
+            <button disabled={raBusy} onClick={updateRetroArchTarget}>
+              Update to {raStatus.latestVersion}
+            </button>
+          )}
+        </div>
+        {raStatus && (
+          <p className="test-result">
+            {!raStatus.installed
+              ? "RetroArch is not installed on this target."
+              : raStatus.updateBlockedReason
+                ? `Installed${raStatus.version ? ` (${raStatus.version})` : ""} via ${raStatus.method}. ${raStatus.updateBlockedReason}`
+                : raStatus.updateAvailable
+                  ? `Installed via ${raStatus.method}: ${raStatus.version} → ${raStatus.latestVersion} available.`
+                  : `Installed via ${raStatus.method}: ${raStatus.version} (up to date).`}
+          </p>
+        )}
+        {raMessage && <p className="test-result">{raMessage}</p>}
+        </>}
         </>}
           </div>
         </div>
