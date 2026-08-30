@@ -39,6 +39,11 @@ interface Window {
     getMediaCacheStats(): Promise<MediaCacheStats>;
     clearMediaCache(): Promise<MediaCacheStats>;
     onVideoProgress(listener: (progress: VideoProgress) => void): () => void;
+    getPcTarget(): Promise<PcTargetSettings | null>;
+    setPcTarget(
+      settings: Partial<PcTargetSettings> & { password?: string },
+    ): Promise<PcTargetSettings>;
+    testPcTarget(): Promise<PcTargetTestResult>;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
@@ -135,6 +140,20 @@ type FpgaSettings = {
   recognized: boolean;
 };
 type FpgaInventory = { status: "unconfigured" | "scanning" | "ready"; gameIds: string[]; scannedAt?: number };
+type PcOs = "windows" | "linux" | "mac";
+type PcTargetSettings = {
+  kind: "local" | "remote";
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  hasPassword: boolean;
+  os?: PcOs;
+  osDetectedAt?: number;
+  /** Local is always itself; remote is true once its SSH host key is on file. */
+  recognized: boolean;
+};
+type PcTargetTestResult = { ok: boolean; os: PcOs; message: string };
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";
 /** Catalog platform. Mirrors `PlatformId` in src/platforms.ts. */

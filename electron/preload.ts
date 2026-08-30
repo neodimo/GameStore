@@ -30,6 +30,16 @@ contextBridge.exposeInMainWorld("gameStore", {
     ipcRenderer.on("media-video-progress", wrapped);
     return () => ipcRenderer.removeListener("media-video-progress", wrapped);
   },
+  getPcTarget: () => ipcRenderer.invoke("pc-target-get"),
+  setPcTarget: (settings: {
+    kind: "local" | "remote";
+    name?: string;
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+  }) => ipcRenderer.invoke("pc-target-set", settings),
+  testPcTarget: () => ipcRenderer.invoke("pc-target-test"),
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
   getFpgaInventory: (catalog: { id: string; title: string }[]) => ipcRenderer.invoke("fpga-inventory-get", catalog),
   refreshFpgaInventory: () => ipcRenderer.invoke("fpga-inventory-refresh"),

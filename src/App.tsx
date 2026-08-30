@@ -1462,7 +1462,7 @@ function ProviderSettings({
   favorites: Set<string>;
   onClose: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"general" | "downloads" | "media" | "device">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "downloads" | "media" | "device" | "pc">("general");
   const [key, setKey] = useState("");
   const [saved, setSaved] = useState(false);
   const [exported, setExported] = useState(false);
@@ -1500,11 +1500,27 @@ function ProviderSettings({
     recognized: false,
   });
   const [locating, setLocating] = useState("");
+  const [pcTarget, setPcTargetState] = useState({
+    kind: "local" as "local" | "remote",
+    name: "",
+    host: "",
+    port: 22,
+    username: "",
+    password: "",
+    hasPassword: false,
+    os: undefined as PcOs | undefined,
+    recognized: false,
+  });
+  const [pcTest, setPcTest] = useState("");
+  const [pcTesting, setPcTesting] = useState(false);
   useEffect(() => {
     window.gameStore?.getTheGamesDbKey().then(setKey);
     window.gameStore
       ?.getFpgaSettings()
       .then((f) => f && setDevice((d) => ({ ...d, ...f, password: "" })));
+    window.gameStore
+      ?.getPcTarget()
+      .then((t) => t && setPcTargetState((p) => ({ ...p, ...t, password: "" })));
     window.gameStore?.getMediaCacheStats().then(setCache);
     window.gameStore?.getDebridSettings().then((state) => {
       setDebridState(state);
@@ -1547,6 +1563,7 @@ function ProviderSettings({
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
     await window.gameStore?.setFpgaSettings(device);
+    await window.gameStore?.setPcTarget(pcTarget);
     const collections = configuredCollections();
     setDebridState(
       (await window.gameStore?.setDebridSettings({ ...debrid, collections })) ??
@@ -1660,6 +1677,20 @@ function ProviderSettings({
       setTest(e instanceof Error ? e.message : String(e));
     }
   };
+  const testPcConnection = async () => {
+    setPcTesting(true);
+    setPcTest(pcTarget.kind === "local" ? "Checking this machine…" : "Connecting…");
+    try {
+      await window.gameStore!.setPcTarget(pcTarget);
+      const result = await window.gameStore!.testPcTarget();
+      setPcTest(result.message);
+      setPcTargetState((p) => ({ ...p, os: result.os, password: "" }));
+    } catch (e) {
+      setPcTest(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPcTesting(false);
+    }
+  };
   const exportShelf = async () => {
     const payload = JSON.stringify(
       {
@@ -1697,6 +1728,7 @@ function ProviderSettings({
             ["downloads", "Downloads"],
             ["media", "Media"],
             ["device", "MiSTer"],
+            ["pc", "PC / Steam"],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -2012,6 +2044,83 @@ function ProviderSettings({
             }
           }}>Refresh device library</button>
         </div>
+        </>}
+        {activeTab === "pc" && <>
+        <h2>
+          <Wifi /> PC / Steam target
+        </h2>
+        <p>
+          Where a future Steam deploy will run. This machine needs no address —
+          GameStore already knows its own OS. A remote PC is identified by name
+          and address, connected over SSH, and its OS (Windows or Linux) is
+          detected before anything is ever installed or written to it.
+        </p>
+        <div className="device-fields">
+          <label>
+            Target
+            <select
+              value={pcTarget.kind}
+              onChange={(e) => setPcTargetState({ ...pcTarget, kind: e.target.value as "local" | "remote" })}
+            >
+              <option value="local">This machine</option>
+              <option value="remote">A remote PC</option>
+            </select>
+          </label>
+          {pcTarget.kind === "remote" && <>
+          <label>
+            Name
+            <input
+              value={pcTarget.name}
+              placeholder="bazzite-steam-pc"
+              onChange={(e) => setPcTargetState({ ...pcTarget, name: e.target.value })}
+            />
+          </label>
+          <label>
+            Address
+            <input
+              value={pcTarget.host}
+              placeholder="192.168.4.112 or a hostname"
+              onChange={(e) => setPcTargetState({ ...pcTarget, host: e.target.value })}
+            />
+          </label>
+          <label>
+            Port
+            <input
+              type="number"
+              value={pcTarget.port}
+              onChange={(e) => setPcTargetState({ ...pcTarget, port: Number(e.target.value) })}
+            />
+          </label>
+          <label>
+            Username
+            <input
+              value={pcTarget.username}
+              onChange={(e) => setPcTargetState({ ...pcTarget, username: e.target.value })}
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              value={pcTarget.password}
+              onChange={(e) => setPcTargetState({ ...pcTarget, password: e.target.value })}
+              placeholder={pcTarget.hasPassword ? "Blank keeps saved password" : ""}
+            />
+          </label>
+          </>}
+        </div>
+        {pcTarget.os && (
+          <small>
+            Last detected: {pcTarget.os === "windows" ? "Windows" : pcTarget.os === "mac" ? "macOS" : "Linux"}
+            {pcTarget.kind === "remote" && !pcTarget.recognized && " · connect once more to confirm this machine's identity"}
+          </small>
+        )}
+        <div className="settings-actions">
+          <button disabled={pcTesting} onClick={testPcConnection}>
+            {pcTesting ? "Checking…" : pcTarget.kind === "local" ? "Detect this machine" : "Connect & detect OS"}
+          </button>
+        </div>
+        {pcTest && <p className="test-result">{pcTest}</p>}
         </>}
           </div>
         </div>

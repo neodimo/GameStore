@@ -86,6 +86,14 @@ import {
   MEDIA_SCHEME,
   streamArchiveVideo,
 } from "./mediaCache";
+import {
+  connectPcSsh,
+  detectOsFromProbe,
+  execRemote,
+  localOs,
+  type PcOs,
+  type PcTargetKind,
+} from "./pcTarget";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -280,6 +288,27 @@ type ProviderSettings = {
     folders: Partial<Record<DeviceFolder, string[]>>;
     error?: string;
   };
+  /**
+   * Where a future "Deploy to Steam" send would run. `local` is the machine
+   * GameStore itself is running on — no address or credentials needed, since
+   * its OS is just `process.platform`. `remote` is a separate PC reached over
+   * SSH, identified the same way a MiSTer is: a name/address that can go
+   * stale, plus a pinned host key that proves a rediscovered address is still
+   * the same machine rather than some other box that happens to answer.
+   */
+  pcTarget?: {
+    kind: PcTargetKind;
+    name?: string;
+    host?: string;
+    hostKey?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    encrypted?: boolean;
+    /** Last detected OS and when, so Settings can show it without reconnecting. */
+    os?: PcOs;
+    osDetectedAt?: number;
+  };
 };
 const readSettings = async (): Promise<ProviderSettings> => {
   try {
@@ -297,6 +326,15 @@ const readSettings = async (): Promise<ProviderSettings> => {
         password: safeStorage.isEncryptionAvailable()
           ? safeStorage.decryptString(
               Buffer.from(stored.fpga.password, "base64"),
+            )
+          : undefined,
+      };
+    if (stored.pcTarget?.password && stored.pcTarget.encrypted)
+      result.pcTarget = {
+        ...stored.pcTarget,
+        password: safeStorage.isEncryptionAvailable()
+          ? safeStorage.decryptString(
+              Buffer.from(stored.pcTarget.password, "base64"),
             )
           : undefined,
       };
@@ -940,6 +978,108 @@ ipcMain.handle(
     return publicFpga();
   },
 );
+
+const publicPcTarget = async () => {
+  const t = (await readSettings()).pcTarget;
+  return t
+    ? {
+        kind: t.kind,
+        name: t.name || (t.kind === "local" ? "This machine" : ""),
+        host: t.host || "",
+        port: t.port || 22,
+        username: t.username || "",
+        hasPassword: !!t.password,
+        os: t.os,
+        osDetectedAt: t.osDetectedAt,
+        /** Whether GameStore has proven this remote address's identity via SSH host key. */
+        recognized: t.kind === "local" || !!t.hostKey,
+      }
+    : null;
+};
+ipcMain.handle("pc-target-get", publicPcTarget);
+ipcMain.handle(
+  "pc-target-set",
+  async (
+    _e,
+    incoming: {
+      kind: PcTargetKind;
+      name?: string;
+      host?: string;
+      port?: number;
+      username?: string;
+      password?: string;
+    },
+  ) => {
+    const existing = JSON.parse(
+      await fs.readFile(settingsFile(), "utf8").catch(() => "{}"),
+    );
+    const previous = (await readSettings()).pcTarget;
+    const password = String(incoming.password || previous?.password || "");
+    const encrypted = !!password && safeStorage.isEncryptionAvailable();
+    const storedPassword = encrypted
+      ? safeStorage.encryptString(password).toString("base64")
+      : password;
+    const host = String(incoming.host || "").trim();
+    await writeSettings({
+      ...existing,
+      pcTarget: {
+        kind: incoming.kind,
+        name: String(incoming.name || "").trim(),
+        host,
+        // A different address means the recorded identity no longer describes it.
+        hostKey: host === previous?.host ? previous?.hostKey : undefined,
+        port: Number(incoming.port) || 22,
+        username: String(incoming.username || "").trim(),
+        password: storedPassword,
+        encrypted,
+        // A changed target (kind or address) invalidates what was last detected.
+        os: incoming.kind === previous?.kind && host === previous?.host ? previous?.os : undefined,
+        osDetectedAt: incoming.kind === previous?.kind && host === previous?.host ? previous?.osDetectedAt : undefined,
+      },
+    });
+    return publicPcTarget();
+  },
+);
+
+/**
+ * Identifies and, for a remote target, connects to whatever machine a future
+ * Steam deploy would run on. Local needs no network at all — GameStore knows
+ * its own OS directly. Remote reuses the exact reachability probe and SSH
+ * host-key pinning already proven for MiSTer, because a PC target has the
+ * same two failure modes: a stale DHCP address, and a home network that has
+ * other SSH-reachable machines on it that must never be silently adopted.
+ */
+ipcMain.handle("pc-target-test", async () => {
+  const t = (await readSettings()).pcTarget;
+  if (!t) throw new Error("Configure a PC target in Settings first.");
+
+  if (t.kind === "local") {
+    const os = localOs(process.platform);
+    const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+    await writeSettings({ ...raw, pcTarget: { ...raw.pcTarget, os, osDetectedAt: Date.now() } });
+    return { ok: true, os, message: `This machine — ${osLabel(os)} detected.` };
+  }
+
+  const host = (t.host || "").trim();
+  if (!host) throw new Error("Enter this PC's name or address first.");
+  if (!(await isReachable(host, t.port || 22)))
+    throw new Error(`${host} is not reachable on port ${t.port || 22}.`);
+
+  const { client, hostKey } = await connectPcSsh(host, t.port || 22, t.username || "", t.password, t.hostKey);
+  try {
+    const os = await detectOsFromProbe((command) => execRemote(client, command));
+    const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+    await writeSettings({
+      ...raw,
+      pcTarget: { ...raw.pcTarget, host, hostKey: hostKey || raw.pcTarget?.hostKey, os, osDetectedAt: Date.now() },
+    });
+    return { ok: true, os, message: `Connected to ${t.name || host} — ${osLabel(os)} detected.` };
+  } finally {
+    client.end();
+  }
+});
+const osLabel = (os: PcOs) => (os === "windows" ? "Windows" : os === "mac" ? "macOS" : "Linux");
+
 type FpgaSettingsShape = NonNullable<ProviderSettings["fpga"]>;
 
 /**
