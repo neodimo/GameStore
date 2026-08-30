@@ -22,6 +22,7 @@ export type RetroArchStatus = {
   version?: string;
   updateAvailable?: boolean;
   latestVersion?: string;
+  flatpakScope?: "user" | "system";
   /**
    * Set when GameStore has deliberately decided not to attempt an automatic
    * update — e.g. a RetroArch copy installed through Steam shows up to
@@ -77,21 +78,31 @@ const runOk = async (run: RunCommand, command: string): Promise<CommandResult> =
   run(command).catch(() => ({ stdout: "", stderr: "", code: 1 }));
 
 const checkLinuxRetroArch = async (run: RunCommand): Promise<RetroArchStatus> => {
-  const listing = await runOk(run, "flatpak list --app --columns=application,version");
-  const installedVersion = parseFlatpakList(listing.stdout).get(FLATPAK_APP_ID);
+  const userListing = await runOk(run, "flatpak list --user --app --columns=application,version");
+  const userVersion = parseFlatpakList(userListing.stdout).get(FLATPAK_APP_ID);
+  const systemListing = userVersion === undefined
+    ? await runOk(run, "flatpak list --system --app --columns=application,version")
+    : undefined;
+  const systemVersion = systemListing
+    ? parseFlatpakList(systemListing.stdout).get(FLATPAK_APP_ID)
+    : undefined;
+  const flatpakScope = userVersion !== undefined ? "user" : systemVersion !== undefined ? "system" : undefined;
+  const installedVersion = userVersion ?? systemVersion;
   if (installedVersion !== undefined) {
-    const remoteInfo = await runOk(run, `flatpak remote-info ${FLATPAK_REMOTE} ${FLATPAK_APP_ID}`);
+    const remoteInfo = await runOk(run, `flatpak remote-info --${flatpakScope} ${FLATPAK_REMOTE} ${FLATPAK_APP_ID}`);
     const latestVersion = parseFlatpakRemoteInfoVersion(remoteInfo.stdout);
     if (!latestVersion)
       return {
         installed: true,
         method: "flatpak",
+        flatpakScope,
         version: installedVersion,
         updateBlockedReason: `Could not read the latest version from the "${FLATPAK_REMOTE}" remote — it may not be configured on this machine.`,
       };
     return {
       installed: true,
       method: "flatpak",
+      flatpakScope,
       version: installedVersion,
       latestVersion,
       updateAvailable: latestVersion !== installedVersion,
@@ -158,7 +169,7 @@ export const installRetroArch = async (
   if (os === "linux") {
     if (channel === "stable") {
       const result = await run(
-        `flatpak install -y --noninteractive ${FLATPAK_REMOTE} ${FLATPAK_APP_ID}`,
+        `flatpak install -y --noninteractive --user ${FLATPAK_REMOTE} ${FLATPAK_APP_ID}`,
       );
       if (result.code !== 0) throw new Error(result.stderr.trim() || "RetroArch stable installation failed.");
       return result;
@@ -186,8 +197,8 @@ export const installRetroArch = async (
 };
 
 /** Applies a previously-detected update. Callers must have just gotten `updateAvailable: true` and a `method` from `checkRetroArch` — this never guesses at how something got installed. */
-export const updateRetroArch = async (os: PcOs, method: RetroArchInstallMethod, run: RunCommand): Promise<CommandResult> => {
-  if (os !== "windows" && method === "flatpak") return run(`flatpak update -y ${FLATPAK_APP_ID}`);
+export const updateRetroArch = async (os: PcOs, method: RetroArchInstallMethod, run: RunCommand, flatpakScope: "user" | "system" = "user"): Promise<CommandResult> => {
+  if (os !== "windows" && method === "flatpak") return run(`flatpak update -y --${flatpakScope} ${FLATPAK_APP_ID}`);
   if (os === "windows" && method === "winget")
     return run(`winget upgrade --id ${WINGET_ID} --exact --silent --accept-package-agreements --accept-source-agreements`);
   throw new Error("GameStore does not know how to update this RetroArch installation automatically.");

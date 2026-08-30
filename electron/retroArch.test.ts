@@ -84,37 +84,50 @@ describe("checkRetroArch", () => {
     const status = await checkRetroArch(
       "linux",
       fixedRun({
-        "flatpak list --app --columns=application,version": {
+        "flatpak list --user --app --columns=application,version": {
           stdout: "org.libretro.RetroArch\t1.19.1\n",
           stderr: "",
           code: 0,
         },
-        "flatpak remote-info flathub org.libretro.RetroArch": {
+        "flatpak remote-info --user flathub org.libretro.RetroArch": {
           stdout: "Version: 1.20.0\n",
           stderr: "",
           code: 0,
         },
       }),
     );
-    expect(status).toMatchObject({ installed: true, method: "flatpak", version: "1.19.1", latestVersion: "1.20.0", updateAvailable: true });
+    expect(status).toMatchObject({ installed: true, method: "flatpak", flatpakScope: "user", version: "1.19.1", latestVersion: "1.20.0", updateAvailable: true });
   });
 
   it("detects a Flatpak install that is already current", async () => {
     const status = await checkRetroArch(
       "linux",
       fixedRun({
-        "flatpak list --app --columns=application,version": { stdout: "org.libretro.RetroArch\t1.20.0\n", stderr: "", code: 0 },
-        "flatpak remote-info flathub org.libretro.RetroArch": { stdout: "Version: 1.20.0\n", stderr: "", code: 0 },
+        "flatpak list --user --app --columns=application,version": { stdout: "org.libretro.RetroArch\t1.20.0\n", stderr: "", code: 0 },
+        "flatpak remote-info --user flathub org.libretro.RetroArch": { stdout: "Version: 1.20.0\n", stderr: "", code: 0 },
       }),
     );
     expect(status.updateAvailable).toBe(false);
+  });
+
+  it("detects a system-scoped Flatpak without confusing duplicate remote names", async () => {
+    const status = await checkRetroArch(
+      "linux",
+      fixedRun({
+        "flatpak list --user --app --columns=application,version": { stdout: "", stderr: "", code: 0 },
+        "flatpak list --system --app --columns=application,version": { stdout: "org.libretro.RetroArch\t1.20.0\n", stderr: "", code: 0 },
+        "flatpak remote-info --system flathub org.libretro.RetroArch": { stdout: "Version: 1.20.0\n", stderr: "", code: 0 },
+      }),
+    );
+    expect(status).toMatchObject({ installed: true, method: "flatpak", flatpakScope: "system", version: "1.20.0" });
   });
 
   it("falls back to a PATH install when no Flatpak copy exists, and does not offer to update it", async () => {
     const status = await checkRetroArch(
       "linux",
       fixedRun({
-        "flatpak list --app --columns=application,version": { stdout: "org.mozilla.firefox\t131.0\n", stderr: "", code: 0 },
+        "flatpak list --user --app --columns=application,version": { stdout: "org.mozilla.firefox\t131.0\n", stderr: "", code: 0 },
+        "flatpak list --system --app --columns=application,version": { stdout: "", stderr: "", code: 0 },
         "command -v retroarch": { stdout: "/usr/bin/retroarch\n", stderr: "", code: 0 },
         "retroarch --version": { stdout: "RetroArch 1.18.0 -- \n", stderr: "", code: 0 },
       }),
@@ -129,7 +142,8 @@ describe("checkRetroArch", () => {
     const status = await checkRetroArch(
       "linux",
       fixedRun({
-        "flatpak list --app --columns=application,version": { stdout: "org.mozilla.firefox\t131.0\n", stderr: "", code: 0 },
+        "flatpak list --user --app --columns=application,version": { stdout: "org.mozilla.firefox\t131.0\n", stderr: "", code: 0 },
+        "flatpak list --system --app --columns=application,version": { stdout: "", stderr: "", code: 0 },
       }),
     );
     expect(status).toEqual({ installed: false });
@@ -173,7 +187,7 @@ describe("updateRetroArch", () => {
       calls.push(cmd);
       return { stdout: "", stderr: "", code: 0 };
     });
-    expect(calls).toEqual(["flatpak update -y org.libretro.RetroArch"]);
+    expect(calls).toEqual(["flatpak update -y --user org.libretro.RetroArch"]);
   });
 
   it("runs the winget non-interactive upgrade command", async () => {
@@ -200,7 +214,7 @@ describe("installRetroArch", () => {
       calls.push(command);
       return { stdout: "", stderr: "", code: 0 };
     });
-    expect(calls).toEqual(["flatpak install -y --noninteractive flathub org.libretro.RetroArch"]);
+    expect(calls).toEqual(["flatpak install -y --noninteractive --user flathub org.libretro.RetroArch"]);
   });
 
   it("adds Flathub beta and installs the Linux nightly channel", async () => {

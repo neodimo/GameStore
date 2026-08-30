@@ -175,6 +175,7 @@ type RetroArchStatus = {
   version?: string;
   updateAvailable?: boolean;
   latestVersion?: string;
+  flatpakScope?: "user" | "system";
   updateBlockedReason?: string;
 };
 type RetroCore = { id: string; name: string; description: string; recommended: boolean; installed: boolean };

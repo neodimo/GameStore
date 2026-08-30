@@ -1129,7 +1129,7 @@ ipcMain.handle("pc-target-retroarch-update", async () =>
     if (status.updateBlockedReason) throw new Error(status.updateBlockedReason);
     if (!status.updateAvailable) return status;
     if (!status.method) throw new Error("Could not determine how to update this RetroArch installation.");
-    await updateRetroArch(os, status.method, run);
+    await updateRetroArch(os, status.method, run, status.flatpakScope);
     return checkRetroArch(os, run);
   }),
 );

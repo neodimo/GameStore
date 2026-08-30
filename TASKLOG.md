@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-30 — v0.25.1 Bazzite Flatpak-scope correction
+
+- **What was done:** Corrected the real Bazzite failure from v0.25.0. Stable RetroArch installation now explicitly targets the user Flatpak scope, so a machine with both user and system remotes named `flathub` no longer leaves Flatpak to choose ambiguously. Detection checks user and system installations separately, records the detected scope, queries that scope's remote, and updates in that same scope.
+- **Evidence:** Added a regression test reproducing duplicate user/system remote names and updated exact-command assertions for user-scoped install/update behavior. Full verification passed: `npm test` (**18 files / 263 tests**), `npm run lint`, `npm run build`, and `git diff --check`. The source media-light check only reports the pre-existing deliberate untracked `mockups/` scratch folder; tracked app core remains 3.38 MiB under the 5 MiB budget.
+- **Artifacts:** `electron/retroArch.ts`, `electron/retroArch.test.ts`, `electron/main.ts`, `src/vite-env.d.ts`, `package.json`, and `package-lock.json`, prepared as v0.25.1. Source changes are local pending commit/tag/push at this entry; `mockups/` remains deliberate untracked planning scratch and is excluded from the commit.
+- **State:** Implemented and locally verified. Real remote Bazzite installation is the remaining acceptance gate.
+- **Next owner + concrete artifact:** Gonzo commits, tags, pushes, and verifies the v0.25.1 release workflow. DiMo then installs v0.25.1 and retries **Install latest stable** against the `.22` Bazzite target; a refreshed installed version in GameStore is the acceptance artifact.
+- **Failure mode:** Flatpak remote names are scoped. Passing `flathub` without `--user` or `--system` is ambiguous when the same name exists in both scopes, especially under non-interactive SSH execution. Installation, remote inspection, and updating must carry one explicit scope end-to-end.
+
 ## 2026-08-30 — v0.25.0 published and CI-verified
 
 - **What was done:** Published the RetroArch stable/nightly empty-state installer as GameStore v0.25.0.
