@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-08-30 — v0.24.0 published and CI-verified
+
+- **What was done:** Published the per-console RetroArch core-management batch as GameStore v0.24.0.
+- **Evidence:** Tagged workflow [33341851222](https://github.com/neodimo/GameStore/actions/runs/33341851222) completed successfully for both Windows and Linux. The public release is neither draft nor prerelease and contains the Windows installer, Linux AppImage/Debian packages, both updater manifests, and the Windows blockmap.
+- **Artifacts:** Public release: https://github.com/neodimo/GameStore/releases/tag/v0.24.0. Windows installer: `GameStore-Setup-0.24.0-x64.exe` (93,113,973 bytes). Source tag `v0.24.0` is commit `20c439a31055d7da91a7e083ee74ee391064bd8a`; this release note is committed/pushed immediately after publication. The untracked `mockups/` folder remains deliberate local planning scratch.
+- **State:** Released. Real remote-core installation acceptance remains for DiMo's connected Bazzite machine; Steam shortcut/game/art deployment and fullscreen launch remain unbuilt.
+- **Next owner + concrete artifact:** DiMo installs v0.24.0, uses Settings → PC/Steam → Check RetroArch → Manage console emulators, installs one default core on Bazzite, and confirms it refreshes to **Installed**. Gonzo owns the following Steam deployment slice after that acceptance.
+
 ## 2026-08-30 — Per-console RetroArch core management for PC targets
 
 - **What was done:** Built the second PC/Steam slice after v0.23.0's RetroArch detection/update. Settings → PC/Steam can now inspect the selected local or SSH-connected target's installed cores and manage PS1, N64, and Saturn separately. Each console lists its practical default first — SwanStation, Mupen64Plus-Next, and Kronos — with a short reason plus alternatives (PCSX-ReARMed, ParaLLEl N64, Beetle Saturn). Installation occurs on the selected target, not implicitly on the GameStore host: Linux installs into Flatpak RetroArch's per-user core directory; Windows uses the winget RetroArch core directory. Downloads come from Libretro's official current x64 buildbot feed.
