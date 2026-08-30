@@ -116,6 +116,22 @@ export type CoreCatalogEntry = {
   rbfSize: number;
   /** Arcade only: every `.mra` this board core plays, path relative to `/media/fat`. */
   mraFiles: CatalogFile[];
+  /**
+   * Arcade only: how many playable romsets this core has (at least 1). Null
+   * for computer/console/LLAPI/other cores, which are general-purpose
+   * platforms with an open-ended software library rather than a fixed,
+   * countable game list — "1 to 10 games" is a question only arcade board
+   * cores can actually answer.
+   */
+  gameCount: number | null;
+  /**
+   * Arcade only: the flagship game's title (region/set variant stripped),
+   * for matching this core against per-game box art. A multi-game board's
+   * display name carries a "+ N more" suffix that no cover art was ever
+   * drawn for, so art lookup always uses the flagship title on its own.
+   * Null for platform cores, which have no single game to depict.
+   */
+  artTitle: string | null;
 };
 
 const CATEGORY_FOLDERS: Record<CoreCategory, string> = {
@@ -275,6 +291,8 @@ export const buildCatalog = (db: RawDb, source: CoreSource): CoreCatalogEntry[] 
       rbfHash: core.hash,
       rbfSize: core.size,
       mraFiles: mras.map((mra) => ({ path: mra.path, hash: mra.hash, size: mra.size })),
+      gameCount: Math.max(mras.length, 1),
+      artTitle: mras.length ? stripVariant(mras[0].title) : humanize(rbfPrefix(core.fileName)),
     });
   }
   for (const [system, core] of bySystem) {
@@ -290,6 +308,8 @@ export const buildCatalog = (db: RawDb, source: CoreSource): CoreCatalogEntry[] 
       rbfHash: core.hash,
       rbfSize: core.size,
       mraFiles: [],
+      gameCount: null,
+      artTitle: null,
     });
   }
   return entries;

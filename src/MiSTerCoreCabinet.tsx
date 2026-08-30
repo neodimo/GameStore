@@ -1,9 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Download, HardDrive, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { CheckCircle2, Download, Gamepad2, HardDrive, LayoutGrid, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { resolveArt } from "./artMatch";
 
 type CategoryFilter = "all" | MiSTerCoreCategory;
 type TierFilter = "all" | MiSTerCoreTier;
 type InstalledFilter = "all" | "installed" | "not-installed";
+
+/**
+ * Arcade box art has a real source: Libretro's FBNeo pack names every file
+ * after the same human-readable arcade title (region/set tags included) that
+ * an MRA carries, so the existing catalog art matcher — built for PS1/N64/
+ * Saturn covers — resolves it without a new scoring path. No equivalent
+ * per-game art source exists for computer/console/LLAPI/other cores, which
+ * are open-ended platforms rather than one depictable game; those get a
+ * category badge instead of a cover.
+ */
+const ARCADE_ART_SOURCE = { system: "FBNeo%20-%20Arcade%20Games", folder: "Named_Boxarts" } as const;
 
 const CATEGORY_LABELS: Record<MiSTerCoreCategory, string> = {
   arcade: "Arcade board recreations",
@@ -39,6 +51,7 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
   const [status, setStatus] = useState("Checking your connected MiSTer…");
   const [installingId, setInstallingId] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, MiSTerCoreInstallProgress>>({});
+  const [arcadeArt, setArcadeArt] = useState<Record<string, string>>({});
 
   const loadCatalog = async (force = false) => {
     try {
@@ -74,6 +87,30 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
       }
     });
   }, []);
+
+  // Box art is a nice-to-have on top of a browsable, installable list, so a
+  // missing/unreachable index leaves cores visible with no cover rather than
+  // failing the page.
+  useEffect(() => {
+    const arcadeCores = (catalog ?? []).filter((core) => core.category === "arcade" && core.artTitle);
+    if (!arcadeCores.length) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const index = await window.gameStore?.getArtIndex(ARCADE_ART_SOURCE.system, ARCADE_ART_SOURCE.folder);
+        if (!index || cancelled) return;
+        const matches: Record<string, string> = {};
+        for (const core of arcadeCores) {
+          const match = resolveArt(core.artTitle!, "USA", index.files, ARCADE_ART_SOURCE);
+          if (match) matches[core.id] = match.url;
+        }
+        if (!cancelled) setArcadeArt(matches);
+      } catch {
+        // No box art this session; install/browse still work without it.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [catalog]);
 
   const install = async (core: MiSTerCoreCatalogEntry) => {
     setInstallingId(core.id);
@@ -185,8 +222,21 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
               const isInstalled = installed?.[core.id];
               const state = progress[core.id];
               const busy = installingId === core.id;
+              const art = arcadeArt[core.id];
               return (
                 <section className={isInstalled ? "core-card installed" : "core-card"} key={core.id}>
+                  <div className="core-card-art">
+                    {art ? (
+                      <img src={art} alt="" loading="lazy" />
+                    ) : (
+                      <div className="core-card-art-placeholder">
+                        {core.category === "arcade" ? <Gamepad2 /> : <LayoutGrid />}
+                      </div>
+                    )}
+                    <span className={`core-game-badge ${core.gameCount === null ? "platform" : core.gameCount === 1 ? "single" : "multi"}`}>
+                      {core.gameCount === null ? "Platform" : core.gameCount === 1 ? "1 game" : `${core.gameCount} games`}
+                    </span>
+                  </div>
                   <div className="core-card-head">
                     <b>{core.name}</b>
                     {isInstalled && <span><CheckCircle2 /> Installed</span>}
@@ -196,7 +246,7 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
                   </p>
                   <p>
                     {core.category === "arcade"
-                      ? `${core.mraFiles.length || 1} romset${core.mraFiles.length === 1 || !core.mraFiles.length ? "" : "s"} · ${formatBytes(core.rbfSize)}`
+                      ? `${core.gameCount} romset${core.gameCount === 1 ? "" : "s"} · ${formatBytes(core.rbfSize)}`
                       : formatBytes(core.rbfSize)}
                   </p>
                   {state && state.stage !== "done" && (

@@ -255,6 +255,10 @@ type MiSTerCoreCatalogEntry = {
   rbfSize: number;
   /** Arcade only: every `.mra` romset this board core plays. */
   mraFiles: MiSTerCoreFile[];
+  /** Arcade only: how many playable romsets this core has. Null for platform cores (computer/console/LLAPI/other), whose game libraries are open-ended rather than a fixed count. */
+  gameCount: number | null;
+  /** Arcade only: the flagship game's title, for per-game box-art lookup. Null for platform cores. */
+  artTitle: string | null;
 };
 type MiSTerCoreInstallProgress = {
   coreId: string;

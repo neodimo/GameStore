@@ -167,4 +167,43 @@ describe("MiSTer core catalog (built from update_all.sh's own manifests)", () =>
     expect(entries[0].name).toBe("Atari7800 (LLAPI)");
     expect(entries[0].rbfPath).toBe("_LLAPI/Atari7800_LLAPI_20250209.rbf");
   });
+
+  it("counts an arcade core's romsets and names its flagship for box-art lookup, regardless of the '+ N more' display suffix", () => {
+    const entries = buildCatalog(officialFixture, officialSource);
+    const donkeyKong = entries.find((entry) => entry.id === "official:arcade:arcadedonkeykong")!;
+    const donkeyKong3 = entries.find((entry) => entry.id === "official:arcade:arcadedonkeykong3")!;
+    expect(donkeyKong.gameCount).toBe(2);
+    expect(donkeyKong.artTitle).toBe("Donkey Kong");
+    expect(donkeyKong3.gameCount).toBe(1);
+    expect(donkeyKong3.artTitle).toBe("Donkey Kong 3");
+  });
+
+  it("names a multi-game board's art title after its flagship alone, without the '+ N more' count the display name carries", () => {
+    const cps2Fixture: RawDb = {
+      base_files_url: "x",
+      tag_dictionary: { arcadecores: 1, cores: 2, arcaderbfsonly: 3, arcadejtcps2: 4 },
+      files: {
+        "_Arcade/cores/jtcps2.rbf": { hash: "h", size: 1, tags: [1, 2, 3, 4] },
+        "_Arcade/1944 The Loop Master (Europe).mra": { hash: "h1", size: 1, tags: [4] },
+        "_Arcade/19XX The War Against Destiny (Europe).mra": { hash: "h2", size: 1, tags: [4] },
+        "_Arcade/Alien vs. Predator (Europe).mra": { hash: "h3", size: 1, tags: [4] },
+        "_Arcade/Armored Warriors (Europe).mra": { hash: "h4", size: 1, tags: [4] },
+        "_Arcade/Battle Circuit (Europe).mra": { hash: "h5", size: 1, tags: [4] },
+      },
+    };
+    const entries = buildCatalog(cps2Fixture, jtcoresSource);
+    expect(entries[0].name).toBe("1944 The Loop Master + 4 more");
+    expect(entries[0].gameCount).toBe(5);
+    expect(entries[0].artTitle).toBe("1944 The Loop Master");
+  });
+
+  it("leaves gameCount and artTitle null for platform cores, which have no fixed or single-game identity", () => {
+    const official = buildCatalog(officialFixture, officialSource);
+    const psx = official.find((entry) => entry.id === "official:console:psx")!;
+    const llapi = buildCatalog(llapiFixture, llapiSource)[0];
+    expect(psx.gameCount).toBeNull();
+    expect(psx.artTitle).toBeNull();
+    expect(llapi.gameCount).toBeNull();
+    expect(llapi.artTitle).toBeNull();
+  });
 });

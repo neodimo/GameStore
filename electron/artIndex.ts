@@ -27,6 +27,7 @@ const SYSTEMS = new Set([
   "Sony%20-%20PlayStation",
   "Nintendo%20-%20Nintendo%2064",
   "Sega%20-%20Saturn",
+  "FBNeo%20-%20Arcade%20Games",
 ]);
 
 export type ArtIndex = {
