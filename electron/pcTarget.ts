@@ -17,9 +17,68 @@
 import { exec } from "node:child_process";
 import { createHash } from "node:crypto";
 import { Client } from "ssh2";
+import { sweepReachableHosts, type SweptHost } from "./networkDiscovery";
 
 export type PcOs = "windows" | "linux" | "mac";
 export type PcTargetKind = "local" | "remote";
+
+export type PcNetworkCandidate = {
+  host: string;
+  hostname?: string;
+  port: number;
+  confidence: "likely" | "unknown";
+  reason: string;
+};
+
+/**
+ * Nothing on a home network broadcasts "I am a laptop" vs "I am a desktop
+ * tower" — physical form factor is not a network-visible fact, so a scan
+ * cannot actually sort by that. What *is* real: printers, routers, smart
+ * TVs, and similar embedded/IoT gear essentially never run an SSH server,
+ * so `sweepReachableHosts`' SSH-reachability gate already excludes almost
+ * all of them on its own. This pattern catches the exceptions that do
+ * answer SSH but clearly are not a general-purpose PC — a MiSTer chief among
+ * them, since it would otherwise show up in its own deploy-target scan.
+ */
+const NOT_A_PC_HOSTNAME =
+  /\b(mister|superstation|router|gateway|modem|printer|nas|synology|firewall|access[- ]?point|\bap\d*\b|smart[- ]?tv|roku|chromecast|apple[- ]?tv|xbox|playstation\d?|nintendo|camera|iot|switch)\b/i;
+
+/** Pure classification, kept separate from the sweep so it can be tested against fixed hosts instead of a real network. */
+export const classifyPcCandidates = (swept: SweptHost[]): PcNetworkCandidate[] =>
+  swept
+    .map(({ host, hostname }) => {
+      const notPc = NOT_A_PC_HOSTNAME.test(`${host} ${hostname ?? ""}`.toLowerCase());
+      return {
+        host,
+        hostname,
+        port: 22,
+        confidence: (notPc ? "unknown" : "likely") as PcNetworkCandidate["confidence"],
+        reason: notPc
+          ? "SSH available, but this name looks like a device, not a general-purpose PC"
+          : hostname
+            ? `Answers to ${hostname}`
+            : "SSH available; no network name found — verify before connecting",
+      };
+    })
+    .sort((a, b) =>
+      a.confidence === b.confidence
+        ? a.host.localeCompare(b.host, undefined, { numeric: true })
+        : a.confidence === "likely"
+          ? -1
+          : 1,
+    );
+
+/**
+ * Finds candidate PC deploy targets on the local network: every SSH-reachable
+ * machine whose name (or address, when nothing answered a name lookup) does
+ * not look like a MiSTer or other non-PC device. This is a starting list for
+ * the user to recognize and pick from, not a verified identity — a name is
+ * cosmetic and never adopted as a target until the user supplies real
+ * credentials and `pc-target-test` proves the connection.
+ */
+export const discoverPcTargets = async (
+  progress?: (done: number, total: number) => void,
+): Promise<PcNetworkCandidate[]> => classifyPcCandidates(await sweepReachableHosts(new Map(), progress));
 
 export type CommandResult = { stdout: string; stderr: string; code: number };
 export type RunCommand = (command: string) => Promise<CommandResult>;

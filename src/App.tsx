@@ -1513,6 +1513,8 @@ function ProviderSettings({
   });
   const [pcTest, setPcTest] = useState("");
   const [pcTesting, setPcTesting] = useState(false);
+  const [pcCandidates, setPcCandidates] = useState<PcNetworkCandidate[]>([]);
+  const [pcScan, setPcScan] = useState("");
   useEffect(() => {
     window.gameStore?.getTheGamesDbKey().then(setKey);
     window.gameStore
@@ -1543,7 +1545,10 @@ function ProviderSettings({
       setLocating("");
       setScan(`Your device moved to ${host} — GameStore found it and saved the new address.`);
     });
-    return () => { stopProgress?.(); stopLocating?.(); stopMoved?.(); };
+    const stopPcScan = window.gameStore?.onPcTargetDiscoveryProgress(({ done, total }) =>
+      setPcScan(`Scanning local network · ${done}/${total}`),
+    );
+    return () => { stopProgress?.(); stopLocating?.(); stopMoved?.(); stopPcScan?.(); };
   }, []);
   const configuredCollections = (): CollectionSource[] =>
     PLATFORMS.flatMap((platform) => {
@@ -1658,6 +1663,17 @@ function ProviderSettings({
       setScan(found.length ? `${found.length} candidate${found.length === 1 ? "" : "s"} found` : "No SSH/SFTP devices found");
     } catch (e) {
       setScan(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const scanPcNetwork = async () => {
+    setPcScan("Finding computers on your network…");
+    setPcCandidates([]);
+    try {
+      const found = (await window.gameStore?.discoverPcTargets()) ?? [];
+      setPcCandidates(found);
+      setPcScan(found.length ? `${found.length} candidate${found.length === 1 ? "" : "s"} found` : "No SSH-reachable computers found");
+    } catch (e) {
+      setPcScan(e instanceof Error ? e.message : String(e));
     }
   };
   const testDebridProvider = async (provider: "realdebrid" | "torbox") => {
@@ -2066,7 +2082,37 @@ function ProviderSettings({
               <option value="remote">A remote PC</option>
             </select>
           </label>
-          {pcTarget.kind === "remote" && <>
+        </div>
+        {pcTarget.kind === "remote" && <>
+        <div className="settings-actions scan-actions">
+          <button type="button" onClick={scanPcNetwork}><Wifi /> Scan network</button>
+          {pcScan && <span>{pcScan}</span>}
+        </div>
+        <p className="device-hint">
+          Nothing on a network announces "I'm a laptop" versus "I'm a desktop" —
+          that's not a fact the network can see. This scan finds every
+          SSH-reachable computer instead, which already excludes almost
+          everything that isn't a general-purpose PC: printers, routers, and
+          smart TVs essentially never run SSH. A MiSTer would, so it's
+          filtered out by name.
+        </p>
+        {!!pcCandidates.length && <div className="device-candidates">
+          {pcCandidates.map((candidate) => (
+            <button
+              key={candidate.host}
+              onClick={() => setPcTargetState({
+                ...pcTarget,
+                host: candidate.host,
+                name: candidate.hostname || pcTarget.name,
+              })}
+            >
+              <b>{candidate.hostname || candidate.host}</b>
+              <span>{candidate.host} · {candidate.confidence}</span>
+              <small>{candidate.reason}</small>
+            </button>
+          ))}
+        </div>}
+        <div className="device-fields">
           <label>
             Name
             <input
@@ -2107,8 +2153,8 @@ function ProviderSettings({
               placeholder={pcTarget.hasPassword ? "Blank keeps saved password" : ""}
             />
           </label>
-          </>}
         </div>
+        </>}
         {pcTarget.os && (
           <small>
             Last detected: {pcTarget.os === "windows" ? "Windows" : pcTarget.os === "mac" ? "macOS" : "Linux"}

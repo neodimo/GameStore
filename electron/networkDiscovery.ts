@@ -180,15 +180,24 @@ export async function locateDevice(options: {
   return outcomes.find(Boolean) ?? null;
 }
 
-export async function discoverFpgaDevices(
-  progress?: (done: number, total: number) => void,
-): Promise<NetworkCandidate[]> {
-  // Named devices are asked for first and cost one multicast round trip, so a
-  // MiSTer that answers to its own name appears immediately rather than after
-  // a 254-address sweep.
-  const named = new Map<string, string>();
-  for (const [name, address] of await resolveMdns(KNOWN_DEVICE_NAMES)) named.set(address, name);
+export type SweptHost = { host: string; hostname?: string; advertised?: string };
 
+/**
+ * Sweeps every address on the local /24s for an open SSH port, then labels
+ * whatever answered. Shared by every "find a machine on my network" scan —
+ * MiSTer discovery and PC-target discovery alike — because the expensive,
+ * previously-tuned parts are identical: 24 probes in flight rather than one
+ * at a time (an untuned sweep of a /24 is minutes, not seconds), and reverse
+ * DNS run *after* the sweep, concurrently, on its own bounded budget, because
+ * an address with no PTR record otherwise makes the resolver wait out its
+ * full retry budget mid-sweep — that one change took a four-host case from
+ * 31 seconds to under 2. `named` is pre-resolved address→name pairs (e.g.
+ * from mDNS) that are worth checking first and never need reverse DNS.
+ */
+export const sweepReachableHosts = async (
+  named: Map<string, string>,
+  progress?: (done: number, total: number) => void,
+): Promise<SweptHost[]> => {
   const hosts = new Set<string>(named.keys());
   for (const prefix of localPrefixes())
     for (let last = 1; last < 255; last++) hosts.add(`${prefix}.${last}`);
@@ -206,12 +215,6 @@ export async function discoverFpgaDevices(
   };
   await Promise.all(Array.from({ length: 24 }, worker));
 
-  // Reverse DNS is a cosmetic label, and an address with no PTR record makes
-  // the resolver wait out its full retry budget: doing these inside the sweep
-  // cost 31 seconds for four hosts and dominated the entire scan. They are
-  // resolved together, after the sweep, on a budget that treats a slow answer
-  // as no answer. Running them concurrently makes that budget a ceiling on the
-  // whole step rather than a cost paid once per host.
   const labels = new Map<string, string>();
   await Promise.all(
     live.map(async (host) => {
@@ -222,10 +225,21 @@ export async function discoverFpgaDevices(
     }),
   );
 
-  return live
-    .map((host) => {
-      const hostname = labels.get(host);
-      const advertised = named.get(host);
+  return live.map((host) => ({ host, hostname: labels.get(host), advertised: named.get(host) }));
+};
+
+export async function discoverFpgaDevices(
+  progress?: (done: number, total: number) => void,
+): Promise<NetworkCandidate[]> {
+  // Named devices are asked for first and cost one multicast round trip, so a
+  // MiSTer that answers to its own name appears immediately rather than after
+  // a 254-address sweep.
+  const named = new Map<string, string>();
+  for (const [name, address] of await resolveMdns(KNOWN_DEVICE_NAMES)) named.set(address, name);
+
+  const swept = await sweepReachableHosts(named, progress);
+  return swept
+    .map(({ host, hostname, advertised }) => {
       const likely = !!advertised || /mister|superstation/.test(`${host} ${hostname ?? ""}`.toLowerCase());
       return {
         host,

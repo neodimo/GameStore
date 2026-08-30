@@ -44,6 +44,8 @@ interface Window {
       settings: Partial<PcTargetSettings> & { password?: string },
     ): Promise<PcTargetSettings>;
     testPcTarget(): Promise<PcTargetTestResult>;
+    discoverPcTargets(): Promise<PcNetworkCandidate[]>;
+    onPcTargetDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
@@ -154,6 +156,13 @@ type PcTargetSettings = {
   recognized: boolean;
 };
 type PcTargetTestResult = { ok: boolean; os: PcOs; message: string };
+type PcNetworkCandidate = {
+  host: string;
+  hostname?: string;
+  port: number;
+  confidence: "likely" | "unknown";
+  reason: string;
+};
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";
 /** Catalog platform. Mirrors `PlatformId` in src/platforms.ts. */

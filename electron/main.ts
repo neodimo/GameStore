@@ -89,6 +89,7 @@ import {
 import {
   connectPcSsh,
   detectOsFromProbe,
+  discoverPcTargets,
   execRemote,
   localOs,
   type PcOs,
@@ -1079,6 +1080,11 @@ ipcMain.handle("pc-target-test", async () => {
   }
 });
 const osLabel = (os: PcOs) => (os === "windows" ? "Windows" : os === "mac" ? "macOS" : "Linux");
+ipcMain.handle("pc-target-discover", async () =>
+  discoverPcTargets((done, total) =>
+    win?.webContents.send("pc-target-discovery-progress", { done, total }),
+  ),
+);
 
 type FpgaSettingsShape = NonNullable<ProviderSettings["fpga"]>;
 

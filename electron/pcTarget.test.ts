@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectOsFromProbe, localOs, type CommandResult } from "./pcTarget";
+import { classifyPcCandidates, detectOsFromProbe, localOs, type CommandResult } from "./pcTarget";
 
 const fixedRun = (responses: Record<string, CommandResult>) => async (command: string) =>
   responses[command] ?? { stdout: "", stderr: `command not found: ${command}`, code: 127 };
@@ -55,5 +55,49 @@ describe("detectOsFromProbe", () => {
     await expect(
       detectOsFromProbe(fixedRun({ "uname -s": { stdout: "", stderr: "", code: 0 } })),
     ).rejects.toThrow(/could not determine/i);
+  });
+});
+
+describe("classifyPcCandidates", () => {
+  it("treats a machine with an ordinary hostname, or no hostname at all, as a likely PC", () => {
+    const [byName, byAddressOnly] = classifyPcCandidates([
+      { host: "192.168.1.42", hostname: "dimos-laptop" },
+      { host: "192.168.1.50" },
+    ]);
+    expect(byName).toMatchObject({ confidence: "likely", reason: "Answers to dimos-laptop" });
+    expect(byAddressOnly.confidence).toBe("likely");
+    expect(byAddressOnly.reason).toMatch(/no network name found/i);
+  });
+
+  it("demotes a MiSTer so it never shows up in its own deploy-target scan", () => {
+    const [candidate] = classifyPcCandidates([{ host: "192.168.1.96", hostname: "MiSTer.local" }]);
+    expect(candidate.confidence).toBe("unknown");
+    expect(candidate.reason).toMatch(/not a general-purpose pc/i);
+  });
+
+  it("demotes common embedded/IoT device hostnames (router, printer, NAS, smart TV)", () => {
+    const results = classifyPcCandidates([
+      { host: "192.168.1.1", hostname: "home-router" },
+      { host: "192.168.1.20", hostname: "office-printer" },
+      { host: "192.168.1.30", hostname: "synology-nas" },
+      { host: "192.168.1.40", hostname: "living-room-smart-tv" },
+    ]);
+    expect(results.every((r) => r.confidence === "unknown")).toBe(true);
+  });
+
+  it("sorts likely PCs before unknown/demoted ones, ties broken by address", () => {
+    const results = classifyPcCandidates([
+      { host: "192.168.1.96", hostname: "MiSTer.local" },
+      { host: "192.168.1.50", hostname: "bazzite-steam-pc" },
+      { host: "192.168.1.10", hostname: "dimos-laptop" },
+    ]);
+    expect(results.map((r) => r.host)).toEqual(["192.168.1.10", "192.168.1.50", "192.168.1.96"]);
+  });
+
+  it("does not flag a hostname merely containing a denylisted word as a substring, e.g. 'laptop' containing 'ap'", () => {
+    // Word-boundary matching: the access-point abbreviation "ap" must match only as its own word,
+    // not as a substring of an unrelated word like "laptop".
+    const results = classifyPcCandidates([{ host: "192.168.1.11", hostname: "dimos-laptop" }]);
+    expect(results[0].confidence).toBe("likely");
   });
 });

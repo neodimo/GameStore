@@ -40,6 +40,12 @@ contextBridge.exposeInMainWorld("gameStore", {
     password?: string;
   }) => ipcRenderer.invoke("pc-target-set", settings),
   testPcTarget: () => ipcRenderer.invoke("pc-target-test"),
+  discoverPcTargets: () => ipcRenderer.invoke("pc-target-discover"),
+  onPcTargetDiscoveryProgress: (listener: (progress: { done: number; total: number }) => void) => {
+    const wrapped = (_e: Electron.IpcRendererEvent, progress: { done: number; total: number }) => listener(progress);
+    ipcRenderer.on("pc-target-discovery-progress", wrapped);
+    return () => ipcRenderer.removeListener("pc-target-discovery-progress", wrapped);
+  },
   getFpgaSettings: () => ipcRenderer.invoke("fpga-settings-get"),
   getFpgaInventory: (catalog: { id: string; title: string }[]) => ipcRenderer.invoke("fpga-inventory-get", catalog),
   refreshFpgaInventory: () => ipcRenderer.invoke("fpga-inventory-refresh"),
