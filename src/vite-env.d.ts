@@ -48,6 +48,8 @@ interface Window {
     onPcTargetDiscoveryProgress(listener: (progress: { done: number; total: number }) => void): () => void;
     checkRetroArch(): Promise<RetroArchStatus>;
     updateRetroArch(): Promise<RetroArchStatus>;
+    getRetroArchCores(): Promise<RetroCorePlatform[]>;
+    installRetroArchCore(coreId: string): Promise<RetroCorePlatform[]>;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
@@ -174,6 +176,8 @@ type RetroArchStatus = {
   latestVersion?: string;
   updateBlockedReason?: string;
 };
+type RetroCore = { id: string; name: string; description: string; recommended: boolean; installed: boolean };
+type RetroCorePlatform = { platform: CatalogPlatformId; label: string; cores: RetroCore[] };
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";
 /** Catalog platform. Mirrors `PlatformId` in src/platforms.ts. */

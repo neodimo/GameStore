@@ -1518,6 +1518,8 @@ function ProviderSettings({
   const [raStatus, setRaStatus] = useState<RetroArchStatus | null>(null);
   const [raBusy, setRaBusy] = useState(false);
   const [raMessage, setRaMessage] = useState("");
+  const [raCores, setRaCores] = useState<RetroCorePlatform[]>([]);
+  const [raCoreBusy, setRaCoreBusy] = useState("");
   useEffect(() => {
     window.gameStore?.getTheGamesDbKey().then(setKey);
     window.gameStore
@@ -1734,6 +1736,30 @@ function ProviderSettings({
       setRaMessage(e instanceof Error ? e.message : String(e));
     } finally {
       setRaBusy(false);
+    }
+  };
+  const checkRetroArchCores = async () => {
+    setRaCoreBusy("checking");
+    setRaMessage("Checking installed emulator cores…");
+    try {
+      setRaCores(await window.gameStore!.getRetroArchCores());
+      setRaMessage("");
+    } catch (e) {
+      setRaMessage(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRaCoreBusy("");
+    }
+  };
+  const installCore = async (coreId: string) => {
+    setRaCoreBusy(coreId);
+    setRaMessage(`Installing ${coreId} on the selected PC…`);
+    try {
+      setRaCores(await window.gameStore!.installRetroArchCore(coreId));
+      setRaMessage("");
+    } catch (e) {
+      setRaMessage(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRaCoreBusy("");
     }
   };
   const exportShelf = async () => {
@@ -2225,6 +2251,31 @@ function ProviderSettings({
                   : `Installed via ${raStatus.method}: ${raStatus.version} (up to date).`}
           </p>
         )}
+        {raStatus?.installed && <>
+          <div className="settings-actions">
+            <button disabled={!!raCoreBusy} onClick={checkRetroArchCores}>
+              {raCoreBusy === "checking" ? "Checking cores…" : "Manage console emulators"}
+            </button>
+          </div>
+          {!!raCores.length && <div className="retro-core-platforms">
+            {raCores.map((platform) => <section key={platform.platform} className="retro-core-platform">
+              <h3>{platform.label}</h3>
+              {platform.cores.map((core) => <div key={core.id} className={`retro-core ${core.installed ? "installed" : ""}`}>
+                <div>
+                  <b>{core.name} {core.recommended && <em>BEST DEFAULT</em>}</b>
+                  <small>{core.description}</small>
+                </div>
+                {core.installed
+                  ? <span>Installed</span>
+                  : core.id === "beetle_saturn"
+                    ? <span className="muted">Unavailable in current x64 feed</span>
+                    : <button disabled={!!raCoreBusy} onClick={() => void installCore(core.id)}>
+                        {raCoreBusy === core.id ? "Installing…" : "Install"}
+                      </button>}
+              </div>)}
+            </section>)}
+          </div>}
+        </>}
         {raMessage && <p className="test-result">{raMessage}</p>}
         </>}
         </>}

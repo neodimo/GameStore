@@ -98,6 +98,7 @@ import {
   type RunCommand,
 } from "./pcTarget";
 import { checkRetroArch, updateRetroArch } from "./retroArch";
+import { installRetroCore, listRetroCores } from "./retroArchCores";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -1119,6 +1120,17 @@ ipcMain.handle("pc-target-retroarch-update", async () =>
     if (!status.method) throw new Error("Could not determine how to update this RetroArch installation.");
     await updateRetroArch(os, status.method, run);
     return checkRetroArch(os, run);
+  }),
+);
+ipcMain.handle("pc-target-retroarch-cores", async () =>
+  runOnPcTarget((run, os) => listRetroCores(os, run)),
+);
+ipcMain.handle("pc-target-retroarch-core-install", async (_event, coreId: string) =>
+  runOnPcTarget(async (run, os) => {
+    const status = await checkRetroArch(os, run);
+    if (!status.installed) throw new Error("Install RetroArch before adding emulator cores.");
+    await installRetroCore(os, coreId, run);
+    return listRetroCores(os, run);
   }),
 );
 

@@ -43,6 +43,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   discoverPcTargets: () => ipcRenderer.invoke("pc-target-discover"),
   checkRetroArch: () => ipcRenderer.invoke("pc-target-retroarch-check"),
   updateRetroArch: () => ipcRenderer.invoke("pc-target-retroarch-update"),
+  getRetroArchCores: () => ipcRenderer.invoke("pc-target-retroarch-cores"),
+  installRetroArchCore: (coreId: string) => ipcRenderer.invoke("pc-target-retroarch-core-install", coreId),
   onPcTargetDiscoveryProgress: (listener: (progress: { done: number; total: number }) => void) => {
     const wrapped = (_e: Electron.IpcRendererEvent, progress: { done: number; total: number }) => listener(progress);
     ipcRenderer.on("pc-target-discovery-progress", wrapped);

@@ -1914,6 +1914,14 @@ footer {
   color: #aeb3b5 !important;
   font-size: 11px;
 }
+.retro-core-platforms { display: grid; gap: 12px; margin: 12px 0; }
+.retro-core-platform { border: 1px solid #34393d; border-radius: 8px; padding: 10px; background: #15181a; }
+.retro-core-platform h3 { margin: 0 0 8px; font-size: 13px; }
+.retro-core { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid #292d30; }
+.retro-core > div { display: grid; gap: 3px; }
+.retro-core small, .retro-core .muted { color: #8e969a; font-size: 10px; }
+.retro-core em { color: var(--cyan); font-size: 8px; font-style: normal; letter-spacing: .08em; margin-left: 5px; }
+.retro-core.installed > span { color: #70d99b; font-size: 11px; }
 .cache-row {
   display: flex;
   align-items: center;
