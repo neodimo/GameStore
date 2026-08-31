@@ -22,7 +22,14 @@ describe("RetroArch core management", () => {
     expect(run.mock.calls[0][0]).toContain(".var/app/org.libretro.RetroArch/config/retroarch/cores");
   });
 
-  it("refuses a core without a verified buildbot artifact", async () => {
-    await expect(installRetroCore("linux", "beetle_saturn", vi.fn())).rejects.toThrow("no verified buildbot package");
+  it("uses Libretro's mednafen package id to install Beetle Saturn", async () => {
+    const run = vi.fn().mockResolvedValue({ stdout: "", stderr: "", code: 0 });
+    await installRetroCore("linux", "mednafen_saturn", run);
+    expect(run.mock.calls[0][0]).toContain("nightly/linux/x86_64/latest/mednafen_saturn_libretro.so.zip");
+  });
+
+  it("detects Beetle Saturn under Libretro's mednafen core filename", async () => {
+    const result = await listRetroCores("linux", vi.fn().mockResolvedValue({ stdout: "mednafen_saturn\n", stderr: "", code: 0 }));
+    expect(result[2].cores.find((core) => core.name === "Beetle Saturn")?.installed).toBe(true);
   });
 });

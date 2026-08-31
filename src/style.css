@@ -1922,6 +1922,9 @@ footer {
 .retro-core small, .retro-core .muted { color: #8e969a; font-size: 10px; }
 .retro-core em { color: var(--cyan); font-size: 8px; font-style: normal; letter-spacing: .08em; margin-left: 5px; }
 .retro-core.installed > span { color: #70d99b; font-size: 11px; }
+.retro-core > button { color: #111; background: var(--amber); border: 1px solid #b47817; border-radius: 6px; padding: 7px 12px; font-weight: 700; cursor: pointer; }
+.retro-core > button:hover:not(:disabled) { background: #ffc45c; border-color: #d99a2e; }
+.retro-core > button:disabled { color: #343434; background: #9d875f; border-color: #766543; cursor: default; }
 .cache-row {
   display: flex;
   align-items: center;

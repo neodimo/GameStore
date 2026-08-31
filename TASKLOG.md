@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-08-30 — v0.25.2 core-action contrast and Beetle Saturn package correction
+
+- **What was done:** Corrected the unreadable RetroArch core Install buttons with explicit dark-on-amber normal, hover, and disabled states. Corrected Beetle Saturn's internal core ID from the nonexistent `beetle_saturn` package name to Libretro's published `mednafen_saturn` ID, enabling both installation and installed-core detection while retaining the familiar Beetle Saturn UI label.
+- **Evidence:** Confirmed HTTP 404 for the former Linux/Windows `beetle_saturn` x64 buildbot URLs and HTTP 200 for both official `mednafen_saturn` x64 artifacts. Added regression tests for the exact download URL and installed filename mapping. Local verification passed: `npm test` (**18 files / 264 tests**), `npm run lint`, `npm run build`, and `git diff --check`. The media-light source check reports only the deliberate untracked `mockups/` planning folder, which is absent from git and release packages.
+- **Artifacts:** `electron/retroArchCores.ts`, `electron/retroArchCores.test.ts`, `src/App.tsx`, `src/style.css`, `CONTEXT.md`, `TASKLOG.md`, and version metadata prepared as `0.25.2`. Source changes are local pending commit/tag at this entry; `mockups/` remains deliberate untracked scratch.
+- **State:** Implemented and locally verified. Release CI and real remote Bazzite installation remain unverified at this entry.
+- **Next owner + concrete artifact:** Gonzo publishes v0.25.2 and verifies both tagged platform jobs and release assets. DiMo then installs v0.25.2, confirms the core action labels are readable, installs Beetle Saturn on the `.22` Bazzite target, and confirms it refreshes to **Installed**.
+- **Failure mode:** Friendly emulator names are not necessarily artifact IDs. Libretro exposes Beetle Saturn as `mednafen_saturn_libretro`; deriving `beetle_saturn_libretro` from the UI label creates a guaranteed 404. Keep display names separate from package/file identifiers and verify both target-platform artifacts before enabling installation.
+
 ## 2026-08-30 — v0.25.1 Bazzite Flatpak-scope correction
 
 - **What was done:** Corrected the real Bazzite failure from v0.25.0. Stable RetroArch installation now explicitly targets the user Flatpak scope, so a machine with both user and system remotes named `flathub` no longer leaves Flatpak to choose ambiguously. Detection checks user and system installations separately, records the detected scope, queries that scope's remote, and updates in that same scope.

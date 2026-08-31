@@ -2,7 +2,7 @@
 
 ## Current PC/Steam deployment state (2026-08-30)
 
-The selected local or remote Windows/Linux target can be discovered, connected, OS-detected, checked for RetroArch, updated when safely package-managed, installed from an explicit stable/nightly choice when absent, and inspected/managed for PS1/N64/Saturn Libretro cores. The actual game/cover transfer, Steam `shortcuts.vdf`/grid-art management, automatic backup, and fullscreen launch command are still pending. v0.25.1 corrects the Bazzite stable-installer failure exposed by duplicate user/system `flathub` remotes: Linux Flatpak installation, detection, remote inspection, and updating now carry an explicit user/system scope end-to-end. Real Bazzite installation remains its acceptance gate.
+The selected local or remote Windows/Linux target can be discovered, connected, OS-detected, checked for RetroArch, updated when safely package-managed, installed from an explicit stable/nightly choice when absent, and inspected/managed for PS1/N64/Saturn Libretro cores. The actual game/cover transfer, Steam `shortcuts.vdf`/grid-art management, automatic backup, and fullscreen launch command are still pending. v0.25.2 makes the core-install actions readable and corrects Beetle Saturn's Libretro package identity: the UI name remains Beetle Saturn, while detection/download use the published `mednafen_saturn` core filename. Real Bazzite core installation remains its acceptance gate.
 
 ## Product premise
 

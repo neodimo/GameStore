@@ -2285,11 +2285,9 @@ function ProviderSettings({
                 </div>
                 {core.installed
                   ? <span>Installed</span>
-                  : core.id === "beetle_saturn"
-                    ? <span className="muted">Unavailable in current x64 feed</span>
-                    : <button disabled={!!raCoreBusy} onClick={() => void installCore(core.id)}>
-                        {raCoreBusy === core.id ? "Installing…" : "Install"}
-                      </button>}
+                  : <button disabled={!!raCoreBusy} onClick={() => void installCore(core.id)}>
+                      {raCoreBusy === core.id ? "Installing…" : "Install"}
+                    </button>}
               </div>)}
             </section>)}
           </div>}

@@ -38,14 +38,12 @@ const CORE_CATALOG: Array<Omit<RetroCorePlatform, "cores"> & { cores: Array<Omit
     label: "Sega Saturn",
     cores: [
       { id: "kronos", name: "Kronos", description: "Practical x64 default with hardware-rendered graphics.", recommended: true },
-      { id: "beetle_saturn", name: "Beetle Saturn", description: "Accuracy-focused alternative when available in the installed core set.", recommended: false },
+      { id: "mednafen_saturn", name: "Beetle Saturn", description: "Accuracy-focused alternative with higher CPU requirements.", recommended: false },
     ],
   },
 ];
 
-// Beetle Saturn is absent from the current x64 buildbot feed, so it remains a
-// detectable alternative but is deliberately not installable by GameStore.
-const BUILD_BOT_IDS = new Set(["swanstation", "pcsx_rearmed", "mupen64plus_next", "parallel_n64", "kronos"]);
+const BUILD_BOT_IDS = new Set(["swanstation", "pcsx_rearmed", "mupen64plus_next", "parallel_n64", "kronos", "mednafen_saturn"]);
 
 export const coreCatalog = () => CORE_CATALOG.map((platform) => ({
   ...platform,
