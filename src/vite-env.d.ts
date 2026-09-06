@@ -5,6 +5,9 @@ interface Window {
     saveExport(data: string): Promise<string>;
     getTheGamesDbKey(): Promise<string>;
     setTheGamesDbKey(key: string): Promise<boolean>;
+    /** Only whether a key is stored; the value never leaves the main process. */
+    getSteamGridDbKey(): Promise<{ configured: boolean }>;
+    setSteamGridDbKey(key: string): Promise<{ configured: boolean }>;
     findTheGamesDbArt(
       title: string,
     ): Promise<
@@ -211,6 +214,10 @@ type SteamDeployResult = {
   coreName: string;
   accountId: string;
   artworkIncluded: boolean;
+  /** Which shape actually reached Steam, so the UI can stop guessing. */
+  artworkShape: "steam-grid" | "native" | "none";
+  /** Why SteamGridDB was not used, when it was tried and did not answer. */
+  artworkNote: string;
 };
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";

@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld("gameStore", {
   getTheGamesDbKey: () => ipcRenderer.invoke("provider-key-get"),
   setTheGamesDbKey: (key: string) =>
     ipcRenderer.invoke("provider-key-set", key),
+  getSteamGridDbKey: () => ipcRenderer.invoke("steamgriddb-key-get"),
+  setSteamGridDbKey: (key: string) =>
+    ipcRenderer.invoke("steamgriddb-key-set", key),
   findTheGamesDbArt: (title: string) =>
     ipcRenderer.invoke("thegamesdb-art", title),
   getArtIndex: (system: string, folder: string, force?: boolean) =>

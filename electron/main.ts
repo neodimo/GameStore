@@ -110,6 +110,7 @@ import {
   type SteamFileTransport,
   type SteamStatus,
 } from "./steamDeploy";
+import { verticalGridFor } from "./steamGridDb";
 import { remoteSteamTransport } from "./steamTransport";
 
 let win: BrowserWindow | null = null;
@@ -277,6 +278,15 @@ type ProviderSettings = {
     password?: string;
     encrypted?: boolean;
   };
+  /**
+   * SteamGridDB's member key. Kept separate from `theGamesDbKey` because it
+   * buys a different thing: metadata versus art cut to Steam's 2:3 grid, and a
+   * user may well hold one and not the other.
+   */
+  steamGridDb?: {
+    key?: string;
+    encrypted?: boolean;
+  };
   fpga?: {
     /** Last address that worked. Treated as a cache, not as the identity. */
     host: string;
@@ -365,6 +375,13 @@ const readSettings = async (): Promise<ProviderSettings> => {
             )
           : undefined,
       };
+    if (stored.steamGridDb?.key && stored.steamGridDb.encrypted)
+      result.steamGridDb = {
+        encrypted: true,
+        key: safeStorage.isEncryptionAvailable()
+          ? safeStorage.decryptString(Buffer.from(stored.steamGridDb.key, "base64"))
+          : undefined,
+      };
     if (stored.debrid?.encrypted && safeStorage.isEncryptionAvailable())
       result.debrid = {
         encrypted: true,
@@ -405,6 +422,32 @@ ipcMain.handle("provider-key-set", async (_e, key: string) => {
     encrypted: !!encrypted,
   });
   return true;
+});
+/**
+ * The key itself never travels back to the renderer. Settings only needs to
+ * know whether one is stored, so that is all it is told; the value stays in the
+ * main process where the network call is made.
+ */
+ipcMain.handle("steamgriddb-key-get", async () => ({
+  configured: Boolean((await readSettings()).steamGridDb?.key),
+}));
+ipcMain.handle("steamgriddb-key-set", async (_e, key: string) => {
+  const clean = String(key || "").trim();
+  const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+  if (!clean) {
+    delete raw.steamGridDb;
+    await writeSettings(raw);
+    return { configured: false };
+  }
+  const encrypted = safeStorage.isEncryptionAvailable();
+  await writeSettings({
+    ...raw,
+    steamGridDb: {
+      encrypted,
+      key: encrypted ? safeStorage.encryptString(clean).toString("base64") : clean,
+    },
+  });
+  return { configured: true };
 });
 const collectionDir = () => path.join(app.getPath("userData"), "collection-index");
 ipcMain.handle("debrid-settings-get", async () => {
@@ -1261,7 +1304,27 @@ ipcMain.handle(
       const account = resolveSteamAccount(status, request.accountId);
       const steamClosed = await closeSteamForDeploy(os, run);
 
-      const localArtwork = request.coverUrl ? (await cachedCoverPath(request.coverUrl)) ?? undefined : undefined;
+      // Steam draws a 2:3 tile, and the catalog cover is the console's own
+      // shape. Prefer art cut for the grid when a SteamGridDB key is stored,
+      // and fall back to the native cover rather than sending nothing: a
+      // letterboxed cover still identifies the game, an absent one does not.
+      // A SteamGridDB outage is reported, never allowed to fail the send.
+      const gridKey = (await readSettings()).steamGridDb?.key;
+      let artworkUrl = request.coverUrl;
+      let artworkShape: "steam-grid" | "native" | "none" = request.coverUrl ? "native" : "none";
+      let artworkNote = "";
+      if (gridKey) {
+        try {
+          const vertical = await verticalGridFor(item.title, gridKey);
+          if (vertical) {
+            artworkUrl = vertical;
+            artworkShape = "steam-grid";
+          } else artworkNote = "SteamGridDB has no vertical art for this title";
+        } catch (error) {
+          artworkNote = error instanceof Error ? error.message : String(error);
+        }
+      }
+      const localArtwork = artworkUrl ? (await cachedCoverPath(artworkUrl)) ?? undefined : undefined;
       const result = await deployToSteam(
         {
           os,
@@ -1277,7 +1340,15 @@ ipcMain.handle(
         },
         transport,
       );
-      return { ...result, steamClosed, coreName: core.name, accountId: account.accountId, artworkIncluded: Boolean(localArtwork) };
+      return {
+        ...result,
+        steamClosed,
+        coreName: core.name,
+        accountId: account.accountId,
+        artworkIncluded: Boolean(localArtwork),
+        artworkShape: localArtwork ? artworkShape : "none",
+        artworkNote,
+      };
     }),
 );
 

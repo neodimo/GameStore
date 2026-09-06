@@ -1543,7 +1543,10 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
       setState("done");
       setNote(
         `${result.appName} → ${result.coreName}, fullscreen. ${result.replacedExisting ? "Updated the existing Steam entry" : "Added to Steam"}` +
-        `${result.artworkIncluded ? " with its cover art" : " (no cached cover to send)"}` +
+        `${result.artworkShape === "steam-grid" ? " with SteamGridDB vertical art"
+          : result.artworkShape === "native" ? " with its catalog cover"
+          : " (no cover art to send)"}` +
+        `${result.artworkNote ? ` (${result.artworkNote})` : ""}` +
         `${result.backupPath ? " · shortcuts.vdf snapshot saved on the target" : " · first shortcuts.vdf on that profile"}` +
         ` · ${result.collectionName} collection. Start Steam to see it.`,
       );
@@ -1660,7 +1663,11 @@ function ProviderSettings({
   const [raMessage, setRaMessage] = useState("");
   const [raCores, setRaCores] = useState<RetroCorePlatform[]>([]);
   const [raCoreBusy, setRaCoreBusy] = useState("");
+  const [gridKey, setGridKey] = useState("");
+  const [gridSaved, setGridSaved] = useState(false);
+  const [gridMessage, setGridMessage] = useState("");
   useEffect(() => {
+    window.gameStore?.getSteamGridDbKey().then(({ configured }) => setGridSaved(configured));
     window.gameStore?.getTheGamesDbKey().then(setKey);
     window.gameStore
       ?.getFpgaSettings()
@@ -2434,6 +2441,52 @@ function ProviderSettings({
         </>}
         {raMessage && <p className="test-result">{raMessage}</p>}
         </>}
+        <hr />
+        <h2>Steam cover art</h2>
+        <p>
+          Steam's library draws a tall 2:3 tile, and a console cover isn't that
+          shape — a jewel case sent as-is gets cropped or pillarboxed. With a
+          SteamGridDB key, GameStore looks for art drawn for that grid and sends
+          it instead, falling back to the catalog cover when a title has none.
+          A free key comes from your SteamGridDB profile's preferences page.
+        </p>
+        <div className="device-fields">
+          <label>
+            SteamGridDB API key
+            <input
+              type="password"
+              value={gridKey}
+              autoComplete="off"
+              placeholder={gridSaved ? "Saved · blank keeps the stored key" : "Paste your key"}
+              onChange={(e) => { setGridKey(e.target.value); setGridMessage(""); }}
+            />
+          </label>
+        </div>
+        <div className="settings-actions">
+          <button
+            type="button"
+            disabled={!gridKey.trim()}
+            onClick={async () => {
+              const result = await window.gameStore!.setSteamGridDbKey(gridKey.trim());
+              setGridSaved(result.configured);
+              setGridKey("");
+              setGridMessage("Key stored. Steam sends will look for vertical art first.");
+            }}
+          >Save key</button>
+          {gridSaved && <button
+            type="button"
+            onClick={async () => {
+              await window.gameStore!.setSteamGridDbKey("");
+              setGridSaved(false); setGridKey("");
+              setGridMessage("Key removed. Steam sends will use the catalog cover.");
+            }}
+          >Forget key</button>}
+          <a href="https://www.steamgriddb.com/profile/preferences/api" onClick={(e) => {
+            e.preventDefault();
+            void window.gameStore?.openExternal("https://www.steamgriddb.com/profile/preferences/api");
+          }}>Get a key</a>
+        </div>
+        {gridMessage && <p className="test-result">{gridMessage}</p>}
         </>}
           </div>
         </div>
