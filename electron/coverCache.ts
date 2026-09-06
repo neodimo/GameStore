@@ -116,3 +116,21 @@ export const getCachedCover = async (url: string): Promise<string | null> => {
   inflight.set(url, task);
   return task;
 };
+
+/**
+ * The real on-disk path of a cached cover, fetching it first if needed.
+ *
+ * `getCachedCover` deliberately hands the renderer a custom-protocol URL, but
+ * the Steam deploy has to upload the actual bytes to another machine, so it
+ * needs the file itself rather than something only this app can resolve.
+ */
+export const cachedCoverPath = async (url: string): Promise<string | null> => {
+  if (!(await getCachedCover(url))) return null;
+  const target = fileFor(url);
+  try {
+    const stat = await fs.stat(target);
+    return stat.isFile() && stat.size > 0 ? target : null;
+  } catch {
+    return null;
+  }
+};

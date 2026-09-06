@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
   Compass,
@@ -32,6 +32,7 @@ import { translationFor } from "./translationManifest";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import {
   PLATFORMS,
+  catalogIdOfDeviceFolder,
   deviceFolderFor,
   deviceFolderLabel,
   platformLabel,
@@ -1450,9 +1451,121 @@ function LibraryCart() {
         </>}
         {message && <p className={`cart-message ${checkout}`}>{message}</p>}
         <small className="cart-footnote">Files stay in your managed library after checkout.</small>
+        <SteamDeploy items={items} />
       </div>}
     </div>
   );
+}
+
+/**
+ * Sends a queued game to a Steam PC instead of the MiSTer.
+ *
+ * The named target and its live state are shown before any button is offered,
+ * because this writes into a Steam library and a delivery whose destination is
+ * ambiguous is the one failure that cannot be undone by clicking again. Every
+ * button that cannot presently succeed is disabled with the actual reason
+ * rather than left clickable to fail later.
+ */
+function SteamDeploy({ items }: { items: LibraryItem[] }) {
+  const { artFor } = useArtwork();
+  const [target, setTarget] = useState<PcTargetSettings | null>(null);
+  const [steam, setSteam] = useState<SteamStatus | null>(null);
+  const [cores, setCores] = useState<RetroCorePlatform[]>([]);
+  const [chosen, setChosen] = useState<Record<string, string>>({});
+  const [state, setState] = useState<"idle" | "loading" | "sending" | "done" | "error">("idle");
+  const [note, setNote] = useState("");
+
+  const load = useCallback(async () => {
+    if (!window.gameStore) return;
+    const configured = await window.gameStore.getPcTarget();
+    setTarget(configured);
+    if (!configured?.os) return;
+    setState("loading"); setNote("");
+    try {
+      const [status, coreList] = await Promise.all([
+        window.gameStore.getSteamStatus(),
+        window.gameStore.getRetroArchCores(),
+      ]);
+      setSteam(status); setCores(coreList); setState("idle");
+    } catch (error) {
+      setState("error"); setNote(error instanceof Error ? error.message : String(error));
+    }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+
+  if (!target) return null;
+  const where = target.kind === "local" ? "this computer" : `${target.name || target.host}${target.host ? ` · ${target.host}` : ""}`;
+  const installedFor = (platform: PlatformId) =>
+    (cores.find((entry) => entry.platform === platform)?.cores ?? []).filter((core) => core.installed);
+
+  const blocked =
+    !target.os ? "Detect this machine’s OS in Settings first."
+    : state === "loading" ? "Checking Steam on the target…"
+    : steam?.blockedReason ? steam.blockedReason
+    : steam && !steam.installed ? "No Steam profile found on this machine."
+    : steam?.running ? "Steam is running there. Close it completely, then re-check."
+    : steam && steam.accounts.length > 1 ? "That machine has more than one Steam profile; GameStore will not guess which library to write to."
+    : "";
+
+  const send = async (item: LibraryItem) => {
+    const platform = catalogIdOfDeviceFolder(item.platform);
+    const coreId = chosen[item.id] ?? installedFor(platform)[0]?.id;
+    if (!coreId) return;
+    const game = games.find((entry) => entry.title === item.title && platformOf(entry.platform).id === platform);
+    setState("sending"); setNote(`Sending ${item.title} to ${where}…`);
+    try {
+      const result = await window.gameStore!.deployToSteam({
+        gameTitle: item.title,
+        catalogPlatform: platform,
+        coreId,
+        coverUrl: game ? artFor(game).url : undefined,
+        accountId: steam?.accounts[0]?.accountId,
+      });
+      setState("done");
+      setNote(
+        `${result.appName} → ${result.coreName}, fullscreen. ${result.replacedExisting ? "Updated the existing Steam entry" : "Added to Steam"}` +
+        `${result.artworkIncluded ? " with its cover art" : " (no cached cover to send)"}` +
+        `${result.backupPath ? " · shortcuts.vdf snapshot saved on the target" : " · first shortcuts.vdf on that profile"}` +
+        ". Start Steam to see it.",
+      );
+    } catch (error) {
+      setState("error"); setNote(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  return <div className="steam-deploy">
+    <div className="steam-deploy-head">
+      <div>
+        <small>STEAM PC</small>
+        <b>{where}</b>
+        <span>{target.os ? `${target.os === "windows" ? "Windows" : "Linux"} · ${steam?.installed ? `Steam profile ${steam.accounts[0]?.accountId ?? ""}` : "Steam not detected"}` : "OS not detected"}</span>
+      </div>
+      <button className="steam-recheck" disabled={state === "loading" || state === "sending"} onClick={() => void load()}>
+        <RefreshCw className={state === "loading" ? "spin" : ""} /> Re-check
+      </button>
+    </div>
+    {blocked && <p className="steam-blocked">{blocked}</p>}
+    {!blocked && !items.length && <p className="steam-blocked">Queue a game to send it to Steam.</p>}
+    {!blocked && items.map((item) => {
+      const platform = catalogIdOfDeviceFolder(item.platform);
+      const available = installedFor(platform);
+      const coreId = chosen[item.id] ?? available[0]?.id ?? "";
+      return <div className="steam-deploy-row" key={item.id}>
+        <b>{item.title}</b>
+        {!available.length
+          ? <span className="steam-need-core">No {platformLabel(platform)} core installed on that machine yet — install one in Settings → PC / Steam.</span>
+          : <>
+            <select value={coreId} aria-label={`Emulator core for ${item.title}`} onChange={(e) => setChosen({ ...chosen, [item.id]: e.target.value })}>
+              {available.map((core) => <option key={core.id} value={core.id}>{core.name}{core.recommended ? " · recommended" : ""}</option>)}
+            </select>
+            <button disabled={state === "sending"} onClick={() => void send(item)}>
+              <HardDriveUpload /> {state === "sending" ? "Sending…" : "Send to Steam"}
+            </button>
+          </>}
+      </div>;
+    })}
+    {note && <p className={`cart-message ${state}`}>{note}</p>}
+  </div>;
 }
 
 function ProviderSettings({

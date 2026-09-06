@@ -1,8 +1,8 @@
 # GameStore context
 
-## Current PC/Steam deployment state (2026-08-30)
+## Current PC/Steam deployment state (2026-09-05)
 
-The selected local or remote Windows/Linux target can be discovered, connected, OS-detected, checked for RetroArch, updated when safely package-managed, installed from an explicit stable/nightly choice when absent, and inspected/managed for PS1/N64/Saturn Libretro cores. The actual game/cover transfer, Steam `shortcuts.vdf`/grid-art management, automatic backup, and fullscreen launch command are still pending. v0.25.2 makes the core-install actions readable and corrects Beetle Saturn's Libretro package identity: the UI name remains Beetle Saturn, while detection/download use the published `mednafen_saturn` core filename. Real Bazzite core installation remains its acceptance gate.
+v0.26.0 is prepared for release: cart → Steam PC → Send to Steam transfers queued game files to the selected local/remote Windows/Linux target, selects an installed console core, writes a backed-up Steam shortcut, includes cached portrait artwork when available, and sets fullscreen launch options. Steam must be closed. Multiple Steam profiles and Flatpak-only Steam installations are blocked in this first UI. Real Bazzite/Windows transfer and launch acceptance remains unverified; no target Steam library was modified during release validation. RetroArch setup/core management from v0.25.2 remains available.
 
 ## Product premise
 

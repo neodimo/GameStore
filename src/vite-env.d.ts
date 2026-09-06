@@ -51,6 +51,16 @@ interface Window {
     updateRetroArch(): Promise<RetroArchStatus>;
     getRetroArchCores(): Promise<RetroCorePlatform[]>;
     installRetroArchCore(coreId: string): Promise<RetroCorePlatform[]>;
+    getSteamStatus(): Promise<SteamStatus>;
+    deployToSteam(request: {
+      gameTitle: string;
+      catalogPlatform?: string;
+      coreId: string;
+      coverUrl?: string;
+      accountId?: string;
+    }): Promise<SteamDeployResult>;
+    removeFromSteam(appId: number, accountId?: string): Promise<{ removed: boolean; shortcutCount: number }>;
+    getSteamDeployed(accountId?: string): Promise<{ appId: number; appName: string }[]>;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
@@ -180,6 +190,25 @@ type RetroArchStatus = {
 };
 type RetroCore = { id: string; name: string; description: string; recommended: boolean; installed: boolean };
 type RetroCorePlatform = { platform: CatalogPlatformId; label: string; cores: RetroCore[] };
+type SteamAccount = { steamRoot: string; accountId: string };
+type SteamStatus = {
+  installed: boolean;
+  running: boolean;
+  accounts: SteamAccount[];
+  blockedReason?: string;
+};
+type SteamDeployResult = {
+  appId: number;
+  appName: string;
+  romPath: string;
+  backupPath: string | null;
+  artworkPath: string | null;
+  replacedExisting: boolean;
+  shortcutCount: number;
+  coreName: string;
+  accountId: string;
+  artworkIncluded: boolean;
+};
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";
 /** Catalog platform. Mirrors `PlatformId` in src/platforms.ts. */

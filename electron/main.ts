@@ -64,7 +64,7 @@ import {
   removeCollectionManifest,
 } from "./collectionIndex";
 import { getArtIndex } from "./artIndex";
-import { getCachedCover } from "./coverCache";
+import { cachedCoverPath, getCachedCover } from "./coverCache";
 import {
   fetchSnap,
   indexSnaps,
@@ -99,6 +99,17 @@ import {
 } from "./pcTarget";
 import { checkRetroArch, installRetroArch, updateRetroArch, type RetroArchReleaseChannel } from "./retroArch";
 import { installRetroCore, listRetroCores } from "./retroArchCores";
+import {
+  deployToSteam,
+  detectFlatpakBranch,
+  findSteam,
+  listDeployedAppIds,
+  removeFromSteam,
+  type SteamAccount,
+  type SteamFileTransport,
+  type SteamStatus,
+} from "./steamDeploy";
+import { Client } from "ssh2";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -1142,6 +1153,193 @@ ipcMain.handle("pc-target-retroarch-core-install", async (_event, coreId: string
     if (!status.installed) throw new Error("Install RetroArch before adding emulator cores.");
     await installRetroCore(os, coreId, run);
     return listRetroCores(os, run);
+  }),
+);
+
+/** Local-disk implementation of the deploy transport. */
+const localSteamTransport = (): SteamFileTransport => ({
+  mkdirp: (directory) => fs.mkdir(directory, { recursive: true }).then(() => undefined),
+  readFile: (remote) => fs.readFile(remote).catch((error) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }),
+  writeFile: async (remote, data) => {
+    await fs.mkdir(path.dirname(remote), { recursive: true });
+    await fs.writeFile(remote, data);
+  },
+  upload: async (localPath, remote) => {
+    await fs.mkdir(path.dirname(remote), { recursive: true });
+    await fs.copyFile(localPath, remote);
+  },
+});
+
+/**
+ * SFTP implementation of the same contract.
+ *
+ * `mkdir` over SFTP has no portable recursive mode, so directories are created
+ * one segment at a time and an already-exists error is the expected outcome
+ * rather than a failure.
+ */
+const remoteSteamTransport = (client: Client, os: PcOs): SteamFileTransport => {
+  const sftp = () =>
+    new Promise<import("ssh2").SFTPWrapper>((resolve, reject) =>
+      client.sftp((error, wrapper) => (error ? reject(error) : resolve(wrapper))),
+    );
+  const separator = os === "windows" ? "\\" : "/";
+  const parentOf = (file: string) => file.slice(0, file.lastIndexOf(separator)) || separator;
+  const mkdirp = async (directory: string) => {
+    const wrapper = await sftp();
+    const parts = directory.split(separator);
+    let current = "";
+    for (const part of parts) {
+      current = current ? `${current}${separator}${part}` : part || separator;
+      if (!part) continue;
+      await new Promise<void>((resolve) => wrapper.mkdir(current, () => resolve()));
+    }
+  };
+  return {
+    mkdirp,
+    readFile: async (remote) => {
+      const wrapper = await sftp();
+      return new Promise((resolve, reject) =>
+        wrapper.readFile(remote, (error, data) => {
+          if (error && (error as Error & { code?: number }).code !== 2) reject(error);
+          else resolve(error ? null : (data as Buffer));
+        }),
+      );
+    },
+    writeFile: async (remote, data) => {
+      await mkdirp(parentOf(remote));
+      const wrapper = await sftp();
+      await new Promise<void>((resolve, reject) =>
+        wrapper.writeFile(remote, data, (error) => (error ? reject(error) : resolve())),
+      );
+    },
+    upload: async (localPath, remote) => {
+      await mkdirp(parentOf(remote));
+      const wrapper = await sftp();
+      await new Promise<void>((resolve, reject) =>
+        wrapper.fastPut(localPath, remote, (error) => (error ? reject(error) : resolve())),
+      );
+    },
+  };
+};
+
+/**
+ * The same connect-or-run-locally branch as `runOnPcTarget`, extended with the
+ * file transport a deploy needs, so the SSH connection is opened once for both
+ * the commands and the transfers instead of twice.
+ */
+const runOnPcTargetWithFiles = async <T,>(
+  handler: (run: RunCommand, os: PcOs, transport: SteamFileTransport) => Promise<T>,
+): Promise<T> => {
+  const t = (await readSettings()).pcTarget;
+  if (!t) throw new Error("Configure a PC target in Settings first.");
+  if (!t.os) throw new Error("Detect this machine's OS first — use Connect & detect OS in Settings.");
+  if (t.kind === "local") return handler(execLocal, t.os, localSteamTransport());
+  const host = (t.host || "").trim();
+  if (!host) throw new Error("Enter this PC's name or address first.");
+  const { client } = await connectPcSsh(host, t.port || 22, t.username || "", t.password, t.hostKey);
+  try {
+    return await handler((command) => execRemote(client, command), t.os, remoteSteamTransport(client, t.os));
+  } finally {
+    client.end();
+  }
+};
+
+/**
+ * Resolves the one account a deploy may write to.
+ *
+ * Multiple signed-in profiles is a real configuration and picking one silently
+ * would put a stranger's game in somebody else's library, so this refuses
+ * instead of guessing when the renderer has not named an account.
+ */
+const resolveSteamAccount = (status: SteamStatus, accountId?: string): SteamAccount => {
+  if (status.blockedReason) throw new Error(status.blockedReason);
+  if (accountId) {
+    const chosen = status.accounts.find((account) => account.accountId === accountId);
+    if (!chosen) throw new Error("That Steam profile is no longer on this machine.");
+    return chosen;
+  }
+  if (status.accounts.length === 1) return status.accounts[0];
+  throw new Error("This machine has more than one Steam profile. Choose which one to deploy to.");
+};
+
+const steamStatusFor = async (run: RunCommand, os: PcOs) => {
+  const status = await findSteam(os, run);
+  const home = (status as { home?: string }).home;
+  if (!home) throw new Error("Could not read the home directory of the selected machine.");
+  return { status, home };
+};
+
+ipcMain.handle("pc-target-steam-status", async () =>
+  runOnPcTarget(async (run, os) => {
+    const status = await findSteam(os, run);
+    return {
+      installed: status.installed,
+      running: status.running,
+      accounts: status.accounts,
+      blockedReason: status.blockedReason,
+    };
+  }),
+);
+
+ipcMain.handle(
+  "pc-target-steam-deploy",
+  async (_event, request: { gameTitle: string; catalogPlatform?: string; coreId: string; coverUrl?: string; accountId?: string }) =>
+    runOnPcTargetWithFiles(async (run, os, transport) => {
+      const folder = deviceFolderForCatalog(request.catalogPlatform);
+      const definition = devicePlatform(folder);
+      const item = (await getCart(libraryRoot())).find(
+        (entry) => entry.title === request.gameTitle && deviceFolderForStored(entry.platform) === folder,
+      );
+      if (!item) throw new Error("This game is not currently in the cart.");
+
+      // Every refusal below is deliberate: a shortcut whose core is missing, or
+      // one written underneath a live Steam client that rewrites the file from
+      // memory when it exits, looks like success and then silently is not.
+      const retroArch = await checkRetroArch(os, run);
+      if (!retroArch.installed) throw new Error("RetroArch is not installed on this target.");
+      const cores = await listRetroCores(os, run);
+      const core = cores.flatMap((platform) => platform.cores).find((candidate) => candidate.id === request.coreId);
+      if (!core) throw new Error("That emulator core is not one GameStore manages.");
+      if (!core.installed) throw new Error(`${core.name} is not installed on this target yet. Install it first.`);
+
+      const { status, home } = await steamStatusFor(run, os);
+      if (status.running) throw new Error("Steam is running on that machine. Close Steam completely, then deploy — a running client rewrites shortcuts.vdf from memory when it exits and would discard this entry.");
+      const account = resolveSteamAccount(status, request.accountId);
+
+      const localArtwork = request.coverUrl ? (await cachedCoverPath(request.coverUrl)) ?? undefined : undefined;
+      const result = await deployToSteam(
+        {
+          os,
+          home,
+          account,
+          appName: item.title,
+          platform: definition.catalogId,
+          coreId: request.coreId,
+          localFiles: item.files,
+          localArtwork,
+          flatpakBranch: os === "windows" ? undefined : await detectFlatpakBranch(run),
+        },
+        transport,
+      );
+      return { ...result, coreName: core.name, accountId: account.accountId, artworkIncluded: Boolean(localArtwork) };
+    }),
+);
+
+ipcMain.handle("pc-target-steam-remove", async (_event, appId: number, accountId?: string) =>
+  runOnPcTargetWithFiles(async (run, os, transport) => {
+    const { status } = await steamStatusFor(run, os);
+    if (status.running) throw new Error("Close Steam on that machine first — a running client would restore this shortcut when it exits.");
+    return removeFromSteam(os, resolveSteamAccount(status, accountId), appId, transport);
+  }),
+);
+
+ipcMain.handle("pc-target-steam-deployed", async (_event, accountId?: string) =>
+  runOnPcTargetWithFiles(async (run, os, transport) => {
+    const { status } = await steamStatusFor(run, os);
+    return listDeployedAppIds(os, resolveSteamAccount(status, accountId), transport);
   }),
 );
 

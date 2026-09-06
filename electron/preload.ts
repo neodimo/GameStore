@@ -46,6 +46,17 @@ contextBridge.exposeInMainWorld("gameStore", {
   updateRetroArch: () => ipcRenderer.invoke("pc-target-retroarch-update"),
   getRetroArchCores: () => ipcRenderer.invoke("pc-target-retroarch-cores"),
   installRetroArchCore: (coreId: string) => ipcRenderer.invoke("pc-target-retroarch-core-install", coreId),
+  getSteamStatus: () => ipcRenderer.invoke("pc-target-steam-status"),
+  deployToSteam: (request: {
+    gameTitle: string;
+    catalogPlatform?: string;
+    coreId: string;
+    coverUrl?: string;
+    accountId?: string;
+  }) => ipcRenderer.invoke("pc-target-steam-deploy", request),
+  removeFromSteam: (appId: number, accountId?: string) =>
+    ipcRenderer.invoke("pc-target-steam-remove", appId, accountId),
+  getSteamDeployed: (accountId?: string) => ipcRenderer.invoke("pc-target-steam-deployed", accountId),
   onPcTargetDiscoveryProgress: (listener: (progress: { done: number; total: number }) => void) => {
     const wrapped = (_e: Electron.IpcRendererEvent, progress: { done: number; total: number }) => listener(progress);
     ipcRenderer.on("pc-target-discovery-progress", wrapped);

@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-05 — v0.26.0 Steam deployment release preparation
+
+- **What was done:** Added cart-to-Steam deployment for the configured local/remote PC, installed-core choice, ROM transfer, cached portrait cover transfer, binary shortcuts merge with backup, and fullscreen launch options. Added read-error propagation so a denied/unreadable shortcuts file cannot be mistaken for an absent library.
+- **Evidence:** 20 test files / 296 tests pass; renderer lint/build pass. Electron compilation caught an error-code typing issue in the transport correction, now corrected and rechecked. No actual target library was modified.
+- **Artifacts:** `electron/steamDeploy.ts`, `electron/steamVdf.ts`, their tests, transport/IPC and cart UI wiring, version metadata, `CONTEXT.md`. Source being committed/tagged as v0.26.0. Existing `mockups/` remains deliberate untracked planning scratch, excluded from release.
+- **State:** Release in progress. Real Windows/Bazzite launch and artwork acceptance unverified. Multiple profiles and Flatpak-only Steam are blocked; artwork requires an available cached cover. No automatic Steam collection grouping is included.
+- **Next owner + concrete artifact:** Gonzo pushes v0.26.0 and verifies tagged release CI/assets. DiMo installs the resulting release, closes Steam on Bazzite, queues a game, uses cart → Steam PC → Send to Steam, restarts Steam and verifies artwork/fullscreen launch.
+- **Failure mode:** Transport read errors must propagate; treating every read failure as file absence risks overwriting an existing shortcuts library without a backup.
+
 ## 2026-08-30 — v0.25.2 core-action contrast and Beetle Saturn package correction
 
 - **What was done:** Corrected the unreadable RetroArch core Install buttons with explicit dark-on-amber normal, hover, and disabled states. Corrected Beetle Saturn's internal core ID from the nonexistent `beetle_saturn` package name to Libretro's published `mednafen_saturn` ID, enabling both installation and installed-core detection while retaining the familiar Beetle Saturn UI label.
