@@ -101,6 +101,7 @@ import { checkRetroArch, installRetroArch, updateRetroArch, type RetroArchReleas
 import { installRetroCore, listRetroCores } from "./retroArchCores";
 import {
   deployToSteam,
+  closeSteamForDeploy,
   detectFlatpakBranch,
   findSteam,
   listDeployedAppIds,
@@ -1306,8 +1307,8 @@ ipcMain.handle(
       if (!core.installed) throw new Error(`${core.name} is not installed on this target yet. Install it first.`);
 
       const { status, home } = await steamStatusFor(run, os);
-      if (status.running) throw new Error("Steam is running on that machine. Close Steam completely, then deploy — a running client rewrites shortcuts.vdf from memory when it exits and would discard this entry.");
       const account = resolveSteamAccount(status, request.accountId);
+      const steamClosed = await closeSteamForDeploy(os, run);
 
       const localArtwork = request.coverUrl ? (await cachedCoverPath(request.coverUrl)) ?? undefined : undefined;
       const result = await deployToSteam(
@@ -1320,11 +1321,12 @@ ipcMain.handle(
           coreId: request.coreId,
           localFiles: item.files,
           localArtwork,
+          beforeLibraryWrite: async () => { await closeSteamForDeploy(os, run); },
           flatpakBranch: os === "windows" ? undefined : await detectFlatpakBranch(run),
         },
         transport,
       );
-      return { ...result, coreName: core.name, accountId: account.accountId, artworkIncluded: Boolean(localArtwork) };
+      return { ...result, steamClosed, coreName: core.name, accountId: account.accountId, artworkIncluded: Boolean(localArtwork) };
     }),
 );
 

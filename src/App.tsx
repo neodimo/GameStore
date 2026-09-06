@@ -1503,7 +1503,6 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
     : state === "loading" ? "Checking Steam on the target…"
     : steam?.blockedReason ? steam.blockedReason
     : steam && !steam.installed ? "No Steam profile found on this machine."
-    : steam?.running ? "Steam is running there. Close it completely, then re-check."
     : steam && steam.accounts.length > 1 ? "That machine has more than one Steam profile; GameStore will not guess which library to write to."
     : "";
 
@@ -1512,7 +1511,7 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
     const coreId = chosen[item.id] ?? installedFor(platform)[0]?.id;
     if (!coreId) return;
     const game = games.find((entry) => entry.title === item.title && platformOf(entry.platform).id === platform);
-    setState("sending"); setNote(`Sending ${item.title} to ${where}…`);
+    setState("sending"); setNote(`Preparing ${where}: closing Steam if needed, then sending ${item.title}…`);
     try {
       const result = await window.gameStore!.deployToSteam({
         gameTitle: item.title,
@@ -1526,7 +1525,7 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
         `${result.appName} → ${result.coreName}, fullscreen. ${result.replacedExisting ? "Updated the existing Steam entry" : "Added to Steam"}` +
         `${result.artworkIncluded ? " with its cover art" : " (no cached cover to send)"}` +
         `${result.backupPath ? " · shortcuts.vdf snapshot saved on the target" : " · first shortcuts.vdf on that profile"}` +
-        ". Start Steam to see it.",
+        ` · ${result.collectionName} collection. Start Steam to see it.`,
       );
     } catch (error) {
       setState("error"); setNote(error instanceof Error ? error.message : String(error));
@@ -1545,6 +1544,7 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
       </button>
     </div>
     {blocked && <p className="steam-blocked">{blocked}</p>}
+    {!blocked && <p className="steam-blocked">Sending closes Steam on {where} and adds each game to its console collection.</p>}
     {!blocked && !items.length && <p className="steam-blocked">Queue a game to send it to Steam.</p>}
     {!blocked && items.map((item) => {
       const platform = catalogIdOfDeviceFolder(item.platform);

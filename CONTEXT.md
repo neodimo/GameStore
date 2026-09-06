@@ -2,7 +2,7 @@
 
 ## Current PC/Steam deployment state (2026-09-05)
 
-v0.26.0 is prepared for release: cart → Steam PC → Send to Steam transfers queued game files to the selected local/remote Windows/Linux target, selects an installed console core, writes a backed-up Steam shortcut, includes cached portrait artwork when available, and sets fullscreen launch options. Steam must be closed. Multiple Steam profiles and Flatpak-only Steam installations are blocked in this first UI. Real Bazzite/Windows transfer and launch acceptance remains unverified; no target Steam library was modified during release validation. RetroArch setup/core management from v0.25.2 remains available.
+v0.26.0 is released with verified Windows/Linux CI. v0.26.1 adds DiMo's requested per-console Steam collections (PS1/N64/Saturn) and graceful shutdown on the destination before deployment. The cart's Steam PC section displays the destination and shutdown behavior. Collection cloud storage is merged/backed up and must already be initialized; malformed data aborts. A running client receives a normal shutdown request, is polled for exit for up to 30 seconds, and is never force-killed. Steam remains closed afterward. Game files, cached portrait artwork and fullscreen shortcuts deploy through the same local/remote transport. Multiple profiles and Flatpak-only Steam remain blocked. Real Bazzite/Windows shutdown, collection visibility, artwork and launch acceptance remain unverified. See TASKLOG.md for exact release evidence.
 
 ## Product premise
 

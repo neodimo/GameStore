@@ -1,3 +1,4 @@
+import { platformCollection, prepareCollection } from "./steamCollections";
 import type { PcOs, RunCommand } from "./pcTarget";
 import type { RetroPlatform } from "./retroArchCores";
 import { decodeBinaryVdf, encodeBinaryVdf, shortcutAppId, unsignedAppId, type VdfMap } from "./steamVdf";
@@ -205,11 +206,14 @@ export type SteamDeployRequest = {
   localArtwork?: string;
   flatpakBranch?: string;
   now?: Date;
+  beforeLibraryWrite?: () => Promise<void>;
 };
 
 export type SteamDeployResult = {
   appId: number;
   appName: string;
+  collectionName: string;
+  collectionBackupPath: string;
   romPath: string;
   backupPath: string | null;
   artworkPath: string | null;
@@ -257,12 +261,17 @@ export const deployToSteam = async (
   const now = request.now ?? new Date();
 
   const romDir = romDirectory(os, home, platform);
-  await transport.mkdirp(romDir);
-  for (const file of localFiles) await transport.upload(file, joinPath(os, romDir, baseName(file)));
   const romPath = joinPath(os, romDir, baseName(pickPrimaryRom(localFiles)));
 
   const launch = buildLaunch(os, home, coreId, romPath, request.flatpakBranch);
   const appId = shortcutAppId(launch.exe, appName);
+  const collectionName = platformCollection(platform);
+  const collection = await prepareCollection(
+    joinPath(os, steamConfigDir(os, account), "cloudstorage"), os === "windows" ? "\\" : "/",
+    collectionName, appId, transport, now,
+  );
+  await transport.mkdirp(romDir);
+  for (const file of localFiles) await transport.upload(file, joinPath(os, romDir, baseName(file)));
 
   let artworkPath: string | null = null;
   if (request.localArtwork) {
@@ -276,6 +285,7 @@ export const deployToSteam = async (
     await transport.upload(request.localArtwork, artworkPath);
   }
 
+  await request.beforeLibraryWrite?.();
   const shortcutsPath = shortcutsFile(os, account);
   const existing = await transport.readFile(shortcutsPath);
   let backupPath: string | null = null;
@@ -291,14 +301,19 @@ export const deployToSteam = async (
     (typeof candidate.appid === "number" && unsignedAppId(candidate.appid) === appId) ||
     (candidate.AppName === appName && candidate.Exe === launch.exe);
   const replacedExisting = entries.some(matches);
-  const merged = entries.map((candidate) => (matches(candidate) ? { ...candidate, ...entry } : candidate));
+  const merged = entries.map((candidate) => (matches(candidate) ? { ...candidate, ...entry, tags: candidate.tags ?? entry.tags } : candidate));
   if (!replacedExisting) merged.push(entry);
 
   const rebuilt: VdfMap = {};
   merged.forEach((value, index) => { rebuilt[String(index)] = value; });
   await transport.writeFile(shortcutsPath, encodeBinaryVdf("shortcuts", rebuilt));
 
-  return { appId, appName, romPath, backupPath, artworkPath, replacedExisting, shortcutCount: merged.length };
+  let collectionBackupPath: string;
+  try { collectionBackupPath = await collection.commit(); }
+  catch (error) {
+    throw new Error(`Game files and Steam shortcut were written, but collection assignment failed. Retry deployment after closing Steam. ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return { appId, appName, collectionName, collectionBackupPath, romPath, backupPath, artworkPath, replacedExisting, shortcutCount: merged.length };
 };
 
 /** Removes a GameStore-written shortcut, leaving every other entry in place. */
@@ -346,3 +361,32 @@ export const detectFlatpakBranch = async (run: RunCommand): Promise<string> => {
   const branch = line?.split(/\s+/)[1]?.trim();
   return branch || "stable";
 };
+
+/** Ask the selected target's client to exit normally; never kill Steam. */
+export async function closeSteamForDeploy(
+  os: PcOs,
+  run: RunCommand,
+  delay: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+): Promise<boolean> {
+  if (os === 'mac') throw new Error('Steam deployment is not supported on macOS.');
+  const probe = os === 'windows'
+    ? `powershell -NoProfile -Command "if(Get-Process steam -ErrorAction SilentlyContinue){'RUNNING'}else{'STOPPED'}"`
+    : `pgrep -x steam >/dev/null 2>&1; code=$?; if [ "$code" = 0 ]; then echo RUNNING; elif [ "$code" = 1 ]; then echo STOPPED; else exit "$code"; fi`;
+  const running = async () => {
+    const result = await run(probe);
+    if (result.code !== 0 || !['RUNNING', 'STOPPED'].includes(result.stdout.trim()))
+      throw new Error('Could not verify whether Steam is running on the destination. No library changes were made.');
+    return result.stdout.trim() === 'RUNNING';
+  };
+  if (!await running()) return false;
+  const command = os === 'windows'
+    ? `powershell -NoProfile -Command "$ErrorActionPreference='Stop'; $p=(Get-ItemProperty 'HKCU:\\Software\\Valve\\Steam' -Name SteamPath).SteamPath; if(!$p){throw 'Steam path not found'}; Start-Process -FilePath (Join-Path $p 'steam.exe') -ArgumentList '-shutdown'"`
+    : 'steam -shutdown';
+  const result = await run(command);
+  if (result.code !== 0) throw new Error('Steam did not accept the shutdown request on the destination. Close it there and retry.');
+  for (let attempt = 0; attempt < 30; attempt++) {
+    if (!await running()) return true;
+    await delay(1000);
+  }
+  throw new Error('Steam is still running on the destination after 30 seconds. Finish any game or Steam dialog there, then retry. No library changes were made.');
+}

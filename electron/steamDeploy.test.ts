@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildLaunch,
+  closeSteamForDeploy,
   coreFile,
   deployToSteam,
   detectFlatpakBranch,
@@ -15,7 +16,7 @@ import {
 import { decodeBinaryVdf, encodeBinaryVdf, shortcutAppId } from "./steamVdf";
 
 const memoryTransport = (seed: Record<string, Buffer> = {}) => {
-  const files = new Map<string, Buffer>(Object.entries(seed));
+  const files = new Map<string, Buffer>(Object.entries({ "/home/dimo/.local/share/Steam/userdata/112233/config/cloudstorage/cloud-storage-namespace-1.json": Buffer.from("[]"), ...seed }));
   const directories: string[] = [];
   const uploads: [string, string][] = [];
   const transport: SteamFileTransport = {
@@ -130,6 +131,26 @@ describe("Deploying into shortcuts.vdf", () => {
     now: new Date("2026-09-05T12:00:00Z"),
   };
 
+  it("assigns the deployed app to its console collection and snapshots the store", async () => {
+    const { transport, files } = memoryTransport();
+    const beforeLibraryWrite = vi.fn().mockResolvedValue(undefined);
+    const result = await deployToSteam({ ...request, beforeLibraryWrite }, transport);
+    expect(beforeLibraryWrite).toHaveBeenCalledOnce();
+    expect(result.collectionName).toBe("Saturn");
+    expect(files.get(result.collectionBackupPath)).toEqual(Buffer.from("[]"));
+    const rows = JSON.parse(files.get("/home/dimo/.local/share/Steam/userdata/112233/config/cloudstorage/cloud-storage-namespace-1.json")!.toString());
+    expect(JSON.parse(rows[0][1].value).added).toContain(result.appId);
+  });
+
+  it("does not transfer or write shortcuts when collection storage is malformed", async () => {
+    const { transport, uploads, files } = memoryTransport({
+      "/home/dimo/.local/share/Steam/userdata/112233/config/cloudstorage/cloud-storage-namespace-1.json": Buffer.from("bad"),
+    });
+    await expect(deployToSteam(request, transport)).rejects.toThrow();
+    expect(uploads).toEqual([]);
+    expect(files.has(shortcutsFile("linux", account))).toBe(false);
+  });
+
   it("transfers every file but points Steam at the cue sheet", async () => {
     const { transport, uploads } = memoryTransport();
     const result = await deployToSteam(request, transport);
@@ -216,5 +237,31 @@ describe("Removing and listing", () => {
   it("reports nothing deployed when the target has no shortcuts file at all", async () => {
     const { transport } = memoryTransport();
     expect(await listDeployedAppIds("linux", account, transport)).toEqual([]);
+  });
+});
+
+
+describe("Destination Steam shutdown", () => {
+  const result = (stdout: string, code = 0) => ({ stdout, stderr: "", code });
+  it("does not start Steam when it is already stopped", async () => {
+    const run = vi.fn().mockResolvedValue(result("STOPPED"));
+    expect(await closeSteamForDeploy("linux", run)).toBe(false);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+  it.each(["linux", "windows"] as const)("requests graceful shutdown on %s and waits for exit", async (os) => {
+    const run = vi.fn().mockResolvedValueOnce(result("RUNNING")).mockResolvedValueOnce(result(""))
+      .mockResolvedValueOnce(result("RUNNING")).mockResolvedValueOnce(result("STOPPED"));
+    const delay = vi.fn().mockResolvedValue(undefined);
+    expect(await closeSteamForDeploy(os, run, delay)).toBe(true);
+    expect(run.mock.calls[1][0]).toContain("-shutdown");
+    expect(delay).toHaveBeenCalledWith(1000);
+  });
+  it("stops without killing the client when it refuses to exit", async () => {
+    const run = vi.fn().mockResolvedValue(result("RUNNING"));
+    await expect(closeSteamForDeploy("linux", run, async () => {})).rejects.toThrow(/still running/);
+    expect(run.mock.calls.every(([command]) => !command.includes("kill"))).toBe(true);
+  });
+  it("refuses an inconclusive process probe", async () => {
+    await expect(closeSteamForDeploy("linux", vi.fn().mockResolvedValue(result("", 1)))).rejects.toThrow(/Could not verify/);
   });
 });

@@ -1,5 +1,22 @@
 # GameStore task log
 
+## 2026-09-05 — v0.26.1 console collections and automatic destination shutdown
+
+- **What was done:** Per DiMo's follow-up requests, deployment requests normal `steam -shutdown` / Windows Steam `-shutdown` on the selected target and polls for confirmed exit, with a bounded 30-second wait and no force-kill. Rechecks immediately before library writing. Assigns each deployed shortcut to PS1, N64, or Saturn; reuses an existing same-named collection, preserves unrelated cloud records/memberships, removes the app from that collection's removed list, and backs up the cloud namespace before writing. Preserves existing shortcut tags on redeploy.
+- **Evidence:** Storage schema researched against Steam ROM Manager `src/lib/category-manager.ts` at https://github.com/SteamGridDB/steam-rom-manager/blob/master/src/lib/category-manager.ts — modern collection entries use `user-collections.*` in the active cloud namespace, not merely shortcut tags. Tests exercise namespace selection, merge preservation, idempotence, backup, corrupt/missing data, concurrent changes, shutdown success/timeout/probe failures and deploy integration. Hardware behavior remains unverified.
+- **Artifacts:** `electron/steamCollections.ts`, `electron/steamCollections.test.ts`, deployment/IPC/UI changes and version metadata being committed/tagged v0.26.1. `mockups/` remains deliberate untracked planning scratch, not packaged.
+- **State:** Release preparation. Collection storage must already be initialized by Steam; if absent, the app explains how to initialize it rather than inventing cloud data. Steam remains closed after delivery; user starts it to play. No force kill, remote credential change, or real target write was performed during development.
+- **Next owner + concrete artifact:** Gonzo verifies v0.26.1 release jobs/assets. DiMo uses cart → Steam PC → Send to Steam on Bazzite, confirms automatic exit, restarts Steam and checks the console collection, artwork and fullscreen launch.
+- **Failure mode:** `shortcuts.vdf` tags alone do not establish modern collection persistence. Steam collection cloud records need a preservation-first merge and backup. Shutdown must be confirmed by target process state, not inferred from the shutdown command exit code.
+
+## 2026-09-05 — v0.26.0 released and verified
+
+- **What was done:** Published the initial Steam deployment slice, then began DiMo's requested collection/shutdown follow-up.
+- **Evidence:** https://github.com/neodimo/GameStore/actions/runs/34001056832 passed Windows and Linux jobs for `560c14e009b73402a90645ad6cf982c35388d329`. Public release is non-draft/non-prerelease and contains Windows EXE/blockmap, Linux AppImage/deb, and both updater manifests.
+- **Artifacts:** https://github.com/neodimo/GameStore/releases/tag/v0.26.0; source/tag committed and pushed. This verification note lands with v0.26.1 source. Existing untracked mockups are deliberate scratch.
+- **State:** Released; real destination transfer/Steam launch remains unverified. v0.26.0 requires manual Steam exit and has no collection grouping.
+- **Next owner + concrete artifact:** Gonzo completes v0.26.1 so DiMo can test both follow-up requests together.
+
 ## 2026-09-05 — v0.26.0 Steam deployment release preparation
 
 - **What was done:** Added cart-to-Steam deployment for the configured local/remote PC, installed-core choice, ROM transfer, cached portrait cover transfer, binary shortcuts merge with backup, and fullscreen launch options. Added read-error propagation so a denied/unreadable shortcuts file cannot be mistaken for an absent library.

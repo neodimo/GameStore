@@ -198,6 +198,9 @@ type SteamStatus = {
   blockedReason?: string;
 };
 type SteamDeployResult = {
+  steamClosed: boolean;
+  collectionName: string;
+  collectionBackupPath: string;
   appId: number;
   appName: string;
   romPath: string;
