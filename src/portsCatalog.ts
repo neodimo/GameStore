@@ -160,6 +160,50 @@ export const portsCatalog: PortEntry[] = [
     needsOriginalAssets: false,
     executableHint: "RE2.exe",
   },
+  {
+    id: "metroid-prime",
+    title: "Metroid Prime",
+    sourcePlatform: "GameCube",
+    year: 2002,
+    project: "PrimeDecomp",
+    description:
+      "Matching decompilation of Metroid Prime. The project's primary output is a research artifact — the bonus, in-progress native PC port (PrimeHack / experimental renderer) gives a glimpse of where the work is heading. Requires original NTSC-U / PAL GameCube or Wii disc data to assemble.",
+    projectUrl: "https://github.com/PrimeDecomp/prime",
+    needsOriginalAssets: true,
+  },
+  {
+    id: "metroid-prime-2-echoes",
+    title: "Metroid Prime 2: Echoes",
+    sourcePlatform: "GameCube",
+    year: 2004,
+    project: "PrimeDecomp Echoes",
+    description:
+      "Matching decompilation of Metroid Prime 2: Echoes. Same caveat as the first Prime — matching-source output today, native PC port is downstream of the decomp completion. Requires the original GameCube release.",
+    projectUrl: "https://github.com/PrimeDecomp/echoes",
+    needsOriginalAssets: true,
+  },
+  {
+    id: "turok-2-decomp",
+    title: "Turok 2: Seeds of Evil",
+    sourcePlatform: "N64",
+    year: 1998,
+    project: "turok2-decomp",
+    description:
+      "Active matching decompilation of Turok 2: Seeds of Evil. Listed for catalog completeness; no shipping native PC port yet. Requires original N64 ROM dump when a playable port lands.",
+    projectUrl: "https://github.com/mgrz18/turok2-decomp",
+    needsOriginalAssets: true,
+  },
+  {
+    id: "project-picori",
+    title: "The Legend of Zelda: The Minish Cap",
+    sourcePlatform: "N64",
+    year: 2004,
+    project: "Project Picori",
+    description:
+      "Native Nintendo 64 build of the GBA-era Minish Cap decomp — experimental cross-platform port that targets N64 hardware. Requires the original GBA Minish Cap ROM. Listed under N64 since that is the port's target runtime.",
+    projectUrl: "https://github.com/999sian/picori-n64",
+    needsOriginalAssets: true,
+  },
 ];
 
 /** Index by id for quick lookup from the cart / Steam deploy path. */
