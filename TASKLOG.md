@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-05 — v0.26.2 SFTP channel lifetime correction
+
+- **What was done:** After DiMo authorized fix/release, extracted the real remote file transport into `electron/steamTransport.ts` and made all operations share one lazy SFTP channel, including concurrent opens. Added idempotent disposal in the deployment connection's finally block; the SSH connection also closes if disposal fails. Existing read-error behavior is preserved.
+- **Evidence:** Six direct transport regressions pass: 120 sequential read/mkdir/upload/write operations under a 10-channel fixture cap open exactly one channel, concurrent operations share one in-flight open, unused disposal opens none, failed opening propagates without retry storms, permission errors propagate, and an opening channel is closed during disposal. Full suite: 22 files / 316 tests passed. Lint/build release validation in progress.
+- **Artifacts:** `electron/steamTransport.ts`, `electron/steamTransport.test.ts`, `electron/main.ts`, package version 0.26.2; being committed/tagged for release. `mockups/` remains deliberate untracked planning scratch, excluded from git/packages.
+- **State:** Implemented; tagged Windows/Linux CI and real Bazzite retry still pending. No actual destination library was touched by these tests.
+- **Next owner + concrete artifact:** Gonzo publishes v0.26.2 and checks both release jobs/assets. DiMo installs it and retries Marvel vs. Capcom → Send to Steam on `.22`, then checks the PS1 collection and fullscreen launch.
+- **Failure mode:** Resource-lifetime bugs in the concrete SFTP adapter are invisible to in-memory deployment tests. The regression now runs the actual adapter with a bounded-channel SSH fixture.
+
 ## 2026-09-05 — Remote Steam deployment SSH channel-open failure diagnosis
 
 - **What was done:** Investigated DiMo's screenshot of Marvel vs. Capcom deployment to Bazzite failing with `(SSH) Channel open failure: open failed`. Found `remoteSteamTransport` opens a new SFTP channel on every read, directory creation, write and upload, retaining them until the entire SSH connection ends.

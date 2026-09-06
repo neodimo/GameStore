@@ -6,7 +6,7 @@ v0.26.0 is released with verified Windows/Linux CI. v0.26.1 is released with ver
 
 ## Open issue: remote Steam transport (2026-09-05)
 
-DiMo reported SSH channel-open failure during Bazzite deployment. Confirmed the released transport leaks SFTP channels per operation; an exact-function fixture reproduces the error with a 10-channel cap. Target limit/partial-write state remain unverified. Correction is identified (reuse one SFTP channel); no implementation changes or new release have been made from this diagnostic report. See newest TASKLOG entry.
+DiMo reported SSH channel-open failure during Bazzite deployment. Confirmed the released transport leaks SFTP channels per operation; an exact-function fixture reproduces the error with a 10-channel cap. Target limit/partial-write state remain unverified. DiMo authorized correction/release. v0.26.2 now reuses one lazy SFTP channel and disposes it in the connection finally block, with six direct transport regressions. Release validation is in progress; real Bazzite retry remains pending. See newest TASKLOG entry.
 
 ## Product premise
 
