@@ -4,6 +4,10 @@
 
 v0.26.0 is released with verified Windows/Linux CI. v0.26.1 is released with verified Windows/Linux CI and adds DiMo's requested per-console Steam collections (PS1/N64/Saturn) and graceful shutdown on the destination before deployment. The cart's Steam PC section displays the destination and shutdown behavior. Collection cloud storage is merged/backed up and must already be initialized; malformed data aborts. A running client receives a normal shutdown request, is polled for exit for up to 30 seconds, and is never force-killed. Steam remains closed afterward. Game files, cached portrait artwork and fullscreen shortcuts deploy through the same local/remote transport. Multiple profiles and Flatpak-only Steam remain blocked. Real Bazzite/Windows shutdown, collection visibility, artwork and launch acceptance remain unverified. See TASKLOG.md for exact release evidence.
 
+## Open issue: remote Steam transport (2026-09-05)
+
+DiMo reported SSH channel-open failure during Bazzite deployment. Confirmed the released transport leaks SFTP channels per operation; an exact-function fixture reproduces the error with a 10-channel cap. Target limit/partial-write state remain unverified. Correction is identified (reuse one SFTP channel); no implementation changes or new release have been made from this diagnostic report. See newest TASKLOG entry.
+
 ## Product premise
 
 GameStore is a Windows and Linux retro-game discovery catalog inspired by the breadth of CDRomance-style platform browsing. It emphasizes official regional box artwork, English playability, unusually strong filtering, editorial similarity shelves, transparent source provenance, and in-place game details.

@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-05 — Remote Steam deployment SSH channel-open failure diagnosis
+
+- **What was done:** Investigated DiMo's screenshot of Marvel vs. Capcom deployment to Bazzite failing with `(SSH) Channel open failure: open failed`. Found `remoteSteamTransport` opens a new SFTP channel on every read, directory creation, write and upload, retaining them until the entire SSH connection ends.
+- **Evidence:** Executed the exact transport function extracted/transpiled from released source with a fixture SSH client limiting concurrent SFTP channels to 10. The 11th read opened channel 11 and reproduced the exact error. This proves the transport leak; Bazzite's actual SSH channel limit and failing operation have not been inspected, so matching this screenshot to exhaustion remains a strong inference.
+- **Artifacts:** Reproduction was inline deliberate runtime scratch, with no test/source file changes. Diagnostic note and context update committed/pushed separately. Existing `mockups/` remains deliberate untracked scratch.
+- **State:** Diagnosed, not fixed or released. Prior deployment may have transferred files before failing; screenshot does not establish exactly which writes completed.
+- **Next owner + concrete artifact:** DiMo authorizes correction/release; Gonzo updates `electron/main.ts` remoteSteamTransport to reuse one SFTP channel per deployment and adds a regression exercising many transport operations with a bounded-channel client.
+- **Failure mode:** Per-operation SFTP subsystem creation without closing/reusing channels exhausts SSH session limits. Pure in-memory SteamFileTransport tests miss real transport resource lifetime.
+
 ## 2026-09-05 — v0.26.1 released and verified
 
 - **What was done:** Released console-based Steam collections and graceful destination Steam shutdown. Confirmed to DiMo that selecting remote Bazzite `.22` closes/updates Steam there; the controlling laptop's Steam remains untouched.
