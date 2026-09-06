@@ -880,7 +880,7 @@ function TranslationPanel({ game }: { game: Game }) {
                 {applied.unverifiedSourceAccepted
                   ? "The source image could not be verified and you chose to apply anyway."
                   : `Source verified by ${applied.verification}.`}{" "}
-                Your original image is untouched, and the copy is queued in the MiSTer cart.
+                Your original image is untouched, and the copy is queued in the cart.
               </p>
               <button className="patch-button" onClick={() => void apply()} disabled={!sourcePath || !patchPath || busy}>
                 {busy ? "Applying…" : "Patch again"}
@@ -1244,7 +1244,7 @@ function Acquisition({ game }: { game: Game }) {
     setState({ status: "downloading", percent: 0, message: "Resolving provider link…" });
     try {
       const result = await window.gameStore.downloadGame(provider, link.trim(), game.title, game.platform);
-      setState({ status: "done", percent: 100, message: `Ready and added to the MiSTer cart · ${result.directory}` });
+      setState({ status: "done", percent: 100, message: `Ready and added to the cart · ${result.directory}` });
     } catch (e) {
       setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
     }
@@ -1291,7 +1291,7 @@ function Acquisition({ game }: { game: Game }) {
       setState({
         status: "done",
         percent: 100,
-        message: `In your MiSTer cart · ${result.directory}`,
+        message: `In your cart · ${result.directory}`,
       });
     } catch (e) {
       setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
@@ -1405,7 +1405,18 @@ function MiSTerManager({ onOpenSettings }: { onOpenSettings: () => void }) {
   </section>;
 }
 
+/**
+ * Finds the catalog entry behind a queued file so both delivery lanes can show
+ * the game's own art. Matching is by title and console because the cart stores
+ * device folder names rather than catalog ids.
+ */
+function catalogGameForItem(item: LibraryItem) {
+  const platform = catalogIdOfDeviceFolder(item.platform);
+  return games.find((entry) => entry.title === item.title && platformOf(entry.platform).id === platform);
+}
+
 function LibraryCart() {
+  const { artFor } = useArtwork();
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [openCart, setOpenCart] = useState(false);
   const [checkout, setCheckout] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -1419,25 +1430,34 @@ function LibraryCart() {
   return (
     <div className="library-cart">
       <button className={items.length ? "cart-button ready" : "cart-button"} onClick={() => setOpenCart(!openCart)}>
-        <ShoppingCart /> MiSTer cart <b>{items.length}</b>
+        <ShoppingCart /> Cart <b>{items.length}</b>
       </button>
       {openCart && <div className="cart-popover">
         <div className="cart-heading">
-          <div><small>MANAGED TRANSFER QUEUE</small><h3>Ready for MiSTer</h3></div>
-          <button aria-label="Close MiSTer cart" onClick={() => setOpenCart(false)}><X /></button>
+          <div><small>MANAGED TRANSFER QUEUE</small><h3>Ready to send</h3></div>
+          <button aria-label="Close cart" onClick={() => setOpenCart(false)}><X /></button>
         </div>
         {!items.length ? <div className="cart-empty"><ShoppingCart /><p>Downloaded games will appear here automatically.</p></div> : <>
           <div className="cart-items">
-            {items.map((item) => <div className="cart-item" key={item.id}>
-              <div>
-                <b>{item.title}{item.translated && <em className="cart-patched" title={item.translated.team ? `Patched with ${item.translated.team}` : "Translated copy"}>PATCHED</em>}</b>
-                <span>
-                  {item.platform} · {item.files.length} managed {item.files.length === 1 ? "file" : "files"}
-                  {item.translated ? " · English copy, original untouched" : ""}
-                </span>
-              </div>
-              <button aria-label={`Remove ${item.title} from MiSTer cart`} title="Keep files, remove from cart" onClick={() => void window.gameStore!.removeLibraryCartItem(item.id)}><X /></button>
-            </div>)}
+            {items.map((item) => {
+              const game = catalogGameForItem(item);
+              const cover = game ? artFor(game).url : undefined;
+              return <div className="cart-item" key={item.id}>
+                {/* Shown at the art's own proportions: this lane sends the console's
+                    native cover, so the row should look like what is being sent. */}
+                {cover
+                  ? <img className="cart-item-art" src={cover} alt="" loading="lazy" />
+                  : <span className="cart-item-art placeholder" aria-hidden="true" />}
+                <div>
+                  <b>{item.title}{item.translated && <em className="cart-patched" title={item.translated.team ? `Patched with ${item.translated.team}` : "Translated copy"}>PATCHED</em>}</b>
+                  <span>
+                    {item.platform} · {item.files.length} managed {item.files.length === 1 ? "file" : "files"}
+                    {item.translated ? " · English copy, original untouched" : ""}
+                  </span>
+                </div>
+                <button aria-label={`Remove ${item.title} from cart`} title="Keep files, remove from cart" onClick={() => void window.gameStore!.removeLibraryCartItem(item.id)}><X /></button>
+              </div>;
+            })}
           </div>
           <button className="checkout" disabled={checkout === "sending"} onClick={async () => {
             setCheckout("sending"); setMessage("Connecting and sending the full cart…");
@@ -1510,7 +1530,7 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
     const platform = catalogIdOfDeviceFolder(item.platform);
     const coreId = chosen[item.id] ?? installedFor(platform)[0]?.id;
     if (!coreId) return;
-    const game = games.find((entry) => entry.title === item.title && platformOf(entry.platform).id === platform);
+    const game = catalogGameForItem(item);
     setState("sending"); setNote(`Preparing ${where}: closing Steam if needed, then sending ${item.title}…`);
     try {
       const result = await window.gameStore!.deployToSteam({
@@ -1550,7 +1570,14 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
       const platform = catalogIdOfDeviceFolder(item.platform);
       const available = installedFor(platform);
       const coreId = chosen[item.id] ?? available[0]?.id ?? "";
+      const game = catalogGameForItem(item);
+      const cover = game ? artFor(game).url : undefined;
       return <div className="steam-deploy-row" key={item.id}>
+        {/* Framed 2:3, the shape Steam's own grid uses, so the row previews how
+            the cover will sit in the library rather than how it looks here. */}
+        {cover
+          ? <img className="steam-deploy-art" src={cover} alt="" loading="lazy" />
+          : <span className="steam-deploy-art placeholder" aria-hidden="true" />}
         <b>{item.title}</b>
         {!available.length
           ? <span className="steam-need-core">No {platformLabel(platform)} core installed on that machine yet — install one in Settings → PC / Steam.</span>
