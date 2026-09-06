@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
+  Box,
   Compass,
   Download,
   Database,
@@ -43,6 +44,7 @@ import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
 import { restartMediaAudit } from "./mediaLibrary";
 import { MiSTerCoreCabinet } from "./MiSTerCoreCabinet";
+import { PortsSection } from "./PortsSection";
 
 type Sort = "title" | "rating";
 type PlatformFilter = "All" | Game["platform"];
@@ -86,6 +88,7 @@ function Catalog() {
   const [deviceManager, setDeviceManager] = useState(false);
   const [coreCabinet, setCoreCabinet] = useState(false);
   const [platformDirectory, setPlatformDirectory] = useState(false);
+  const [portsOpen, setPortsOpen] = useState(false);
   const [facet, setFacet] = useState("All flavors");
   const [translation, setTranslation] = useState(false);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
@@ -212,6 +215,7 @@ function Catalog() {
     setDeviceManager(false);
     setCoreCabinet(false);
     setPlatformDirectory(false);
+    setPortsOpen(false);
   };
   const browsing =
     !!query ||
@@ -248,7 +252,7 @@ function Catalog() {
           })}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button>
         </div>
         <nav>
-          <button className={!favoriteOnly && !deviceManager && !coreCabinet && !platformDirectory ? "active" : ""} onClick={reset} title="Discover">
+          <button className={!favoriteOnly && !deviceManager && !coreCabinet && !platformDirectory && !portsOpen ? "active" : ""} onClick={reset} title="Discover">
             <Compass />
             <span>Discover</span>
           </button>
@@ -278,6 +282,10 @@ function Catalog() {
           <button className={coreCabinet ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(true); }} title="MiSTer Cores">
             <Grid2X2 />
             <span>MiSTer Cores</span>
+          </button>
+          <button className={portsOpen ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setPlatformDirectory(false); setPortsOpen(true); }} title="PC-native ports of retro games">
+            <Box />
+            <span>Ports</span>
           </button>
         </nav>
         <button className="settings-link" onClick={() => setSettings(true)} title="Settings">
