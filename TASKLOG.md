@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-09-05 — v0.26.1 released and verified
+
+- **What was done:** Released console-based Steam collections and graceful destination Steam shutdown. Confirmed to DiMo that selecting remote Bazzite `.22` closes/updates Steam there; the controlling laptop's Steam remains untouched.
+- **Evidence:** 21 files / 310 tests, lint, renderer/Electron build passed locally. Tagged workflow https://github.com/neodimo/GameStore/actions/runs/34001396130 passed both Windows and Linux jobs for `f7c3d0fd6a204d3fb0b0e97c27520db59c0c7f4a`, including packaging and media/size checks. Public release verified non-draft/non-prerelease with all six expected assets.
+- **Artifacts:** https://github.com/neodimo/GameStore/releases/tag/v0.26.1 — Windows installer/blockmap, Linux AppImage/deb and both updater manifests. Source/tag committed and pushed; this verification note committed/pushed after publication. `mockups/` is deliberate untracked planning scratch, excluded from git/packages.
+- **State:** Released. Real Bazzite/Windows shutdown, collection visibility, cover display and fullscreen launch remain unverified. Missing initialized collection storage prompts the user to create a Steam collection once; multiple profiles and Flatpak-only Steam remain blocked.
+- **Next owner + concrete artifact:** DiMo installs v0.26.1, selects remote Bazzite `.22`, queues a game and clicks cart → Steam PC → Send to Steam. Restart Steam on Bazzite and verify the PS1/N64/Saturn collection, cover and fullscreen launch. Gonzo owns corrections from that acceptance pass.
+
 ## 2026-09-05 — v0.26.1 console collections and automatic destination shutdown
 
 - **What was done:** Per DiMo's follow-up requests, deployment requests normal `steam -shutdown` / Windows Steam `-shutdown` on the selected target and polls for confirmed exit, with a bounded 30-second wait and no force-kill. Rechecks immediately before library writing. Assigns each deployed shortcut to PS1, N64, or Saturn; reuses an existing same-named collection, preserves unrelated cloud records/memberships, removes the app from that collection's removed list, and backs up the cloud namespace before writing. Preserves existing shortcut tags on redeploy.
