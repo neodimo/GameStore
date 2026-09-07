@@ -7,7 +7,6 @@
 - **State:** Resetting the current OpenClaw session is the available compaction equivalent; it retains this Discord channel but replaces the overloaded model context. No GameStore source is discarded or released by this operation.
 - **Next owner + concrete artifact:** Gonzo resumes from this log and the current GameStore working tree. Before releasing, inspect `git status` and run the listed local gates; the PS2/Xbox 360 work below is implemented but explicitly uncommitted and unverified on real hardware.
 
-
 ## 2026-09-07 — PS2 + Xbox 360 consoles, and right-click box art in the cart
 
 - **What was done:** DiMo's two outstanding asks. (1) **Right-click box art at checkout.** Both checkout lanes — the MiSTer cart rows and the Steam deploy rows — now open the existing `ArtPicker` on right-click, so the cover can be swapped from the same sources the app already scrapes (`Named_Boxarts`/`Named_Titles`/`Named_Snaps` plus TheGamesDB). The picker renders inside the cart popover so the cart stays open behind it, and the chosen override is what both lanes then send, including into the Steam `coverUrl`. A queued file matching no catalog entry has no alternates to browse, so it keeps the browser's own context menu instead of opening an empty picker. (2) **PlayStation 2 and Xbox 360 added as catalog consoles.**
@@ -927,3 +926,8 @@
 - **Artifacts:** `mockups/time-capsule-v002.html` is the source of truth and can be opened locally in any browser. `mockups/time-capsule-v002.png` is a Chromium-rendered 1440×1120 review image. Both are local, uncommitted planning artifacts.
 - **State:** Awaiting Omid’s visual/product decision. The interactive era controls show an explicit prototype response; only Fall ’97 is populated. The app implementation is intentionally held until v002 is approved.
 - **Next owner + concrete artifact:** Omid reviews `mockups/time-capsule-v002.png` and selects/adjusts the visual direction. Gonzo then ports the approved HTML structure into the GameStore React surface, retaining the same layout and interaction affordances rather than substituting a separate design.
+
+
+## 2026-09-07 — v0.31.0 release verification
+
+- **Verification:** GitHub Actions run 34147909181 completed successfully. The v0.31.0 release contains `GameStore-Setup-0.31.0-x64.exe`, `GameStore-Setup-0.31.0-x64.exe.blockmap`, `latest.yml`, `GameStore-0.31.0-x86_64.AppImage`, `GameStore-0.31.0-amd64.deb`, and `latest-linux.yml`.
