@@ -2,7 +2,7 @@
 
 ## Ports release status (2026-09-06)
 
-v0.28.0 published Linux assets but Windows packaging was blocked by a POSIX executable-bit test assertion. v0.28.1 corrects that test while preserving cross-platform extraction/content checks; release validation is in progress. Ports catalog and pipeline are unchanged from v0.28.0. Real end-to-end port installation is still unverified; CI establishes build/package correctness only. See TASKLOG.md for exact release evidence.
+v0.28.0 published Linux assets but Windows packaging was blocked by a POSIX executable-bit test assertion. v0.28.1 is released with successful Windows/Linux CI and all six assets, including the Windows installer. It corrects that test while preserving cross-platform extraction/content checks. Ports catalog and pipeline are unchanged from v0.28.0. Real end-to-end port installation is still unverified; CI establishes build/package correctness only. See TASKLOG.md for exact release evidence.
 
 ## Current PC/Steam deployment state (2026-09-05)
 

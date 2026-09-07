@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-06 — v0.28.1 released; Windows installer verified
+
+- **What was done:** Published the Windows test correction as v0.28.1, completing the previously Linux-only v0.28.0 release workstream.
+- **Evidence:** https://github.com/neodimo/GameStore/actions/runs/34088946969 completed successfully for both Windows and Linux on `6516f5130bdc5a27e60b2a30ff2022863a52bb88`. Windows passed tests, lint, installer build, size checks and upload. All 396 tests passed locally alongside lint/build/bundle checks.
+- **Artifacts:** https://github.com/neodimo/GameStore/releases/tag/v0.28.1 verified public, non-draft/non-prerelease with all six assets: Windows EXE (93,135,287 bytes), blockmap, Linux AppImage/deb, and both updater manifests. Source/tag committed and pushed to origin main; verification notes committed/pushed after publication. `mockups/` remains deliberate untracked planning scratch.
+- **State:** Released. Real end-to-end port acquisition/installation/Steam launch remains unverified.
+- **Next owner + concrete artifact:** DiMo downloads `GameStore-Setup-0.28.1-x64.exe` from the release and tests Ports installation to the selected target. Gonzo owns any failures surfaced by that acceptance pass.
+- **Failure mode:** Cross-platform tests must distinguish portable archive-content semantics from POSIX-only permissions. The test retains content assertions on Windows and executable-bit checks on Linux.
+
 ## 2026-09-06 — v0.28.1 Windows release correction
 
 - **What was done:** Corrected the tar extraction test that blocked Windows v0.28.0 packaging. File extraction and exact content are asserted on every OS; POSIX executable bits are asserted only on non-Windows hosts. No production installer behavior changed. Prepared version 0.28.1 without moving the already published v0.28.0 tag.
