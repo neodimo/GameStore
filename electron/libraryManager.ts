@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { pipeline } from "node:stream/promises";
 import yauzl from "yauzl";
-import { deviceFolderForPlatformId, devicePlatform } from "./devicePlatforms";
+import { devicePlatform, libraryFolderForPlatformId } from "./devicePlatforms";
 
 export type LibraryItem = {
   id: string;
@@ -31,6 +31,8 @@ const cleanName = (value: string) => value.replace(/[\\/:*?"<>|]/g, "-").trim();
 const playableExtensions = new Set([
   ".chd", ".cue", ".bin", ".iso", ".pbp", ".ccd", ".img", ".sub", ".m3u",
   ".gba", ".gb", ".gbc", ".z64", ".n64", ".v64", ".nes", ".sfc", ".smc", ".md", ".gen",
+  // Xbox 360 releases arrive as disc images or extracted executables.
+  ".xex", ".zar",
 ]);
 
 const walk = async (root: string, current = root): Promise<string[]> => {
@@ -120,20 +122,35 @@ export const removeFromCart = async (root: string, id: string) => {
   return index.cart;
 };
 
+/**
+ * Sends every eligible cart item, leaving the rest queued.
+ *
+ * `skip` exists because the cart stopped being single-destination. It now holds
+ * consoles the MiSTer has no core for, and throwing on the first of those
+ * aborted the whole batch — one PlayStation 2 game would strand every
+ * PlayStation game behind it. Skipped items keep their place in the cart so the
+ * Steam lane can still send them.
+ */
 export const checkoutCart = async (
   root: string,
   transfer: (item: LibraryItem) => Promise<void>,
   onChange?: () => void,
+  skip?: (item: LibraryItem) => boolean,
 ) => {
   const cart = await getCart(root);
   const completed: LibraryItem[] = [];
+  const skipped: LibraryItem[] = [];
   for (const item of cart) {
+    if (skip?.(item)) {
+      skipped.push(item);
+      continue;
+    }
     await transfer(item);
     completed.push(item);
     await removeFromCart(root, item.id);
     onChange?.();
   }
-  return completed;
+  return Object.assign(completed, { skipped });
 };
 
 export async function finalizeDownload(args: {
@@ -145,7 +162,7 @@ export async function finalizeDownload(args: {
   // Catalog downloads arrive as `PS1`/`SAT`; the cart and device use
   // `PSX`/`Saturn`. Keep unknown legacy platforms working as generic local
   // libraries, but make every registered console obey its registry facts.
-  const deviceFolder = deviceFolderForPlatformId(args.platform);
+  const deviceFolder = libraryFolderForPlatformId(args.platform);
   const platform = deviceFolder ?? cleanName(args.platform);
   const definition = deviceFolder ? devicePlatform(deviceFolder) : undefined;
   const archives = args.downloadedFiles.filter((file) => path.extname(file).toLowerCase() === ".zip");

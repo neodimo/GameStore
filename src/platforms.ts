@@ -1,7 +1,7 @@
 import {
-  DEVICE_PLATFORMS,
+  CATALOG_PLATFORMS,
   devicePlatform,
-  type DeviceFolder,
+  type LibraryFolder,
 } from "../electron/devicePlatforms";
 
 /**
@@ -17,7 +17,7 @@ import {
  */
 
 /** Catalog identity. What a `Game.platform` carries. */
-export type PlatformId = "PS1" | "N64" | "SAT";
+export type PlatformId = "PS1" | "N64" | "SAT" | "PS2" | "X360";
 
 export type PlatformDefinition = {
   id: PlatformId;
@@ -30,28 +30,49 @@ export type PlatformDefinition = {
    * pasted straight into a request path.
    */
   thumbnailSystem: string;
-  deviceFolder: DeviceFolder;
+  deviceFolder: LibraryFolder;
+  /**
+   * Whether the MiSTer has a core for this console. The two PC-lane consoles
+   * are shown everywhere the catalog is shown and hidden from every FPGA
+   * control, so a card can be browsed and downloaded without ever offering a
+   * transfer that has no hardware behind it.
+   */
+  mister: boolean;
 };
 
 const SHORT_LABELS: Record<PlatformId, string> = {
   PS1: "PS1",
   N64: "N64",
   SAT: "Saturn",
+  PS2: "PS2",
+  X360: "Xbox 360",
 };
 
+/**
+ * Thumbnail pack per console. Every name here was read from the live index at
+ * `https://thumbnails.libretro.com/` rather than guessed from the console's
+ * name — the PS2 and Xbox 360 packs were confirmed to exist there before those
+ * consoles were added, because a wrong pack name fails as silently missing art.
+ */
 const THUMBNAIL_SYSTEMS: Record<PlatformId, string> = {
   PS1: "Sony%20-%20PlayStation",
   N64: "Nintendo%20-%20Nintendo%2064",
   SAT: "Sega%20-%20Saturn",
+  PS2: "Sony%20-%20PlayStation%202",
+  X360: "Microsoft%20-%20Xbox%20360",
 };
 
-export const PLATFORMS: PlatformDefinition[] = DEVICE_PLATFORMS.map((device) => ({
+export const PLATFORMS: PlatformDefinition[] = CATALOG_PLATFORMS.map((device) => ({
   id: device.catalogId,
   label: device.label,
   shortLabel: SHORT_LABELS[device.catalogId],
   thumbnailSystem: THUMBNAIL_SYSTEMS[device.catalogId],
   deviceFolder: device.deviceFolder,
+  mister: device.mister,
 }));
+
+/** Consoles with a MiSTer core, for every FPGA-facing control. */
+export const MISTER_PLATFORMS = PLATFORMS.filter((platform) => platform.mister);
 
 export const PLATFORM_IDS = PLATFORMS.map((platform) => platform.id);
 
@@ -70,6 +91,9 @@ export const deviceFolderFor = (id: string | undefined) =>
 export const deviceFolderLabel = (folder: string | undefined) =>
   devicePlatform(folder).label;
 
-/** The catalog platform a MiSTer core folder belongs to. */
+/** The catalog platform a library folder belongs to. */
 export const catalogIdOfDeviceFolder = (folder: string | undefined): PlatformId =>
   devicePlatform(folder).catalogId;
+
+/** Whether this console can be sent to the MiSTer at all. */
+export const isMisterPlatform = (id: string | undefined) => platformOf(id).mister;

@@ -101,7 +101,8 @@ interface Window {
     transferLibraryToFpga(title: string, platform: string): Promise<{ canceled: boolean; files?: number; remoteDir?: string }>;
     getLibraryCart(): Promise<LibraryItem[]>;
     removeLibraryCartItem(id: string): Promise<LibraryItem[]>;
-    checkoutLibraryCart(): Promise<{ items: number; files: number }>;
+    /** `skipped` counts cart items left queued because no MiSTer core runs them. */
+    checkoutLibraryCart(): Promise<{ items: number; files: number; skipped: number }>;
     onLibraryChanged(listener: () => void): () => void;
     onFpgaProgress(listener: (progress: FpgaProgress) => void): () => void;
     getDebridSettings(): Promise<{ hasRealDebrid: boolean; hasTorBox: boolean; collections: CollectionSource[] }>;
@@ -233,7 +234,7 @@ type SteamDeployResult = {
 /** MiSTer core folder. Mirrors `DEVICE_FOLDERS` in electron/devicePlatforms.ts. */
 type DeviceFolderId = "PSX" | "N64" | "Saturn";
 /** Catalog platform. Mirrors `PlatformId` in src/platforms.ts. */
-type CatalogPlatformId = "PS1" | "N64" | "SAT";
+type CatalogPlatformId = "PS1" | "N64" | "SAT" | "PS2" | "X360";
 type BiosStatus = { platform: DeviceFolderId; ready: boolean; files: { name: string; present: boolean }[] };
 /** Partial: a device cache written before a console existed has no entry for it. */
 type DeviceLibrary = { host: string; folders: Partial<Record<DeviceFolderId, string[]>>; bios: BiosStatus[] };

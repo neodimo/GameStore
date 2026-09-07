@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createCuratedShelves, games, metaLine, translationSearchTerm, translationSearchUrl } from './catalog';
 import { ps1Expansion } from './ps1Expansion';
+import { PLATFORMS } from './platforms';
 describe('catalog invariants',()=>{
  it('contains the full USA retail base plus the eligible regional catalog',()=>{expect(games.filter(g=>g.region==='USA').length).toBeGreaterThanOrEqual(1350);expect(new Set(games.map(g=>g.id)).size).toBe(games.length)});
  it('adds a sourced N64 catalog without admitting unreviewed Japanese imports',()=>{
@@ -44,9 +45,14 @@ describe('catalog invariants',()=>{
   const carrying=games.filter(g=>/\.(cue|chd|iso|bin|n64|z64|v64|nes|sfc|smc|md|gen|gg|sms|gb|gbc|gba|pce|32x)$/i.test(g.coverName??''));
   expect(carrying.map(g=>`${g.platform} ${g.coverName}`)).toEqual([]);
  });
- /** A seeded cover URL must be built from the game's own console. */
+ /**
+  * A seeded cover URL must be built from the game's own console. Read from the
+  * platform registry rather than a second copy of the mapping, because a
+  * hardcoded table silently stops covering a console the moment one is added.
+  */
  it('seeds each platform its own Libretro thumbnail system',()=>{
-  const systems:Record<string,string>={PS1:'Sony%20-%20PlayStation',N64:'Nintendo%20-%20Nintendo%2064',SAT:'Sega%20-%20Saturn'};
+  const systems=Object.fromEntries(PLATFORMS.map(p=>[p.id,p.thumbnailSystem]));
+  expect(Object.keys(systems).sort()).toEqual([...new Set(games.map(g=>g.platform))].sort());
   for(const g of games){
    if(!g.cover?.startsWith('https://thumbnails.libretro.com/')) continue;
    expect(g.cover,`${g.platform} ${g.title}`).toContain(`/${systems[g.platform]}/`);
@@ -80,7 +86,32 @@ describe('catalog invariants',()=>{
    expect(games.some(g=>g.title===title),`${title} was removed`).toBe(true);
  });
  it('keeps this expansion to official English-language releases',()=>{const ids=new Set(ps1Expansion.filter(([, , ,region])=>region!=='Japan').map(([id])=>id));for(const g of games.filter(g=>ids.has(g.id)))expect(g.region).not.toBe('Japan')});
- it('keeps an explicit lightweight cover fallback for every USA title',()=>{for(const g of games.filter(g=>g.region==='USA'))expect(g.cover).toMatch(/^https:\/\/thumbnails\.libretro\.com\//)});
+ /**
+  * A seeded cover is the offline fallback for the web build, which cannot fetch
+  * the thumbnail index, and it only exists where Libretro publishes a box art.
+  * So the pairing is asserted rather than blanket presence: a record has a
+  * seeded URL exactly when it has a published name, which fails both a cover
+  * built from nothing and a name that never became a URL.
+  *
+  * Coverage is then asserted per console, because a pack being unpopulated and
+  * an importer silently losing its matches look identical from one record. The
+  * `Microsoft - Xbox 360` pack holds 12 box arts against 5593 released games,
+  * so the 360 is expected to be nearly bare; every other console must stay
+  * almost fully seeded.
+  */
+ it('keeps an explicit lightweight cover fallback for every USA title',()=>{
+  for(const g of games)
+   expect(Boolean(g.cover),`${g.platform} ${g.title} cover/coverName disagree`).toBe(Boolean(g.coverName));
+  for(const g of games.filter(g=>g.cover))
+   expect(g.cover,`${g.platform} ${g.title}`).toMatch(/^https:\/\/thumbnails\.libretro\.com\//);
+  for(const platform of PLATFORMS.map(p=>p.id)){
+   const usa=games.filter(g=>g.platform===platform&&g.region==='USA');
+   const seeded=usa.filter(g=>g.cover).length/usa.length;
+   if(platform==='X360') expect(seeded,'X360 pack is unpopulated upstream').toBeLessThan(.2);
+   else expect(seeded,`${platform} lost its box-art matches`).toBeGreaterThan(.9);
+  }
+ });
+
  it('keeps Japan-only English records explicit',()=>{for(const g of games.filter(g=>g.region==='Japan'&&g.translation))expect(g.translation?.base).toBeTruthy()});
  it('keeps every outbound link stateful',()=>{for(const g of games)for(const l of g.links)expect(['verified','unverified','stale','dead']).toContain(l.state)});
  it('never presents an unsourced editorial quote',()=>{expect(games.every(g=>!g.curatorNote)).toBe(true)});
@@ -158,5 +189,5 @@ describe('catalog invariants',()=>{
   expect(vocabulary.has('Platformer')).toBe(true);
  });
  it('builds replaceable discovery shelves',()=>{const low=createCuratedShelves(()=>0);const high=createCuratedShelves(()=>0.999);expect(low).toHaveLength(4);expect(high).toHaveLength(4);expect(low.map(s=>s.title)).not.toEqual(high.map(s=>s.title));for(const shelf of [...low,...high])expect(shelf.ids.length).toBeGreaterThan(0)});
- it('gives every current console a discovery flavor vocabulary',()=>{for(const platform of ['PS1','N64','SAT']){const library=games.filter(game=>game.platform===platform);expect(library.length).toBeGreaterThan(0);expect(library.filter(game=>game.facets.length>0).length/library.length).toBeGreaterThan(.95);expect(createCuratedShelves(()=>.5,library).length).toBeGreaterThan(0)}});
+ it('gives every current console a discovery flavor vocabulary',()=>{for(const platform of PLATFORMS.map(p=>p.id)){const library=games.filter(game=>game.platform===platform);expect(library.length).toBeGreaterThan(0);expect(library.filter(game=>game.facets.length>0).length/library.length).toBeGreaterThan(.95);expect(createCuratedShelves(()=>.5,library).length).toBeGreaterThan(0)}});
 });

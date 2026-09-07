@@ -785,6 +785,8 @@ export const games: Game[] = [
     .map((game) => ({ ...game, curatorNote: undefined })),
   ...n64Games,
   ...saturnGames,
+  ...ps2Games,
+  ...x360Games,
 ].map(flavored);
 
 type ShelfRecipe = { title: string; subtitle: string; matches: (game: Game) => boolean };
@@ -836,4 +838,6 @@ import { ps1Expansion } from "./ps1Expansion";
 import { usCatalog } from "./ps1UsCatalog";
 import { n64Games } from "./n64Catalog";
 import { saturnGames } from "./satCatalog";
+import { ps2Games } from "./ps2Catalog";
+import { x360Games } from "./x360Catalog";
 import { translationManifest } from "./translationManifest";

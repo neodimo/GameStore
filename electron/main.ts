@@ -46,9 +46,12 @@ import {
   deviceFolderForCatalog,
   deviceFolderForPlatformId,
   deviceFolderForStored,
+  libraryFolderForCatalog,
+  libraryFolderForStored,
   devicePlatform,
   isDeviceFolder,
   isGameEntry,
+  isMisterPlatform,
   type DeviceFolder,
 } from "./devicePlatforms";
 import {
@@ -101,7 +104,7 @@ import {
   type RunCommand,
 } from "./pcTarget";
 import { checkRetroArch, installRetroArch, updateRetroArch, type RetroArchReleaseChannel } from "./retroArch";
-import { installRetroCore, listRetroCores } from "./retroArchCores";
+import { installRetroCore, isRetroPlatform, listRetroCores } from "./retroArchCores";
 import {
   deployToSteam,
   steamConfigDir,
@@ -685,7 +688,7 @@ ipcMain.handle("collection-download", async (_e, sourceUrl: string, paths: strin
   if (!allowed) throw new Error("This collection source is not configured in Settings.");
   const token = settings.debrid?.realdebrid;
   if (!token) throw new Error("Add a Real-Debrid API token in Settings first.");
-  const result = await downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, platform: deviceFolderForCatalog(platform), window: win });
+  const result = await downloadCollectionFiles({ token, torrent: await fetchTorrent(sourceUrl), wantedPaths: paths, gameTitle, platform: libraryFolderForCatalog(platform), window: win });
   win?.webContents.send("library-changed");
   return result;
 });
@@ -699,7 +702,7 @@ ipcMain.handle(
   async (_e, provider: DebridProvider, link: string, gameTitle: string, platform = "PS1") => {
     const token = (await readSettings()).debrid?.[provider];
     if (!token) throw new Error("Configure this provider in Settings first.");
-    const result = await downloadResolvedLink({ provider, token, link, gameTitle, platform: deviceFolderForCatalog(platform), window: win });
+    const result = await downloadResolvedLink({ provider, token, link, gameTitle, platform: libraryFolderForCatalog(platform), window: win });
     win?.webContents.send("library-changed");
     return result;
   },
@@ -1337,10 +1340,19 @@ ipcMain.handle(
   "pc-target-steam-deploy",
   async (_event, request: { gameTitle: string; catalogPlatform?: string; coreId: string; coverUrl?: string; accountId?: string }) =>
     runOnPcTargetWithFiles(async (run, os, transport) => {
-      const folder = deviceFolderForCatalog(request.catalogPlatform);
+      // The PC lane serves every catalog console, including the two with no
+      // MiSTer core, so it resolves library folders rather than device folders.
+      const folder = libraryFolderForCatalog(request.catalogPlatform);
       const definition = devicePlatform(folder);
+      // Refused by name rather than by the missing-core message below, so the
+      // Xbox 360 reads as "no emulator exists" instead of "you forgot to
+      // install one" — there is no libretro core to install.
+      if (!isRetroPlatform(definition.catalogId))
+        throw new Error(
+          `${definition.label} has no RetroArch core. Use the Ports section for native ${definition.label} builds.`,
+        );
       const item = (await getCart(libraryRoot())).find(
-        (entry) => entry.title === request.gameTitle && deviceFolderForStored(entry.platform) === folder,
+        (entry) => entry.title === request.gameTitle && libraryFolderForStored(entry.platform) === folder,
       );
       if (!item) throw new Error("This game is not currently in the cart.");
 
@@ -1845,17 +1857,40 @@ ipcMain.handle("library-cart-remove", async (_e, id: string) => {
   return cart;
 });
 ipcMain.handle("library-cart-checkout", async () => {
-  if (!(await getCart(libraryRoot())).length) throw new Error("The MiSTer cart is empty.");
-  const completed = await checkoutCart(libraryRoot(), async (item) => {
-    // Cart items store the core folder; a console the build does not carry is
-    // refused by name rather than silently transferred into the wrong folder.
-    const platform = deviceFolderForStored(item.platform);
-    if (!platform) throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
-    await transferFilesToFpga(item.title, item.files, platform);
-  }, () => win?.webContents.send("library-changed"));
-  return { items: completed.length, files: completed.reduce((sum, item) => sum + item.files.length, 0) };
+  const cart = await getCart(libraryRoot());
+  if (!cart.length) throw new Error("The MiSTer cart is empty.");
+  // A console with no MiSTer core is passed over rather than transferred into
+  // the wrong folder or thrown on. Throwing aborted the batch, so a single PS2
+  // game used to strand every PlayStation game queued behind it.
+  const eligible = cart.filter((item) => isMisterPlatform(item.platform));
+  if (!eligible.length)
+    throw new Error(
+      `Nothing in the cart runs on the MiSTer. ${cart.length === 1 ? "That game needs" : "Those games need"} a Steam PC.`,
+    );
+  const completed = await checkoutCart(
+    libraryRoot(),
+    async (item) => {
+      // Cart items store the core folder; a console the build does not carry is
+      // refused by name rather than silently transferred into the wrong folder.
+      const platform = deviceFolderForStored(item.platform);
+      if (!platform) throw new Error(`${item.title} targets ${item.platform}; that MiSTer console route is not configured yet.`);
+      await transferFilesToFpga(item.title, item.files, platform);
+    },
+    () => win?.webContents.send("library-changed"),
+    (item) => !isMisterPlatform(item.platform),
+  );
+  return {
+    items: completed.length,
+    files: completed.reduce((sum, item) => sum + item.files.length, 0),
+    skipped: completed.skipped.length,
+  };
 });
 ipcMain.handle("fpga-transfer", async (_e, gameTitle: string, catalogPlatform?: string) => {
+  // `deviceFolderForCatalog` falls back to PlayStation, which is only safe once
+  // the consoles with no core are refused here. The renderer already hides the
+  // button; this is the boundary that makes the fallback safe.
+  if (catalogPlatform && !isMisterPlatform(catalogPlatform))
+    throw new Error(`${catalogPlatform} has no MiSTer core. Send this game to a Steam PC instead.`);
   const platform = deviceFolderForCatalog(catalogPlatform);
   const definition = devicePlatform(platform);
   const picked = await dialog.showOpenDialog(win!, {
@@ -1867,6 +1902,8 @@ ipcMain.handle("fpga-transfer", async (_e, gameTitle: string, catalogPlatform?: 
   return transferFilesToFpga(gameTitle, picked.filePaths, platform);
 });
 ipcMain.handle("fpga-transfer-library", async (_e, gameTitle: string, catalogPlatform?: string) => {
+  if (catalogPlatform && !isMisterPlatform(catalogPlatform))
+    throw new Error(`${catalogPlatform} has no MiSTer core. Send this game to a Steam PC instead.`);
   const platform = deviceFolderForCatalog(catalogPlatform);
   // A title alone is not an identity: the same title can exist in several
   // console libraries. The renderer supplies its catalog platform and legacy

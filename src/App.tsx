@@ -32,10 +32,12 @@ import { createCuratedShelves, games, metaLine, Game } from "./catalog";
 import { translationFor } from "./translationManifest";
 import { ArtworkProvider, useArtwork } from "./artwork";
 import {
+  MISTER_PLATFORMS,
   PLATFORMS,
   catalogIdOfDeviceFolder,
   deviceFolderFor,
   deviceFolderLabel,
+  isMisterPlatform,
   platformLabel,
   platformOf,
   type PlatformId,
@@ -192,7 +194,11 @@ function Catalog() {
     return () => removeEventListener("keydown", key);
   }, []);
   useEffect(() => {
-    const catalog = games.map(({ id, title, coverName, platform }) => ({ id, title, coverName, platform: deviceFolderFor(platform) }));
+    // FPGA inventory answers "is this already on the MiSTer", so consoles the
+    // MiSTer has no core for are left out of the question entirely.
+    const catalog = games
+      .filter((game) => isMisterPlatform(game.platform))
+      .map(({ id, title, coverName, platform }) => ({ id, title, coverName, platform: deviceFolderFor(platform) as DeviceFolderId }));
     const loadInventory = () => window.gameStore?.getFpgaInventory(catalog).then((result) => {
       if (result?.status === "ready") setFpgaGameIds(new Set(result.gameIds));
     });
@@ -926,7 +932,10 @@ function PlatformDirectory({ onChoose }: { onChoose: (platform: PlatformFilter) 
       {PLATFORMS.map((definition) => {
         const count = games.filter((game) => game.platform === definition.id).length;
         return <button className="platform-directory-card" key={definition.id} onClick={() => onChoose(definition.id)}>
-          <Gamepad2 /><b>{definition.label}</b><span>{count.toLocaleString()} games · MiSTer: {deviceFolderLabel(definition.id)}</span>
+          {/* A console with no MiSTer core has no core folder to name, so the
+              card says where its games can actually go instead of printing a
+              folder the device will never have. */}
+          <Gamepad2 /><b>{definition.label}</b><span>{count.toLocaleString()} games · {definition.mister ? `MiSTer: ${deviceFolderLabel(definition.id)}` : "Steam PC only"}</span>
         </button>;
       })}
     </div>
@@ -1364,7 +1373,14 @@ function Acquisition({ game }: { game: Game }) {
         <i><b style={{ width: `${state.percent ?? 0}%` }} /></i>
         <span>{state.message}</span>
       </div>}
-      {state.status === "done" && <button className="source-fallback" disabled={sending} onClick={async () => {
+      {/* The transfer is offered only for consoles the MiSTer has a core for.
+          Offering it for PlayStation 2 or Xbox 360 and failing at the device
+          would look like a broken connection rather than hardware that cannot
+          run the game at all. */}
+      {state.status === "done" && !isMisterPlatform(game.platform) && <p className="source-note">
+        {platformLabel(game.platform)} has no MiSTer core. This download stays in your library for a Steam PC.
+      </p>}
+      {state.status === "done" && isMisterPlatform(game.platform) && <button className="source-fallback" disabled={sending} onClick={async () => {
         setSending(true);
         try {
           const result = await window.gameStore!.transferLibraryToFpga(game.title, game.platform);
@@ -1405,7 +1421,7 @@ function MiSTerManager({ onOpenSettings }: { onOpenSettings: () => void }) {
         </section>)}
       </div>
       <div className="device-library-grid">
-        {PLATFORMS.map((definition) => definition.deviceFolder).map((platform) => <section className="device-console" key={platform}>
+        {MISTER_PLATFORMS.map((definition) => definition.deviceFolder as DeviceFolderId).map((platform) => <section className="device-console" key={platform}>
           <div><h2>{deviceFolderLabel(platform)}</h2><span>{(device.folders[platform] ?? []).length} installed</span></div>
           {!(device.folders[platform] ?? []).length ? <p>No managed games on this console yet.</p> : <ul>{(device.folders[platform] ?? []).map((folder) => <li key={folder}><span>{folder}</span><button disabled={busy} title="Remove this game from MiSTer" onClick={async () => {
             if (!confirm(`Remove “${folder}” from your MiSTer? The local GameStore library will stay intact.`)) return;
@@ -1427,10 +1443,29 @@ function catalogGameForItem(item: LibraryItem) {
   return games.find((entry) => entry.title === item.title && platformOf(entry.platform).id === platform);
 }
 
+/**
+ * Right-click handler shared by both checkout lanes' cover images.
+ *
+ * A queued file whose title matches no catalog entry has no artwork to choose
+ * between, so the browser's own menu is left alone rather than opening a picker
+ * with nothing in it.
+ */
+const artContextMenu = (game: Game | undefined, onPick: (game: Game) => void) =>
+  game
+    ? (event: React.MouseEvent) => {
+        event.preventDefault();
+        onPick(game);
+      }
+    : undefined;
+
+const artTitle = (game: Game | undefined) =>
+  game ? "Right-click to choose different box art" : undefined;
+
 function LibraryCart() {
   const { artFor } = useArtwork();
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [openCart, setOpenCart] = useState(false);
+  const [artPicker, setArtPicker] = useState<Game | null>(null);
   const [checkout, setCheckout] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
   const refresh = async () => setItems((await window.gameStore?.getLibraryCart()) ?? []);
@@ -1458,7 +1493,14 @@ function LibraryCart() {
                 {/* Shown at the art's own proportions: this lane sends the console's
                     native cover, so the row should look like what is being sent. */}
                 {cover
-                  ? <img className="cart-item-art" src={cover} alt="" loading="lazy" />
+                  ? <img
+                      className={game ? "cart-item-art pickable" : "cart-item-art"}
+                      src={cover}
+                      alt=""
+                      loading="lazy"
+                      title={artTitle(game)}
+                      onContextMenu={artContextMenu(game, setArtPicker)}
+                    />
                   : <span className="cart-item-art placeholder" aria-hidden="true" />}
                 <div>
                   <b>{item.title}{item.translated && <em className="cart-patched" title={item.translated.team ? `Patched with ${item.translated.team}` : "Translated copy"}>PATCHED</em>}</b>
@@ -1475,15 +1517,22 @@ function LibraryCart() {
             setCheckout("sending"); setMessage("Connecting and sending the full cart…");
             try {
               const result = await window.gameStore!.checkoutLibraryCart();
-              setCheckout("done"); setMessage(`Sent ${result.items} ${result.items === 1 ? "game" : "games"} · ${result.files} ${result.files === 1 ? "file" : "files"}`);
+              // Skipped items stay in the cart for the Steam lane, so the count
+              // is reported rather than left looking like a partial failure.
+              const skipped = result.skipped ? ` · ${result.skipped} left for a Steam PC` : "";
+              setCheckout("done"); setMessage(`Sent ${result.items} ${result.items === 1 ? "game" : "games"} · ${result.files} ${result.files === 1 ? "file" : "files"}${skipped}`);
             } catch (error) {
               setCheckout("error"); setMessage(error instanceof Error ? error.message : String(error));
             }
           }}><HardDriveUpload /> {checkout === "sending" ? "Sending cart…" : `Send all ${items.length} to MiSTer`}</button>
         </>}
         {message && <p className={`cart-message ${checkout}`}>{message}</p>}
-        <small className="cart-footnote">Files stay in your managed library after checkout.</small>
-        <SteamDeploy items={items} />
+        <small className="cart-footnote">Files stay in your managed library after checkout. Right-click a cover to pick different box art.</small>
+        <SteamDeploy items={items} onPickArt={setArtPicker} />
+        {/* Rendered inside the popover so the cart stays open behind it: the
+            chosen cover is what both lanes send, so the picker belongs to the
+            checkout it is about to change. */}
+        {artPicker && <ArtPicker game={artPicker} onClose={() => setArtPicker(null)} />}
       </div>}
     </div>
   );
@@ -1498,7 +1547,7 @@ function LibraryCart() {
  * button that cannot presently succeed is disabled with the actual reason
  * rather than left clickable to fail later.
  */
-function SteamDeploy({ items }: { items: LibraryItem[] }) {
+function SteamDeploy({ items, onPickArt }: { items: LibraryItem[]; onPickArt: (game: Game) => void }) {
   const { artFor } = useArtwork();
   const [target, setTarget] = useState<PcTargetSettings | null>(null);
   const [steam, setSteam] = useState<SteamStatus | null>(null);
@@ -1591,7 +1640,14 @@ function SteamDeploy({ items }: { items: LibraryItem[] }) {
         {/* Framed 2:3, the shape Steam's own grid uses, so the row previews how
             the cover will sit in the library rather than how it looks here. */}
         {cover
-          ? <img className="steam-deploy-art" src={cover} alt="" loading="lazy" />
+          ? <img
+              className={game ? "steam-deploy-art pickable" : "steam-deploy-art"}
+              src={cover}
+              alt=""
+              loading="lazy"
+              title={artTitle(game)}
+              onContextMenu={artContextMenu(game, onPickArt)}
+            />
           : <span className="steam-deploy-art placeholder" aria-hidden="true" />}
         <b>{item.title}</b>
         {!available.length

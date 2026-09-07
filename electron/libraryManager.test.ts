@@ -118,4 +118,29 @@ describe("managed library", () => {
     })).rejects.toThrow("device disconnected");
     expect((await getCart(dir)).map((item) => item.title)).toEqual(["Second"]);
   });
+
+  /**
+   * The cart stopped being single-destination when PlayStation 2 and Xbox 360
+   * entered the catalog. Before `skip`, a console with no MiSTer core threw and
+   * aborted the batch, so one PS2 game stranded every PlayStation game queued
+   * behind it. Skipped items must stay queued for the Steam lane.
+   */
+  it("sends the eligible cart and leaves consoles with no core queued", async () => {
+    const dir = await root();
+    for (const [title, platform] of [["First", "PSX"], ["Console-Only", "PS2"], ["Third", "Saturn"]]) {
+      const source = path.join(dir, `${title}.bin`);
+      await fs.writeFile(source, title);
+      await finalizeDownload({ root: dir, title, platform, downloadedFiles: [source] });
+    }
+    const sent: string[] = [];
+    const completed = await checkoutCart(
+      dir,
+      async (item) => { sent.push(item.title); },
+      undefined,
+      (item) => item.platform === "PS2",
+    );
+    expect(sent).toEqual(["First", "Third"]);
+    expect(completed.skipped.map((item) => item.title)).toEqual(["Console-Only"]);
+    expect((await getCart(dir)).map((item) => item.title)).toEqual(["Console-Only"]);
+  });
 });

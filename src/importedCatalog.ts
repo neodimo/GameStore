@@ -40,8 +40,12 @@ export const importedGames = (
     descriptionSource: seed.descriptionSource
       ? { label: "Catalog description source", url: seed.descriptionSource }
       : undefined,
-    cover: coverUrl(platform, seed.coverName),
-    coverName: seed.coverName,
+    // A seed with no published box-art name leaves both fields empty rather
+    // than building `Named_Boxarts/.png`, which would render a broken image
+    // instead of falling through to the runtime resolver. The Xbox 360
+    // thumbnail pack holds 12 covers, so nearly every 360 record lands here.
+    cover: seed.coverName ? coverUrl(platform, seed.coverName) : undefined,
+    coverName: seed.coverName || undefined,
     players:
       !seed.players || seed.players === "0"
         ? "Unknown"

@@ -266,6 +266,11 @@ header {
    proportions so the row shows the artwork exactly as it will be delivered. */
 .cart-item-art { flex: none; width: auto; height: 46px; max-width: 62px; object-fit: contain; border-radius: 4px; background: #1a1d1f; }
 .cart-item-art.placeholder { width: 34px; height: 46px; border: 1px dashed #3c4145; }
+/* Marks a cover whose right-click opens the artwork picker. Only covers backed
+   by a catalog entry carry it — a queued file matching no catalog title has no
+   alternates to browse, so its cover keeps the browser's own menu. */
+.cart-item-art.pickable, .steam-deploy-art.pickable { cursor: context-menu; }
+.cart-item-art.pickable:hover, .steam-deploy-art.pickable:hover { outline: 1px solid var(--amber); outline-offset: 1px; }
 .cart-item b, .cart-item span { display: block; }
 .cart-item b { font: 600 12px "Space Grotesk"; }
 .cart-item span { margin-top: 3px; color: #7d8386; font-size: 9px; }
@@ -1373,6 +1378,9 @@ main {
 .acquisition-form button { color: var(--amber); cursor: pointer; }
 .acquisition .source-fallback { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
 .acquisition .source-fallback svg { width: 14px; }
+/* Replaces the MiSTer transfer button for a console with no core, so the space
+   explains where the download can go instead of going quiet. */
+.acquisition .source-note { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; }
 .collection-candidates { display: grid; gap: 6px; margin-top: 10px; }
 .collection-candidates p { margin: 0; font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; color: #7d8386; }
 .collection-candidates button { display: grid; gap: 3px; text-align: left; cursor: pointer; }

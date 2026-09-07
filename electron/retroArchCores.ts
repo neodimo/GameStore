@@ -1,6 +1,22 @@
 import type { PcOs, RunCommand } from "./pcTarget";
 
-export type RetroPlatform = "PS1" | "N64" | "SAT";
+/**
+ * Consoles RetroArch can actually run here.
+ *
+ * Deliberately not every catalog console. The libretro buildbot index was read
+ * directly while adding PlayStation 2 and Xbox 360, and it carries
+ * `pcsx2_libretro` and `play_libretro` but nothing for the Xbox 360 — no
+ * `xenia` package exists on either the Linux or the Windows nightly. So the
+ * 360 is a catalog and library console only, served by the Ports section's
+ * recompilations rather than by an emulator core that does not exist.
+ */
+export type RetroPlatform = "PS1" | "N64" | "SAT" | "PS2";
+
+const RETRO_PLATFORMS = new Set<string>(["PS1", "N64", "SAT", "PS2"]);
+
+/** Whether RetroArch has a core for this catalog console. */
+export const isRetroPlatform = (id: string | undefined): id is RetroPlatform =>
+  RETRO_PLATFORMS.has(id ?? "");
 
 export type RetroCore = {
   id: string;
@@ -34,6 +50,14 @@ const CORE_CATALOG: Array<Omit<RetroCorePlatform, "cores"> & { cores: Array<Omit
     ],
   },
   {
+    platform: "PS2",
+    label: "PlayStation 2",
+    cores: [
+      { id: "pcsx2", name: "PCSX2", description: "The mainline PS2 emulator; best compatibility, needs a reasonably modern x64 CPU.", recommended: true },
+      { id: "play", name: "Play!", description: "Lighter alternative with narrower compatibility.", recommended: false },
+    ],
+  },
+  {
     platform: "SAT",
     label: "Sega Saturn",
     cores: [
@@ -43,7 +67,9 @@ const CORE_CATALOG: Array<Omit<RetroCorePlatform, "cores"> & { cores: Array<Omit
   },
 ];
 
-const BUILD_BOT_IDS = new Set(["swanstation", "pcsx_rearmed", "mupen64plus_next", "parallel_n64", "kronos", "mednafen_saturn"]);
+// Every id here was confirmed present on both the Linux and Windows nightly
+// indexes at buildbot.libretro.com before being listed as installable.
+const BUILD_BOT_IDS = new Set(["swanstation", "pcsx_rearmed", "mupen64plus_next", "parallel_n64", "kronos", "mednafen_saturn", "pcsx2", "play"]);
 
 export const coreCatalog = () => CORE_CATALOG.map((platform) => ({
   ...platform,
