@@ -327,10 +327,6 @@ function Catalog() {
           <div className="platforms">
             <button className={platform === "All" ? "active" : ""} onClick={() => choosePlatform("All")}>All</button>
             {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => choosePlatform(definition.id)}>{definition.shortLabel}</button>)}
-            <button disabled>PS2</button>
-            <button disabled>Dreamcast</button>
-            <button disabled>GameCube</button>
-            <button disabled>PSP</button>
             <span>PS1 preview catalog</span>
           </div>
           <div className="filters">
@@ -935,7 +931,7 @@ function PlatformDirectory({ onChoose }: { onChoose: (platform: PlatformFilter) 
           {/* A console with no MiSTer core has no core folder to name, so the
               card says where its games can actually go instead of printing a
               folder the device will never have. */}
-          <Gamepad2 /><b>{definition.label}</b><span>{count.toLocaleString()} games · {definition.mister ? `MiSTer: ${deviceFolderLabel(definition.id)}` : "Steam PC only"}</span>
+          <Gamepad2 /><b>{definition.label}</b><span>{count.toLocaleString()} games · {definition.mister ? `MiSTer: ${deviceFolderLabel(deviceFolderFor(definition.id))}` : "Steam PC only"}</span>
         </button>;
       })}
     </div>
@@ -1754,7 +1750,7 @@ function ProviderSettings({
       setDebridState(state);
       setCollectionUrls(
         Object.fromEntries(
-          state.collections.map((source) => [source.platform, source.url]),
+          (state.collections ?? []).map((source) => [source.platform, source.url]),
         ),
       );
     });
@@ -1780,7 +1776,7 @@ function ProviderSettings({
     PLATFORMS.flatMap((platform) => {
       const url = (collectionUrls[platform.id] ?? "").trim();
       if (!url) return [];
-      const existing = debridState.collections.find(
+      const existing = (debridState.collections ?? []).find(
         (source) => source.platform === platform.id,
       );
       return [{
@@ -1805,7 +1801,7 @@ function ProviderSettings({
   };
   const indexCollection = async (platformId: PlatformId) => {
     const collections = configuredCollections();
-    const source = collections.find((candidate) => candidate.platform === platformId);
+    const source = (collections ?? []).find((candidate) => candidate.platform === platformId);
     if (!source) return;
     setIndexing((current) => ({ ...current, [platformId]: `Indexing ${source.name}…` }));
     try {

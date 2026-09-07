@@ -25,8 +25,11 @@ const CATEGORY_LABELS: Record<MiSTerCoreCategory, string> = {
   other: "Other",
 };
 
-const formatBytes = (value: number) =>
-  value >= 1024 ** 2 ? `${(value / 1024 ** 2).toFixed(1)} MB` : `${(value / 1024).toFixed(0)} KB`;
+const formatBytes = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(value)) return "—";
+  if (value >= 1024 ** 2) return `${(value / 1024 ** 2).toFixed(1)} MB`;
+  return `${(value / 1024).toFixed(0)} KB`;
+};
 
 /**
  * The MiSTer Core Cabinet: browse every core in the catalogs `update_all.sh`
@@ -234,7 +237,7 @@ export function MiSTerCoreCabinet({ onOpenSettings }: { onOpenSettings: () => vo
                       </div>
                     )}
                     <span className={`core-game-badge ${core.gameCount === null ? "platform" : core.gameCount === 1 ? "single" : "multi"}`}>
-                      {core.gameCount === null ? "Platform" : core.gameCount === 1 ? "1 game" : `${core.gameCount} games`}
+                      {core.gameCount == null ? "Platform" : core.gameCount === 1 ? "1 game" : `${core.gameCount} games`}
                     </span>
                   </div>
                   <div className="core-card-head">

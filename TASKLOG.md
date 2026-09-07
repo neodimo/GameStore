@@ -1,5 +1,19 @@
 # GameStore task log
 
+## 2026-09-07 — Visual + technical audit batch (v0.33.0)
+
+- **What was done:** Walked every GameStore sidebar view + Settings tabs + cart → art picker flow with a puppeteer build against `dist/` (audit scratch in `/tmp/gamestore-audit/`, screenshots in `mockups/audit-2026-09-07/`, deliberately untracked per media-light policy). Three real bugs plus four polish findings; shipped all of them as v0.33.0.
+- **Bug 1 — SteamGridDB alternate-art → broken images on remote export (Omid's report, root cause confirmed):** `electron/coverCache.ts` downscales every cover to `TARGET_PX = 384`. SteamGridDB URLs are 600×900, got cached as 384×576, then uploaded to the remote PC as the `<appid>p.jpg` portrait capsule. Steam's grid needs ≥600×900. Fix: added a separate `cachedRawCoverPath` path under `covers-raw/` that keeps the source bytes, and `resolveLibraryArtwork` now routes SteamGridDB URLs through it while the native cover still uses the in-app grid cache.
+- **Bug 2 — Dead UI: duplicate platform pills on Discover:** `src/App.tsx` ~318 still rendered `<button disabled>PS2/Dreamcast/GameCube/PSP</button>` after `PLATFORMS.map(...)`. After v0.31.0 added PS2 + Xbox 360 to the real catalog, PS2 appeared twice (active + greyed). Dropped the hardcoded row.
+- **Bug 3 — MiSTer Cores "UNDEFINED GAMES" on every card + "NaN KB" size:** The `core-game-badge` rendered `${core.gameCount} games` when `core.gameCount` was `undefined` (rather than `null`); `formatBytes` rendered "NaN KB" for missing `core.rbfSize`. Both now guard against `null`/`undefined`/`NaN`.
+- **Polish also in v0.33.0:**
+  - Saturn card in Platforms showed `MiSTer: Sony PlayStation`. Root cause: `deviceFolderLabel(definition.id)` was being called with the catalog id (`"SAT"`) but the function expected a device folder name. Wrapped with `deviceFolderFor(definition.id)` so it goes catalog-id → device-folder → label.
+  - ProviderSettings Downloads / MiSTer tabs crashed on undefined collections. Wrapped `state.collections.map`, `debridState.collections.find`, and the related `.find` with `(x ?? [])` guards.
+- **Gates:** `npm run lint` ✓ · `npm test` 417/417 ✓ · `npm run build` ✓ · `check:bundle-size` (dist 2.90/3.00 MiB, dist-electron 0.35/0.50 MiB) ✓ · `check:package-size` ✓.
+- **Artifacts:** `electron/coverCache.ts`, `electron/main.ts`, `src/App.tsx`, `src/MiSTerCoreCabinet.tsx`, `package.json`, `package-lock.json`. `mockups/` and `scripts/__pycache__/import-ps1-catalog.cpython-314.pyc` remain untracked.
+- **State:** Ready to release as v0.33.0. The audit screenshots in `mockups/audit-2026-09-07/` are real audit captures (not marketing mockups); media-light policy should be reviewed and either that folder migrated to `docs/audit/` or the policy updated to include audit captures.
+- **Next owner + concrete artifact:** DiMo installs v0.33.0, triggers one SteamGridDB-sourced remote export on Bazzite, and confirms the `<appid>p.jpg` on the target is the original 600×900 (not a 384×576). Inspect via `ls -la ~/.steam/.../userdata/<id>/config/grid/`.
+
 ## 2026-09-07 — Xbox 360 standalone Xenia Canary route
 
 - **What was done:** Added an actual Xenia Canary lifecycle path outside RetroArch. Settings → PC / Steam now checks, installs, and updates Xenia through its official `xenia-canary/xenia-canary` GitHub releases. Linux installs the official `xenia_canary_linux.AppImage` into `~/.local/opt/xenia-canary`; Windows installs the official `xenia_canary_windows.7z` into `%LOCALAPPDATA%\GameStore\Xenia Canary`. Both persist the release tag locally and compare it with the current release API tag before offering an update. Xbox 360 cart items now expose Xenia Canary as their Steam deployment option once installed; they are uploaded under the GameStore library and receive a Steam shortcut that launches Xenia directly, in the Xbox 360 collection.

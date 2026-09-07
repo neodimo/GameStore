@@ -21,9 +21,24 @@ const QUALITY = 85;
 const MAX_INFLIGHT = 6;
 
 const root = () => path.join(app.getPath("userData"), "media-cache", "covers");
+/**
+ * Steam's portrait grid is 600×900. `covers/` re-encodes everything to 384px
+ * long edge, which is fine for in-app catalog cards but is the wrong shape for
+ * the `<appid>p.jpg` capsule GameStore uploads to a remote Steam library.
+ * `covers-raw/` keeps the original bytes for that exact consumer.
+ */
+const rawRoot = () => path.join(app.getPath("userData"), "media-cache", "covers-raw");
 const keyFor = (url: string) =>
   crypto.createHash("sha1").update(url).digest("hex");
 const fileFor = (url: string) => path.join(root(), `${keyFor(url)}.jpg`);
+const rawFileFor = (url: string) => {
+  const pathname = (() => {
+    try { return new URL(url).pathname; } catch { return ""; }
+  })();
+  const ext = path.extname(pathname).toLowerCase();
+  const safeExt = /^\.(png|jpe?g|webp)$/.test(ext) ? ext : ".jpg";
+  return path.join(rawRoot(), `${keyFor(url)}${safeExt}`);
+};
 
 /** In-flight and failed lookups, so a repainting grid never refetches. */
 const inflight = new Map<string, Promise<string | null>>();
@@ -91,6 +106,38 @@ const fetchAndStore = async (url: string): Promise<string | null> => {
 };
 
 /**
+ * Same as `fetchAndStore` but stores the original bytes without re-encoding.
+ *
+ * Used when the consumer needs the exact source dimensions — Steam's portrait
+ * capsule is 600×900 and a 384px re-encode (the grid-card tier) renders as a
+ * visibly broken or upscaled image when uploaded there. We share the
+ * `failed`/`inflight` map with the resized path so a previously-failed fetch
+ * is not retried under a different key.
+ */
+const fetchAndStoreRaw = async (url: string): Promise<string | null> => {
+  await acquire();
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": `GameStore/${app.getVersion()}` },
+    });
+    if (!response.ok) throw new Error(`Cover fetch returned ${response.status}`);
+    const data = Buffer.from(await response.arrayBuffer());
+    if (!data.length) throw new Error("Cover fetch produced no data.");
+    const target = rawFileFor(url);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    const temp = `${target}.${process.pid}.part`;
+    await fs.writeFile(temp, data);
+    await fs.rename(temp, target);
+    return target;
+  } catch {
+    failed.add(url);
+    return null;
+  } finally {
+    release();
+  }
+};
+
+/**
  * Returns a local address for `url`, caching it on first request. Null means the
  * cover could not be cached and the caller should use the remote original.
  *
@@ -133,4 +180,29 @@ export const cachedCoverPath = async (url: string): Promise<string | null> => {
   } catch {
     return null;
   }
+};
+
+/**
+ * On-disk path to the **original** bytes of `url`, cached on first request.
+ *
+ * Distinct from `cachedCoverPath` because that one re-encodes to the catalog
+ * grid tier (384px long edge). The Steam deploy upload needs the source
+ * dimensions — Steam's `<appid>p` portrait capsule is 600×900, and the
+ * re-encoded file renders as a broken/upscaled image when used there.
+ */
+export const cachedRawCoverPath = async (url: string): Promise<string | null> => {
+  if (!/^https:\/\//i.test(url)) return null;
+  if (failed.has(url)) return null;
+  const target = rawFileFor(url);
+  try {
+    const stat = await fs.stat(target);
+    if (stat.isFile() && stat.size > 0) return target;
+  } catch {
+    // Not cached yet.
+  }
+  const existing = inflight.get(`raw:${url}`);
+  if (existing) return existing;
+  const task = fetchAndStoreRaw(url).finally(() => inflight.delete(`raw:${url}`));
+  inflight.set(`raw:${url}`, task);
+  return task;
 };

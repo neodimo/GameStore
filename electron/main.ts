@@ -70,7 +70,7 @@ import {
   removeCollectionManifest,
 } from "./collectionIndex";
 import { getArtIndex } from "./artIndex";
-import { cachedCoverPath, getCachedCover } from "./coverCache";
+import { cachedCoverPath, cachedRawCoverPath, getCachedCover } from "./coverCache";
 import {
   fetchSnap,
   indexSnaps,
@@ -1342,7 +1342,15 @@ const resolveLibraryArtwork = async (title: string, coverUrl?: string) => {
       artworkNote = error instanceof Error ? error.message : String(error);
     }
   }
-  const localArtwork = artworkUrl ? (await cachedCoverPath(artworkUrl)) ?? undefined : undefined;
+  // SteamGridDB art is already the right shape for the `<appid>p` capsule
+  // (600×900), so it must NOT go through the 384px grid-tier cache that the
+  // in-app catalog cards share. The native cover falls back to the resized
+  // path because the letterboxed Steam grid tile it produces is still a
+  // better outcome than nothing, and a 384px image is what GameStore had
+  // been uploading pre-v0.33.0 — the bug that surfaced as "broken images".
+  const localArtwork = artworkUrl
+    ? (await (artworkShape === "steam-grid" ? cachedRawCoverPath(artworkUrl) : cachedCoverPath(artworkUrl))) ?? undefined
+    : undefined;
   return { localArtwork, artworkShape: localArtwork ? artworkShape : ("none" as const), artworkNote };
 };
 
