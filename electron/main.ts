@@ -105,6 +105,7 @@ import {
 } from "./pcTarget";
 import { checkRetroArch, installRetroArch, updateRetroArch, type RetroArchReleaseChannel } from "./retroArch";
 import { installRetroCore, isRetroPlatform, listRetroCores } from "./retroArchCores";
+import { checkXenia, installXenia, updateXenia } from "./xenia";
 import {
   deployToSteam,
   steamConfigDir,
@@ -1217,6 +1218,27 @@ ipcMain.handle("pc-target-retroarch-core-install", async (_event, coreId: string
     return listRetroCores(os, run);
   }),
 );
+ipcMain.handle("pc-target-xenia-check", async () => runOnPcTarget((run, os) => checkXenia(os, run)));
+ipcMain.handle("pc-target-xenia-install", async () =>
+  runOnPcTarget(async (run, os) => {
+    const before = await checkXenia(os, run);
+    if (before.installed) throw new Error("Xenia Canary is already installed on this target.");
+    await installXenia(os, run);
+    const after = await checkXenia(os, run);
+    if (!after.installed) throw new Error("Xenia's installer finished, but GameStore could not detect it afterward.");
+    return after;
+  }),
+);
+ipcMain.handle("pc-target-xenia-update", async () =>
+  runOnPcTarget(async (run, os) => {
+    const status = await checkXenia(os, run);
+    if (!status.installed) throw new Error("Xenia Canary is not installed on this target.");
+    if (status.updateBlockedReason) throw new Error(status.updateBlockedReason);
+    if (!status.updateAvailable) return status;
+    await updateXenia(os, run);
+    return checkXenia(os, run);
+  }),
+);
 
 /** Local-disk implementation of the deploy transport. */
 const localSteamTransport = (): SteamFileTransport => ({
@@ -1344,13 +1366,6 @@ ipcMain.handle(
       // MiSTer core, so it resolves library folders rather than device folders.
       const folder = libraryFolderForCatalog(request.catalogPlatform);
       const definition = devicePlatform(folder);
-      // Refused by name rather than by the missing-core message below, so the
-      // Xbox 360 reads as "no emulator exists" instead of "you forgot to
-      // install one" — there is no libretro core to install.
-      if (!isRetroPlatform(definition.catalogId))
-        throw new Error(
-          `${definition.label} has no RetroArch core. Use the Ports section for native ${definition.label} builds.`,
-        );
       const item = (await getCart(libraryRoot())).find(
         (entry) => entry.title === request.gameTitle && libraryFolderForStored(entry.platform) === folder,
       );
@@ -1359,12 +1374,22 @@ ipcMain.handle(
       // Every refusal below is deliberate: a shortcut whose core is missing, or
       // one written underneath a live Steam client that rewrites the file from
       // memory when it exits, looks like success and then silently is not.
-      const retroArch = await checkRetroArch(os, run);
-      if (!retroArch.installed) throw new Error("RetroArch is not installed on this target.");
-      const cores = await listRetroCores(os, run);
-      const core = cores.flatMap((platform) => platform.cores).find((candidate) => candidate.id === request.coreId);
-      if (!core) throw new Error("That emulator core is not one GameStore manages.");
-      if (!core.installed) throw new Error(`${core.name} is not installed on this target yet. Install it first.`);
+      let coreName: string;
+      if (definition.catalogId === "X360") {
+        if (request.coreId !== "xenia") throw new Error("Xbox 360 games must use Xenia Canary.");
+        const xenia = await checkXenia(os, run);
+        if (!xenia.installed) throw new Error("Xenia Canary is not installed on this target. Install it in Settings → PC / Steam.");
+        coreName = "Xenia Canary";
+      } else {
+        if (!isRetroPlatform(definition.catalogId)) throw new Error(`${definition.label} has no supported PC emulator.`);
+        const retroArch = await checkRetroArch(os, run);
+        if (!retroArch.installed) throw new Error("RetroArch is not installed on this target.");
+        const cores = await listRetroCores(os, run);
+        const core = cores.flatMap((platform) => platform.cores).find((candidate) => candidate.id === request.coreId);
+        if (!core) throw new Error("That emulator core is not one GameStore manages.");
+        if (!core.installed) throw new Error(`${core.name} is not installed on this target yet. Install it first.`);
+        coreName = core.name;
+      }
 
       const { status, home } = await steamStatusFor(run, os);
       const account = resolveSteamAccount(status, request.accountId);
@@ -1389,7 +1414,7 @@ ipcMain.handle(
       return {
         ...result,
         steamClosed,
-        coreName: core.name,
+        coreName,
         accountId: account.accountId,
         artworkIncluded: Boolean(localArtwork),
         artworkShape: localArtwork ? artworkShape : "none",

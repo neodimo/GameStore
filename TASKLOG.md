@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-09-07 — Xbox 360 standalone Xenia Canary route
+
+- **What was done:** Added an actual Xenia Canary lifecycle path outside RetroArch. Settings → PC / Steam now checks, installs, and updates Xenia through its official `xenia-canary/xenia-canary` GitHub releases. Linux installs the official `xenia_canary_linux.AppImage` into `~/.local/opt/xenia-canary`; Windows installs the official `xenia_canary_windows.7z` into `%LOCALAPPDATA%\GameStore\Xenia Canary`. Both persist the release tag locally and compare it with the current release API tag before offering an update. Xbox 360 cart items now expose Xenia Canary as their Steam deployment option once installed; they are uploaded under the GameStore library and receive a Steam shortcut that launches Xenia directly, in the Xbox 360 collection.
+- **Evidence:** Live research of the official latest release returned tag `80679bc`, with `xenia_canary_linux.AppImage` and `xenia_canary_windows.7z` assets. `npm run lint`, full `npm run build`, `git diff --check`, and `npx vitest run` passed: **416 tests, 30 files**. New unit tests cover Linux status/version comparison and both official installer paths.
+- **Artifacts:** New `electron/xenia.ts`, `electron/xenia.test.ts`. Modified `electron/main.ts`, `electron/preload.ts`, `electron/steamDeploy.ts`, `electron/steamCollections.ts`, `src/App.tsx`, `src/vite-env.d.ts`, package versions. `scripts/__pycache__/import-ps1-catalog.cpython-314.pyc` is a pre-existing generated tracked artifact rewritten by Python and remains deliberately unstaged; `mockups/` remains DiMo's untracked scratch.
+- **State:** Ready to release as v0.32.0. **Unverified:** a real target install/update, Xenia successfully opening an actual Xbox 360 dump, and the resulting Steam shortcut launch have not run against DiMo's PC.
+- **Next owner + concrete artifact:** DiMo installs v0.32.0, connects the PC target, uses Settings → PC / Steam → Xbox 360 · Xenia Canary → Install latest Xenia Canary, then sends one X360 cart game through the Xenia entry. Any observed command/output is the validation artifact for a follow-up.
+
 ## 2026-09-07 — Session-compaction handoff
 
 - **What was done:** Diagnosed the #gamestore run failures from gateway logs. The Discord session grew to 377k tokens against a 272k context window; Claude Opus turns then hit the 720-second CLI timeout twice and subsequently its session quota. Earlier MiniMax fallback hit HTTP 429. Sticky model overrides disabled normal fallback routing. The progress narrator also has no Anthropic credential and disabled itself after repeated auth failures.

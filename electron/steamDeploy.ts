@@ -122,10 +122,12 @@ export const coreFile = (os: PcOs, home: string, coreId: string) =>
  * so a game written here is readable by the emulator that has to open it —
  * which a game dropped in `~/Games` would not reliably be.
  */
-export const romDirectory = (os: PcOs, home: string, platform: RetroPlatform) =>
-  os === "windows"
+export const romDirectory = (os: PcOs, home: string, platform: RetroPlatform | "X360") =>
+  platform === "X360"
     ? joinPath(os, home, "GameStore", "roms", platform)
-    : joinPath(os, home, LINUX_RETRO_ROOT, "gamestore", platform);
+    : os === "windows"
+      ? joinPath(os, home, "GameStore", "roms", platform)
+      : joinPath(os, home, LINUX_RETRO_ROOT, "gamestore", platform);
 
 const PRIMARY_ORDER = [".m3u", ".cue", ".chd", ".pbp", ".iso", ".ccd", ".z64", ".n64", ".v64", ".bin", ".img"];
 
@@ -172,6 +174,15 @@ export const buildLaunch = (
   romPath: string,
   flatpakBranch = "stable",
 ): SteamLaunch => {
+  if (coreId === "xenia") {
+    const xeniaRoot = os === "windows"
+      ? joinPath(os, home, "AppData", "Local", "GameStore", "Xenia Canary")
+      : joinPath(os, home, ".local", "opt", "xenia-canary");
+    const exe = os === "windows"
+      ? joinPath(os, xeniaRoot, "xenia_canary.exe")
+      : joinPath(os, xeniaRoot, "xenia_canary.AppImage");
+    return { exe: `"${exe}"`, startDir: `"${xeniaRoot}${os === "windows" ? "\\" : "/"}"`, launchOptions: `"${romPath}"` };
+  }
   const core = coreFile(os, home, coreId);
   if (os === "windows") {
     const retroRoot = joinPath(os, home, WINDOWS_RETRO_ROOT);
@@ -220,7 +231,7 @@ export type SteamDeployRequest = {
   appName: string;
   management?: { kind?: "recomp" | "decomp" | "port"; platform?: string; version?: string; projectUrl?: string };
   /** Emulator deployments only — a port launches itself and belongs to no console. */
-  platform?: RetroPlatform;
+  platform?: RetroPlatform | "X360";
   coreId?: string;
   /** Absolute paths on the machine GameStore itself is running on. */
   localFiles: string[];

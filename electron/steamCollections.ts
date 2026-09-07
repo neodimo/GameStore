@@ -1,8 +1,8 @@
 import type { SteamFileTransport } from './steamDeploy';
 import type { RetroPlatform } from './retroArchCores';
 
-export const platformCollection = (platform: RetroPlatform): string =>
-  ({ PS1: 'PS1', N64: 'N64', SAT: 'Saturn', PS2: 'PS2' })[platform];
+export const platformCollection = (platform: RetroPlatform | "X360"): string =>
+  ({ PS1: 'PS1', N64: 'N64', SAT: 'Saturn', PS2: 'PS2', X360: 'Xbox 360' })[platform];
 
 type CloudEntry = [string, Record<string, unknown>];
 const object = (value: unknown): value is Record<string, unknown> =>

@@ -96,6 +96,14 @@ describe("Launch command", () => {
     expect(launch.launchOptions.endsWith("--fullscreen")).toBe(true);
   });
 
+  it("launches Xbox 360 games through the managed Xenia Canary executable", () => {
+    const launch = buildLaunch("linux", "/home/dimo", "xenia", "/home/dimo/GameStore/roms/X360/game.iso");
+    expect(launch.exe).toBe('"/home/dimo/.local/opt/xenia-canary/xenia_canary.AppImage"');
+    expect(launch.startDir).toBe('"/home/dimo/.local/opt/xenia-canary/"');
+    expect(launch.launchOptions).toBe('"/home/dimo/GameStore/roms/X360/game.iso"');
+    expect(romDirectory("linux", "/home/dimo", "X360")).toBe("/home/dimo/GameStore/roms/X360");
+  });
+
   it("reads the installed Flatpak branch rather than assuming stable", async () => {
     const run = vi.fn().mockResolvedValue({ stdout: "org.libretro.RetroArch\tbeta\norg.kde.Platform\t6.7\n", stderr: "", code: 0 });
     expect(await detectFlatpakBranch(run)).toBe("beta");

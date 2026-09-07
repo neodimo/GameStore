@@ -1552,6 +1552,7 @@ function SteamDeploy({ items, onPickArt }: { items: LibraryItem[]; onPickArt: (g
   const [target, setTarget] = useState<PcTargetSettings | null>(null);
   const [steam, setSteam] = useState<SteamStatus | null>(null);
   const [cores, setCores] = useState<RetroCorePlatform[]>([]);
+  const [xenia, setXenia] = useState<XeniaStatus | null>(null);
   const [chosen, setChosen] = useState<Record<string, string>>({});
   const [state, setState] = useState<"idle" | "loading" | "sending" | "done" | "error">("idle");
   const [note, setNote] = useState("");
@@ -1563,11 +1564,12 @@ function SteamDeploy({ items, onPickArt }: { items: LibraryItem[]; onPickArt: (g
     if (!configured?.os) return;
     setState("loading"); setNote("");
     try {
-      const [status, coreList] = await Promise.all([
+      const [status, coreList, xeniaStatus] = await Promise.all([
         window.gameStore.getSteamStatus(),
         window.gameStore.getRetroArchCores(),
+        window.gameStore.checkXenia(),
       ]);
-      setSteam(status); setCores(coreList); setState("idle");
+      setSteam(status); setCores(coreList); setXenia(xeniaStatus); setState("idle");
     } catch (error) {
       setState("error"); setNote(error instanceof Error ? error.message : String(error));
     }
@@ -1576,8 +1578,9 @@ function SteamDeploy({ items, onPickArt }: { items: LibraryItem[]; onPickArt: (g
 
   if (!target) return null;
   const where = target.kind === "local" ? "this computer" : `${target.name || target.host}${target.host ? ` · ${target.host}` : ""}`;
-  const installedFor = (platform: PlatformId) =>
-    (cores.find((entry) => entry.platform === platform)?.cores ?? []).filter((core) => core.installed);
+  const installedFor = (platform: PlatformId) => platform === "X360"
+    ? xenia?.installed ? [{ id: "xenia", name: "Xenia Canary", recommended: true, installed: true, description: "Standalone Xbox 360 emulator" }] : []
+    : (cores.find((entry) => entry.platform === platform)?.cores ?? []).filter((core) => core.installed);
 
   const blocked =
     !target.os ? "Detect this machine’s OS in Settings first."
@@ -1651,7 +1654,7 @@ function SteamDeploy({ items, onPickArt }: { items: LibraryItem[]; onPickArt: (g
           : <span className="steam-deploy-art placeholder" aria-hidden="true" />}
         <b>{item.title}</b>
         {!available.length
-          ? <span className="steam-need-core">No {platformLabel(platform)} core installed on that machine yet — install one in Settings → PC / Steam.</span>
+          ? <span className="steam-need-core">{platform === "X360" ? "Xenia Canary is not installed on that machine yet — install it in Settings → PC / Steam." : `No ${platformLabel(platform)} core installed on that machine yet — install one in Settings → PC / Steam.`}</span>
           : <>
             <select value={coreId} aria-label={`Emulator core for ${item.title}`} onChange={(e) => setChosen({ ...chosen, [item.id]: e.target.value })}>
               {available.map((core) => <option key={core.id} value={core.id}>{core.name}{core.recommended ? " · recommended" : ""}</option>)}
@@ -1731,6 +1734,9 @@ function ProviderSettings({
   const [raMessage, setRaMessage] = useState("");
   const [raCores, setRaCores] = useState<RetroCorePlatform[]>([]);
   const [raCoreBusy, setRaCoreBusy] = useState("");
+  const [xeniaStatus, setXeniaStatus] = useState<XeniaStatus | null>(null);
+  const [xeniaBusy, setXeniaBusy] = useState(false);
+  const [xeniaMessage, setXeniaMessage] = useState("");
   const [gridKey, setGridKey] = useState("");
   const [gridSaved, setGridSaved] = useState(false);
   const [gridMessage, setGridMessage] = useState("");
@@ -1990,6 +1996,24 @@ function ProviderSettings({
     } finally {
       setRaCoreBusy("");
     }
+  };
+  const checkXeniaStatus = async () => {
+    setXeniaBusy(true); setXeniaMessage("Checking Xenia Canary…");
+    try { setXeniaStatus(await window.gameStore!.checkXenia()); setXeniaMessage(""); }
+    catch (error) { setXeniaMessage(error instanceof Error ? error.message : String(error)); }
+    finally { setXeniaBusy(false); }
+  };
+  const installXeniaTarget = async () => {
+    setXeniaBusy(true); setXeniaMessage("Installing the latest Xenia Canary release…");
+    try { setXeniaStatus(await window.gameStore!.installXenia()); setXeniaMessage("Xenia Canary installed successfully."); }
+    catch (error) { setXeniaMessage(error instanceof Error ? error.message : String(error)); }
+    finally { setXeniaBusy(false); }
+  };
+  const updateXeniaTarget = async () => {
+    setXeniaBusy(true); setXeniaMessage("Updating Xenia Canary…");
+    try { setXeniaStatus(await window.gameStore!.updateXenia()); setXeniaMessage(""); }
+    catch (error) { setXeniaMessage(error instanceof Error ? error.message : String(error)); }
+    finally { setXeniaBusy(false); }
   };
   const exportShelf = async () => {
     const payload = JSON.stringify(
@@ -2508,6 +2532,36 @@ function ProviderSettings({
           </div>}
         </>}
         {raMessage && <p className="test-result">{raMessage}</p>}
+        <hr />
+        <h2>Xbox 360 · Xenia Canary</h2>
+        <p>
+          Xbox 360 uses Xenia Canary directly — it is separate from RetroArch.
+          GameStore installs the official release, reads its version from the
+          release channel, and offers an update only when a newer build exists.
+        </p>
+        <div className="settings-actions">
+          <button disabled={xeniaBusy} onClick={checkXeniaStatus}>
+            {xeniaBusy ? "Working…" : "Check Xenia Canary"}
+          </button>
+          {xeniaStatus?.installed && xeniaStatus.updateAvailable && (
+            <button disabled={xeniaBusy} onClick={updateXeniaTarget}>
+              Update to {xeniaStatus.latestVersion}
+            </button>
+          )}
+          {xeniaStatus && !xeniaStatus.installed && !xeniaStatus.updateBlockedReason && (
+            <button disabled={xeniaBusy} onClick={installXeniaTarget}>Install latest Xenia Canary</button>
+          )}
+        </div>
+        {xeniaStatus && <p className="test-result">
+          {!xeniaStatus.installed
+            ? xeniaStatus.updateBlockedReason ?? "Xenia Canary is not installed on this target."
+            : xeniaStatus.updateBlockedReason
+              ? `Installed${xeniaStatus.version ? ` (${xeniaStatus.version})` : ""}. ${xeniaStatus.updateBlockedReason}`
+              : xeniaStatus.updateAvailable
+                ? `Installed ${xeniaStatus.version ?? "release"} → ${xeniaStatus.latestVersion} available.`
+                : `Installed ${xeniaStatus.version ?? "release"}${xeniaStatus.latestVersion ? " (up to date)" : ""}.`}
+        </p>}
+        {xeniaMessage && <p className="test-result">{xeniaMessage}</p>}
         </>}
         <hr />
         <h2>Steam cover art</h2>

@@ -64,6 +64,9 @@ contextBridge.exposeInMainWorld("gameStore", {
   updateRetroArch: () => ipcRenderer.invoke("pc-target-retroarch-update"),
   getRetroArchCores: () => ipcRenderer.invoke("pc-target-retroarch-cores"),
   installRetroArchCore: (coreId: string) => ipcRenderer.invoke("pc-target-retroarch-core-install", coreId),
+  checkXenia: () => ipcRenderer.invoke("pc-target-xenia-check"),
+  installXenia: () => ipcRenderer.invoke("pc-target-xenia-install"),
+  updateXenia: () => ipcRenderer.invoke("pc-target-xenia-update"),
   getSteamStatus: () => ipcRenderer.invoke("pc-target-steam-status"),
   deployToSteam: (request: {
     gameTitle: string;

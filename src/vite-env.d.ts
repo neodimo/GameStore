@@ -54,6 +54,9 @@ interface Window {
     updateRetroArch(): Promise<RetroArchStatus>;
     getRetroArchCores(): Promise<RetroCorePlatform[]>;
     installRetroArchCore(coreId: string): Promise<RetroCorePlatform[]>;
+    checkXenia(): Promise<XeniaStatus>;
+    installXenia(): Promise<XeniaStatus>;
+    updateXenia(): Promise<XeniaStatus>;
     getSteamStatus(): Promise<SteamStatus>;
     deployToSteam(request: {
       gameTitle: string;
@@ -205,6 +208,14 @@ type RetroArchStatus = {
 };
 type RetroCore = { id: string; name: string; description: string; recommended: boolean; installed: boolean };
 type RetroCorePlatform = { platform: CatalogPlatformId; label: string; cores: RetroCore[] };
+type XeniaStatus = {
+  installed: boolean;
+  method?: "github-release" | "path";
+  version?: string;
+  latestVersion?: string;
+  updateAvailable?: boolean;
+  updateBlockedReason?: string;
+};
 type SteamAccount = { steamRoot: string; accountId: string };
 type SteamStatus = {
   installed: boolean;
