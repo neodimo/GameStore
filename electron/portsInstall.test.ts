@@ -59,7 +59,7 @@ describe("extractTarGz", () => {
     }
   });
 
-  it("preserves the executable bit for files that had it", async () => {
+  it("extracts executable files and preserves POSIX permissions where supported", async () => {
     const dir = await tempDir();
     try {
       const archive = path.join(dir, "release.tar.gz");
@@ -67,7 +67,9 @@ describe("extractTarGz", () => {
       const destination = path.join(dir, "out");
       await extractTarGz(archive, destination);
       const mode = (await fs.stat(path.join(destination, "run.sh"))).mode & 0o777;
-      expect(mode & 0o111).not.toBe(0);
+      expect(await fs.readFile(path.join(destination, "run.sh"), "utf8")).toBe("#!/bin/sh\n");
+      // Windows stat/chmod does not expose POSIX executable bits.
+      if (process.platform !== "win32") expect(mode & 0o111).not.toBe(0);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
