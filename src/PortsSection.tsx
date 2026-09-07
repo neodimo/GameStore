@@ -183,10 +183,14 @@ function PortCard({
     setBusy("acquiring");
     setNote(`Searching your torrent collection for the ${PORT_PLATFORM_LABELS[entry.sourcePlatform]} release…`);
     try {
+      // The collection IPC accepts the narrower catalog platform id; ports
+      // that map to consoles with no torrent collection configured will just
+      // return an empty result, which the error path below handles.
+      const collectionPlatform = entry.sourcePlatform as CatalogPlatformId;
       const found = await window.gameStore!.searchCollections(
         entry.title,
         "USA",
-        entry.sourcePlatform,
+        collectionPlatform,
       );
       if (!found.length) {
         setBusy("error");
@@ -204,7 +208,7 @@ function PortCard({
         pick.sourceUrl,
         [pick.path],
         entry.title,
-        entry.sourcePlatform,
+        collectionPlatform,
       );
       setBusy("done");
       setNote(
@@ -219,7 +223,7 @@ function PortCard({
 
   // Promise-based selector so the install handler can `await` a user choice
   // without locking the rest of the UI. Resolves with `null` on cancel.
-  const pickCandidate = (candidates: { path: string }[]): Promise<{ path: string } | null> =>
+  const pickCandidate = (candidates: CollectionCandidate[]): Promise<CollectionCandidate | null> =>
     new Promise((resolve) => {
       const choices = candidates.map((c) => c.path.split("/").pop() ?? c.path);
       const answer = window.prompt(
