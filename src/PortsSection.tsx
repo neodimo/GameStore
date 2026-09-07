@@ -1,9 +1,7 @@
 import {
   AlertTriangle,
   Box,
-  Download,
   ExternalLink,
-  FolderOpen,
   HardDriveUpload,
   RefreshCw,
   ShieldAlert,
@@ -181,43 +179,59 @@ function PortCard({
     technique: entry.technique,
   };
 
-  const attachFiles = async () => {
-    const picked = await window.gameStore?.pickPortGameData();
-    if (picked?.length) setGameDataFiles((existing) => [...existing, ...picked]);
-  };
-
-  const acquireFromMinerva = async () => {
-    setBusy("acquiring"); setNote("Fetching the original game through the configured Minerva / Real-Debrid source…");
-    try {
-      const files = await window.gameStore!.acquirePortGameData(requestEntry);
-      setGameDataFiles((existing) => [...existing, ...files]);
-      setBusy("idle"); setNote(`Fetched ${files.length} file(s).`);
-    } catch (error) {
-      setBusy("error"); setNote(error instanceof Error ? error.message : String(error));
-    }
-  };
-
   const install = async () => {
-    setBusy("installing"); setNote(`Downloading the release, unpacking it, and sending it to ${targetLabel ?? "the target"}…`);
+    setBusy("acquiring");
+    setNote(`Searching your torrent collection for the ${PORT_PLATFORM_LABELS[entry.sourcePlatform]} release…`);
     try {
-      const result = await window.gameStore!.installPort({
-        entry: requestEntry,
-        gameDataFiles,
-        coverUrl: coverSrc ?? entry.coverUrl,
-        accountId,
-      });
+      const found = await window.gameStore!.searchCollections(
+        entry.title,
+        "USA",
+        entry.sourcePlatform,
+      );
+      if (!found.length) {
+        setBusy("error");
+        setNote(
+          `No torrent collection is indexed for ${PORT_PLATFORM_LABELS[entry.sourcePlatform]}. ` +
+          `Add or re-index one in Settings → Collections, then try again.`,
+        );
+        return;
+      }
+      const pick = found.length === 1 ? found[0] : await pickCandidate(found);
+      if (!pick) { setBusy("idle"); setNote(""); return; }
+      setBusy("installing");
+      setNote(`Downloading ${pick.path.split("/").pop() ?? pick.path}…`);
+      await window.gameStore!.downloadCollectionSelection(
+        pick.sourceUrl,
+        [pick.path],
+        entry.title,
+        entry.sourcePlatform,
+      );
       setBusy("done");
       setNote(
-        `${result.appName} installed. ${result.replacedExisting ? "Updated the existing Steam entry" : "Added to Steam"}` +
-        `${result.artworkShape === "steam-grid" ? " with SteamGridDB vertical art" : result.artworkShape === "native" ? " with its catalog cover" : ""}` +
-        ` · Ports collection. Start Steam to see it.`,
+        `In your cart. ${found.length > 1 ? `Picked ${pick.path.split("/").pop()} from ${found.length} candidates. ` : ""}` +
+        `Open the cart to send it to ${targetLabel ?? "the target"}.`,
       );
     } catch (error) {
-      setBusy("error"); setNote(error instanceof Error ? error.message : String(error));
+      setBusy("error");
+      setNote(error instanceof Error ? error.message : String(error));
     }
   };
 
-  const needsGameData = entry.needsOriginalAssets && gameDataFiles.length === 0;
+  // Promise-based selector so the install handler can `await` a user choice
+  // without locking the rest of the UI. Resolves with `null` on cancel.
+  const pickCandidate = (candidates: { path: string }[]): Promise<{ path: string } | null> =>
+    new Promise((resolve) => {
+      const choices = candidates.map((c) => c.path.split("/").pop() ?? c.path);
+      const answer = window.prompt(
+        `Multiple releases of ${entry.title} were found. Type the one to download:\n\n${choices.map((c, i) => `${i + 1}. ${c}`).join("\n")}`,
+        choices[0],
+      );
+      if (answer == null) return resolve(null);
+      const match = candidates.find((c) => (c.path.split("/").pop() ?? c.path) === answer)
+        ?? candidates.find((c) => c.path.endsWith(answer))
+        ?? candidates[0];
+      resolve(match);
+    });
 
   return (
     <article className="port-card">
@@ -241,13 +255,6 @@ function PortCard({
           {entry.preRelease && <span className="port-card-badge port-card-badge-warn">Pre-release</span>}
           {entry.aiAssisted && <span className="port-card-badge"><Sparkles size={12} /> AI-assisted</span>}
         </p>
-        {entry.needsOriginalAssets && (
-          <p className="port-card-assets">
-            <ShieldAlert />
-            Requires your own legally-acquired copy of the original game
-            {entry.requiredRomRevision ? ` (${entry.requiredRomRevision})` : ""}.
-          </p>
-        )}
 
         <div className="port-card-actions">
           <button className="port-card-link" onClick={() => openExternal(entry.projectUrl)}>
@@ -273,28 +280,13 @@ function PortCard({
 
         {installable && supportsThisTarget && (
           <div className="port-card-install">
-            {needsGameData && (
-              <div className="port-card-gamedata">
-                {entry.downloadUrl && (
-                  <button className="port-card-link" disabled={busy === "acquiring"} onClick={() => void acquireFromMinerva()}>
-                    <Download /> {busy === "acquiring" ? "Fetching…" : "Get game data"}
-                  </button>
-                )}
-                <button className="port-card-link" onClick={() => void attachFiles()}>
-                  <FolderOpen /> Attach files I have
-                </button>
-              </div>
-            )}
-            {gameDataFiles.length > 0 && (
-              <p className="port-card-gamedata-note">{gameDataFiles.length} game data file(s) ready.</p>
-            )}
             <button
               className="port-card-cart"
-              disabled={busy === "installing" || busy === "acquiring" || needsGameData || Boolean(installDisabledReason)}
+              disabled={busy !== "idle" || Boolean(installDisabledReason)}
               title={installDisabledReason || undefined}
               onClick={() => void install()}
             >
-              <HardDriveUpload /> {busy === "installing" ? "Installing…" : "Install to PC"}
+              <HardDriveUpload /> {busy === "acquiring" ? "Searching…" : busy === "installing" ? "Downloading…" : "Download release"}
             </button>
           </div>
         )}
