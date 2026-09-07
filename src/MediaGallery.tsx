@@ -336,7 +336,11 @@ function PreviewPane({
           muted
           loop
           playsInline
-          preload="auto"
+          // `metadata` loads the header so the loop start seek works without
+          // pulling the whole video up front. A future patch can swap this for
+          // an IntersectionObserver that sets `src` only when the card is in
+          // the viewport; right now the card mount itself is the gate.
+          preload="metadata"
           poster={video?.gifUrl}
           onLoadedMetadata={(event) => {
             if (start) event.currentTarget.currentTime = start;

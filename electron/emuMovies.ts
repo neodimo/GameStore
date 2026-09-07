@@ -133,8 +133,13 @@ const LATER_SONY = /\b(2|3|4|5|portable|psp|vita)\b/i;
 
 const SYSTEM_ALIASES: Record<string, RegExp> = {
   PS1: /sony|playstation|psx/i,
+  // PS2 lives under Sony in the FTP tree, and LATER_SONY below filters out
+  // PS3/PS4/PSP/Vita folders so the same traversal does not pick up a PS3
+  // snap set when a PS2 catalog is the request.
+  PS2: /sony.*playstation\s*2|ps2/i,
   N64: /nintendo\W*(?:64|n64)\b|\bn64\b/i,
   SAT: /sega\s*saturn|\bsaturn\b/i,
+  X360: /xbox\s*360|\bxbox\b|\bx360\b/i,
 };
 
 /**
