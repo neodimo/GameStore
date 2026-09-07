@@ -9,7 +9,7 @@ const object = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Merge one membership; unrelated cloud records and user collections survive. */
-export function mergeCollection(data: Buffer, name: string, appId: number, now: Date): Buffer {
+export function mergeCollection(data: Buffer, name: string, appId: number, now: Date, action: "add" | "remove" = "add"): Buffer {
   const entries: unknown = JSON.parse(data.toString('utf8'));
   if (!Array.isArray(entries) || !entries.every((entry) => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && object(entry[1])))
     throw new Error('Unrecognized Steam collection storage; no collection changes were made.');
@@ -26,6 +26,7 @@ export function mergeCollection(data: Buffer, name: string, appId: number, now: 
       selected = row; collection = parsed;
     }
   }
+  if (!selected && action === "remove") return data;
   if (!selected) {
     const id = `gamestore-${name.toLowerCase()}`;
     if (rows.some((row) => row[0] === `user-collections.${id}`))
@@ -39,8 +40,8 @@ export function mergeCollection(data: Buffer, name: string, appId: number, now: 
   const removed = current.removed ?? [];
   if (!Array.isArray(added) || !Array.isArray(removed) || ![...added, ...removed].every((id) => Number.isInteger(id)))
     throw new Error('Invalid Steam collection membership; no collection changes were made.');
-  current.added = [...new Set([...added, appId])];
-  current.removed = removed.filter((id) => id !== appId);
+  current.added = action === "add" ? [...new Set([...added, appId])] : added.filter((id) => id !== appId);
+  current.removed = action === "add" ? removed.filter((id) => id !== appId) : [...new Set([...removed, appId])];
   const timestamp = Math.floor(now.getTime() / 1000);
   selected[1] = { ...selected[1], key: selected[0], timestamp, version: String(timestamp),
     value: JSON.stringify(current), conflictResolutionMethod: 'custom', strMethodId: 'union-collections' };
@@ -48,7 +49,7 @@ export function mergeCollection(data: Buffer, name: string, appId: number, now: 
 }
 
 /** Read and validate before deploying any files; never treat corrupt data as empty. */
-export async function prepareCollection(directory: string, separator: string, name: string, appId: number, transport: SteamFileTransport, now: Date) {
+export async function prepareCollection(directory: string, separator: string, name: string, appId: number, transport: SteamFileTransport, now: Date, action: "add" | "remove" = "add") {
   const namespaces = await transport.readFile(`${directory}${separator}cloud-storage-namespaces.json`);
   let namespace = 1;
   if (namespaces) {
@@ -63,7 +64,7 @@ export async function prepareCollection(directory: string, separator: string, na
   const file = `${directory}${separator}cloud-storage-namespace-${namespace}.json`;
   const original = await transport.readFile(file);
   if (!original) throw new Error('Steam collection storage is not initialized. Create a collection in Steam, close Steam completely, then retry.');
-  const updated = mergeCollection(original, name, appId, now);
+  const updated = mergeCollection(original, name, appId, now, action);
   return {
     file,
     async commit() {

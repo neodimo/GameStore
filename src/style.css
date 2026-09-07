@@ -2636,3 +2636,18 @@ footer {
 .port-card-note.done {
   color: rgb(150, 220, 170);
 }
+
+.managed-steam { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.managed-header, .managed-filters, .managed-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.managed-header > div { flex: 1; }
+.managed-header h1 { display: flex; align-items: center; gap: 10px; }
+.managed-steam p, .managed-steam small { color: #b4b8bd; line-height: 1.5; }
+.managed-steam button { background: #edb444; color: #17191b; border: 1px solid #a88034; border-radius: 7px; padding: 9px 13px; cursor: pointer; }
+.managed-steam button:disabled { opacity: .5; cursor: wait; }
+.managed-steam input, .managed-steam select { background: #17191b; color: #eee; border: 1px solid #45494e; border-radius: 7px; padding: 10px; }
+.managed-game { background: #191c1f; border: 1px solid #3c4146; border-radius: 12px; padding: 20px; margin: 14px 0; }
+.managed-game h3 { margin: 0; }
+.managed-game dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px; font-size: 13px; }
+.managed-game dt { color: #b4b8bd; }
+.managed-game dd { margin: 0; overflow-wrap: anywhere; }
+.managed-status { color: #edb444; font-size: 13px; }

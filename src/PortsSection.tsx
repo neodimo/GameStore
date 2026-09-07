@@ -178,6 +178,7 @@ function PortCard({
     downloadUrl: entry.downloadUrl,
     requiredRomRevision: entry.requiredRomRevision,
     sourcePlatform: entry.sourcePlatform,
+    technique: entry.technique,
   };
 
   const attachFiles = async () => {

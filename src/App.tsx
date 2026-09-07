@@ -44,6 +44,7 @@ import { ArtPicker } from "./ArtPicker";
 import { MediaGallery } from "./MediaGallery";
 import { restartMediaAudit } from "./mediaLibrary";
 import { MiSTerCoreCabinet } from "./MiSTerCoreCabinet";
+import { ManagedSteamSection } from "./ManagedSteamSection";
 import { PortsSection } from "./PortsSection";
 
 type Sort = "title" | "rating";
@@ -89,6 +90,7 @@ function Catalog() {
   const [coreCabinet, setCoreCabinet] = useState(false);
   const [platformDirectory, setPlatformDirectory] = useState(false);
   const [portsOpen, setPortsOpen] = useState(false);
+  const [managedOpen, setManagedOpen] = useState(false);
   const [facet, setFacet] = useState("All flavors");
   const [translation, setTranslation] = useState(false);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
@@ -216,6 +218,7 @@ function Catalog() {
     setCoreCabinet(false);
     setPlatformDirectory(false);
     setPortsOpen(false);
+    setManagedOpen(false);
   };
   const browsing =
     !!query ||
@@ -252,11 +255,11 @@ function Catalog() {
           })}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button>
         </div>
         <nav>
-          <button className={!favoriteOnly && !deviceManager && !coreCabinet && !platformDirectory && !portsOpen ? "active" : ""} onClick={reset} title="Discover">
+          <button className={!favoriteOnly && !deviceManager && !coreCabinet && !platformDirectory && !portsOpen && !managedOpen ? "active" : ""} onClick={reset} title="Discover">
             <Compass />
             <span>Discover</span>
           </button>
-          <button className={platformDirectory ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setPlatformDirectory(true); }} title="Platforms">
+          <button className={platformDirectory ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setManagedOpen(false); setPortsOpen(false); setPlatformDirectory(true); }} title="Platforms">
             <Gamepad2 />
             <span>Platforms</span>
           </button>
@@ -270,23 +273,24 @@ function Catalog() {
           </button>
           <button
             className={favoriteOnly ? "active" : ""}
-            onClick={() => setFavoriteOnly(true)}
+            onClick={() => { reset(); setFavoriteOnly(true); }}
           >
             <Heart />
             <span>Favorites</span>
           </button>
-          <button className={deviceManager ? "active" : ""} onClick={() => { setCoreCabinet(false); setDeviceManager(true); }} title="Manage MiSTer">
+          <button className={deviceManager ? "active" : ""} onClick={() => { setManagedOpen(false); setPortsOpen(false); setCoreCabinet(false); setDeviceManager(true); }} title="Manage MiSTer">
             <HardDrive />
             <span>Manage MiSTer</span>
           </button>
-          <button className={coreCabinet ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(true); }} title="MiSTer Cores">
+          <button className={coreCabinet ? "active" : ""} onClick={() => { setManagedOpen(false); setPortsOpen(false); setDeviceManager(false); setCoreCabinet(true); }} title="MiSTer Cores">
             <Grid2X2 />
             <span>MiSTer Cores</span>
           </button>
-          <button className={portsOpen ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setPlatformDirectory(false); setPortsOpen(true); }} title="PC-native ports of retro games">
+          <button className={portsOpen ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setPlatformDirectory(false); setManagedOpen(false); setPortsOpen(true); }} title="PC-native ports of retro games">
             <Box />
             <span>Ports</span>
           </button>
+          <button className={managedOpen ? "active" : ""} onClick={() => { setDeviceManager(false); setCoreCabinet(false); setPlatformDirectory(false); setPortsOpen(false); setManagedOpen(true); }} title="Manage games on the selected PC"><HardDrive /><span>Managed PC games</span></button>
         </nav>
         <button className="settings-link" onClick={() => setSettings(true)} title="Settings">
           <Settings />
@@ -313,7 +317,7 @@ function Catalog() {
           <LibraryCart />
         </header>
         <main>
-          {deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : coreCabinet ? <MiSTerCoreCabinet onOpenSettings={() => setSettings(true)} /> : platformDirectory ? <PlatformDirectory onChoose={(next) => { choosePlatform(next); setPlatformDirectory(false); }} /> : <>
+          {managedOpen ? <ManagedSteamSection onOpenSettings={() => setSettings(true)} onOpenPorts={() => { setManagedOpen(false); setPortsOpen(true); }} /> : portsOpen ? <PortsSection onClose={() => setPortsOpen(false)} /> : deviceManager ? <MiSTerManager onOpenSettings={() => setSettings(true)} /> : coreCabinet ? <MiSTerCoreCabinet onOpenSettings={() => setSettings(true)} /> : platformDirectory ? <PlatformDirectory onChoose={(next) => { choosePlatform(next); setPlatformDirectory(false); }} /> : <>
           <div className="platforms">
             <button className={platform === "All" ? "active" : ""} onClick={() => choosePlatform("All")}>All</button>
             {PLATFORMS.map((definition) => <button key={definition.id} className={platform === definition.id ? "active" : ""} onClick={() => choosePlatform(definition.id)}>{definition.shortLabel}</button>)}

@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { readRegistry, saveRegistry, reconcile, legacyCandidates, shortcutEntries, editManagedShortcut } from "./managedSteam";
+import { prepareCollection } from "./steamCollections";
 import {
   app,
   BrowserWindow,
@@ -101,6 +104,9 @@ import { checkRetroArch, installRetroArch, updateRetroArch, type RetroArchReleas
 import { installRetroCore, listRetroCores } from "./retroArchCores";
 import {
   deployToSteam,
+  steamConfigDir,
+  shortcutsFile,
+  joinPath,
   closeSteamForDeploy,
   detectFlatpakBranch,
   findSteam,
@@ -1232,23 +1238,31 @@ const localSteamTransport = (): SteamFileTransport => ({
  * file transport a deploy needs, so the SSH connection is opened once for both
  * the commands and the transfers instead of twice.
  */
-const runOnPcTargetWithFiles = async <T,>(
-  handler: (run: RunCommand, os: PcOs, transport: SteamFileTransport) => Promise<T>,
+const runOnPcTargetWithFilesUnlocked = async <T,>(
+  handler: (run: RunCommand, os: PcOs, transport: SteamFileTransport, target: NonNullable<Awaited<ReturnType<typeof readSettings>>["pcTarget"]>) => Promise<T>,
 ): Promise<T> => {
   const t = (await readSettings()).pcTarget;
   if (!t) throw new Error("Configure a PC target in Settings first.");
   if (!t.os) throw new Error("Detect this machine's OS first — use Connect & detect OS in Settings.");
-  if (t.kind === "local") return handler(execLocal, t.os, localSteamTransport());
+  if (t.kind === "local") return handler(execLocal, t.os, localSteamTransport(), t);
   const host = (t.host || "").trim();
   if (!host) throw new Error("Enter this PC's name or address first.");
   const { client } = await connectPcSsh(host, t.port || 22, t.username || "", t.password, t.hostKey);
   const transport = remoteSteamTransport(client, t.os);
   try {
-    return await handler((command) => execRemote(client, command), t.os, transport);
+    return await handler((command) => execRemote(client, command), t.os, transport, t);
   } finally {
     try { await transport.dispose(); }
     finally { client.end(); }
   }
+};
+
+// A deployment and a management edit must not overwrite each other's snapshots.
+let pcFileQueue: Promise<unknown> = Promise.resolve();
+const runOnPcTargetWithFiles: typeof runOnPcTargetWithFilesUnlocked = (handler) => {
+  const operation = pcFileQueue.then(() => runOnPcTargetWithFilesUnlocked(handler));
+  pcFileQueue = operation.catch(() => undefined);
+  return operation;
 };
 
 /**
@@ -1261,7 +1275,9 @@ const runOnPcTargetWithFiles = async <T,>(
 const resolveSteamAccount = (status: SteamStatus, accountId?: string): SteamAccount => {
   if (status.blockedReason) throw new Error(status.blockedReason);
   if (accountId) {
-    const chosen = status.accounts.find((account) => account.accountId === accountId);
+    const matches = status.accounts.filter((account) => account.accountId === accountId);
+    if (matches.length > 1) throw new Error("That Steam profile appears in multiple Steam installations. Resolve the duplicate installations before managing it.");
+    const chosen = matches[0];
     if (!chosen) throw new Error("That Steam profile is no longer on this machine.");
     return chosen;
   }
@@ -1386,6 +1402,63 @@ ipcMain.handle("pc-target-steam-deployed", async (_event, accountId?: string) =>
 );
 
 /** The catalog fields the Ports IPC surface needs from the renderer. Mirrors `PlannablePort`. */
+const managedTargetKey = (target: NonNullable<Awaited<ReturnType<typeof readSettings>>["pcTarget"]>) =>
+  JSON.stringify([target.kind, target.host ?? "", target.port ?? 22, target.username ?? "", target.os ?? ""]);
+
+ipcMain.handle("pc-target-managed-list", async (_event, accountId?: string) =>
+  runOnPcTargetWithFiles(async (run, os, transport, target) => {
+    const { status, home } = await steamStatusFor(run, os);
+    const account = resolveSteamAccount(status, accountId);
+    const registry = await readRegistry(joinPath(os, steamConfigDir(os, account), "gamestore-managed.json"), transport);
+    const entries = shortcutEntries(await transport.readFile(shortcutsFile(os, account)));
+    const legacy = legacyCandidates(entries, registry, home).map(({ shortcut: _shortcut, ...game }) => game);
+    return { games: reconcile(registry, entries), legacy, accountId: account.accountId,
+      targetKey: managedTargetKey(target), targetLabel: target.kind === "local" ? "This computer" : `${target.name || target.host} · ${target.host}` };
+  }),
+);
+
+ipcMain.handle("pc-target-managed-action", async (_event, request: { appId: number; accountId: string; targetKey: string; action: "adopt" | "remove" | "restore" }) =>
+  runOnPcTargetWithFiles(async (run, os, transport, target) => {
+    if (managedTargetKey(target) !== request.targetKey) throw new Error("Selected PC changed. Refresh the managed games list before making changes.");
+    if (!["adopt", "remove", "restore"].includes(request.action) || !Number.isInteger(request.appId)) throw new Error("Invalid management action.");
+    const { status, home } = await steamStatusFor(run, os);
+    const account = resolveSteamAccount(status, request.accountId);
+    const directory = steamConfigDir(os, account);
+    const registryFile = joinPath(os, directory, "gamestore-managed.json");
+    const registry = await readRegistry(registryFile, transport);
+    if (request.action !== "adopt") await closeSteamForDeploy(os, run);
+    const shortcutsPath = shortcutsFile(os, account);
+    const original = await transport.readFile(shortcutsPath);
+    const entries = shortcutEntries(original);
+    if (request.action === "adopt") {
+      const candidate = legacyCandidates(entries, registry, home).find((g) => g.appId === request.appId);
+      if (!candidate) throw new Error("That legacy GameStore entry is no longer available to import.");
+      registry.games.push(candidate);
+      await saveRegistry(registryFile, registry, transport);
+      return { message: "Added to tracking. Existing release version is unknown; game files were not changed." };
+    }
+    const game = registry.games.find((g) => g.appId === request.appId);
+    if (!game) throw new Error("Only tracked GameStore entries can be managed here.");
+    const current = entries.find((e) => typeof e.appid === "number" && (e.appid >>> 0) === game.appId);
+    const updated = editManagedShortcut(entries, game, request.action);
+    const collection = await prepareCollection(joinPath(os, directory, "cloudstorage"), os === "windows" ? "\\" : "/",
+      game.collection, game.appId, transport, new Date(), request.action === "remove" ? "remove" : "add");
+    if (current) game.shortcut = current;
+    game.updatedAt = new Date().toISOString();
+    game.deployment = "pending";
+    await saveRegistry(registryFile, registry, transport);
+    if (original) await transport.writeFile(`${shortcutsPath}.gamestore-${randomUUID()}.bak`, original);
+    const latestShortcuts = await transport.readFile(shortcutsPath);
+    if (original ? !latestShortcuts?.equals(original) : latestShortcuts !== null) throw new Error("Steam shortcuts changed during this operation. Refresh and retry.");
+    await transport.writeFile(shortcutsPath, updated);
+    try { await collection.commit(); }
+    catch (error) { throw new Error(`Steam entry changed, but collection update failed. Refresh and retry. ${error instanceof Error ? error.message : String(error)}`); }
+    game.deployment = "ready";
+    await saveRegistry(registryFile, registry, transport);
+    return { message: request.action === "remove" ? "Removed from Steam and its managed collection. Game files and saves are retained; Restore can add it back." : "Restored Steam entry and collection. Game files were not re-downloaded. Start Steam on the destination to see it." };
+  }),
+);
+
 type PortRequestEntry = {
   id: string;
   title: string;
@@ -1397,6 +1470,7 @@ type PortRequestEntry = {
   downloadUrl?: string;
   requiredRomRevision?: string;
   sourcePlatform: string;
+  technique?: string;
 };
 
 const toPlannable = (entry: PortRequestEntry): PlannablePort => ({
@@ -1514,6 +1588,7 @@ ipcMain.handle(
           home,
           account,
           appName: entry.title,
+          management: { kind: entry.technique === "recomp" || entry.technique === "decomp" ? entry.technique : "port", platform: entry.sourcePlatform, version: release!.tag, projectUrl: entry.projectUrl },
           localFiles: request.gameDataFiles.length
             ? [...staged.files, ...request.gameDataFiles.map((file) => path.join(staged.root, path.basename(file)))]
             : staged.files,

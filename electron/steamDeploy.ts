@@ -1,3 +1,4 @@
+import { readRegistry, saveRegistry, upsertGame, type ManagedGame } from "./managedSteam";
 import { platformCollection, prepareCollection } from "./steamCollections";
 import { buildPortLaunch } from "./portsPipeline";
 import type { PcOs, RunCommand } from "./pcTarget";
@@ -217,6 +218,7 @@ export type SteamDeployRequest = {
   home: string;
   account: SteamAccount;
   appName: string;
+  management?: { kind?: "recomp" | "decomp" | "port"; platform?: string; version?: string; projectUrl?: string };
   /** Emulator deployments only — a port launches itself and belongs to no console. */
   platform?: RetroPlatform;
   coreId?: string;
@@ -300,6 +302,8 @@ export const deployToSteam = async (
   const { os, home, account, appName, platform, coreId, localFiles } = request;
   if (!localFiles.length) throw new Error("This game has no files to send.");
   const now = request.now ?? new Date();
+  const registryFile = joinPath(os, steamConfigDir(os, account), "gamestore-managed.json");
+  let registry = await readRegistry(registryFile, transport);
 
   const port = request.port;
   if (!port && (!platform || !coreId)) {
@@ -374,6 +378,15 @@ export const deployToSteam = async (
 
   const rebuilt: VdfMap = {};
   merged.forEach((value, index) => { rebuilt[String(index)] = value; });
+  const managed: ManagedGame = {
+    appId, title: appName, kind: port ? request.management?.kind ?? "port" : "emulated",
+    platform: platform ?? request.management?.platform ?? "Unknown", coreId, portId: port?.portId,
+    version: request.management?.version, projectUrl: request.management?.projectUrl,
+    location: port ? port.installDirectory : romPath, collection: collectionName,
+    installedAt: now.toISOString(), updatedAt: now.toISOString(), deployment: "pending", shortcut: merged.find(matches)!,
+  };
+  registry = upsertGame(registry, managed);
+  await saveRegistry(registryFile, registry, transport);
   await transport.writeFile(shortcutsPath, encodeBinaryVdf("shortcuts", rebuilt));
 
   let collectionBackupPath: string;
@@ -381,6 +394,7 @@ export const deployToSteam = async (
   catch (error) {
     throw new Error(`Game files and Steam shortcut were written, but collection assignment failed. Retry deployment after closing Steam. ${error instanceof Error ? error.message : String(error)}`);
   }
+  await saveRegistry(registryFile, upsertGame(registry, { ...managed, deployment: "ready" }), transport);
   return { appId, appName, collectionName, collectionBackupPath, romPath, backupPath, artworkPath, replacedExisting, shortcutCount: merged.length };
 };
 

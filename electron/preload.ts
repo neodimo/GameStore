@@ -74,6 +74,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   }) => ipcRenderer.invoke("pc-target-steam-deploy", request),
   removeFromSteam: (appId: number, accountId?: string) =>
     ipcRenderer.invoke("pc-target-steam-remove", appId, accountId),
+  getManagedSteamGames: (accountId?: string) => ipcRenderer.invoke("pc-target-managed-list", accountId),
+  manageSteamGame: (request: { appId: number; accountId: string; targetKey: string; action: "adopt" | "remove" | "restore" }) => ipcRenderer.invoke("pc-target-managed-action", request),
   getSteamDeployed: (accountId?: string) => ipcRenderer.invoke("pc-target-steam-deployed", accountId),
   pickPortGameData: () => ipcRenderer.invoke("ports-pick-game-data") as Promise<string[]>,
   acquirePortGameData: (entry: PortRequestEntry) => ipcRenderer.invoke("ports-acquire-game-data", entry) as Promise<string[]>,

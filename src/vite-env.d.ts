@@ -63,6 +63,8 @@ interface Window {
       accountId?: string;
     }): Promise<SteamDeployResult>;
     removeFromSteam(appId: number, accountId?: string): Promise<{ removed: boolean; shortcutCount: number }>;
+    getManagedSteamGames(accountId?: string): Promise<ManagedSteamInventory>;
+    manageSteamGame(request: { appId: number; accountId: string; targetKey: string; action: "adopt" | "remove" | "restore" }): Promise<{ message: string }>;
     getSteamDeployed(accountId?: string): Promise<{ appId: number; appName: string }[]>;
     pickPortGameData(): Promise<string[]>;
     acquirePortGameData(entry: PortRequestEntry): Promise<string[]>;
@@ -360,6 +362,7 @@ type MiSTerCoreInstallProgress = {
 };
 /** The catalog fields the Ports IPC surface needs. Mirrors `electron/main.ts`'s `PortRequestEntry`. */
 type PortRequestEntry = {
+  technique?: "recomp" | "decomp" | "port";
   id: string;
   title: string;
   projectUrl: string;
@@ -397,4 +400,15 @@ type VideoProgress = {
   bytes: number;
   total: number;
   percent: number;
+};
+
+
+type ManagedSteamGame = {
+  appId: number; title: string; kind: "emulated" | "recomp" | "decomp" | "port";
+  platform: string; coreId?: string; portId?: string; version?: string; projectUrl?: string;
+  location: string; collection: string; installedAt: string; updatedAt: string;
+  status?: "in-steam" | "removed" | "conflict" | "partial";
+};
+type ManagedSteamInventory = {
+  games: ManagedSteamGame[]; legacy: ManagedSteamGame[]; accountId: string; targetKey: string; targetLabel: string;
 };
