@@ -64,6 +64,15 @@ interface Window {
     }): Promise<SteamDeployResult>;
     removeFromSteam(appId: number, accountId?: string): Promise<{ removed: boolean; shortcutCount: number }>;
     getSteamDeployed(accountId?: string): Promise<{ appId: number; appName: string }[]>;
+    pickPortGameData(): Promise<string[]>;
+    acquirePortGameData(entry: PortRequestEntry): Promise<string[]>;
+    planPortInstall(entry: PortRequestEntry, gameDataFiles: string[]): Promise<PortInstallPlan>;
+    installPort(request: {
+      entry: PortRequestEntry;
+      gameDataFiles: string[];
+      coverUrl?: string;
+      accountId?: string;
+    }): Promise<SteamDeployResult>;
     getFpgaSettings(): Promise<FpgaSettings | null>;
     getFpgaInventory(catalog: { id: string; title: string; coverName?: string; platform?: DeviceFolderId }[]): Promise<FpgaInventory>;
     refreshFpgaInventory(): Promise<{ folders: number }>;
@@ -348,6 +357,39 @@ type MiSTerCoreInstallProgress = {
   coreId: string;
   stage: "checking" | "downloading" | "uploading" | "done" | "error";
   message: string;
+};
+/** The catalog fields the Ports IPC surface needs. Mirrors `electron/main.ts`'s `PortRequestEntry`. */
+type PortRequestEntry = {
+  id: string;
+  title: string;
+  projectUrl: string;
+  needsOriginalAssets: boolean;
+  distributionKind: "github-releases" | "user-assets-required";
+  deployTargets: string[];
+  executableHint?: string;
+  downloadUrl?: string;
+  requiredRomRevision?: string;
+  sourcePlatform: string;
+};
+type PortInstallBlocker = {
+  kind: "no-published-binary" | "unsupported-target" | "missing-game-data" | "no-installable-asset";
+  message: string;
+};
+type PortInstallStep =
+  | { kind: "acquire-game-data"; source: "library" | "curated-download"; detail: string }
+  | { kind: "download-release"; asset: string; url: string; bytes: number }
+  | { kind: "extract-release"; detail: string }
+  | { kind: "place-game-data"; files: string[]; detail: string }
+  | { kind: "transfer-to-target"; directory: string }
+  | { kind: "register-steam-shortcut"; detail: string };
+type PortInstallPlan = {
+  portId: string;
+  title: string;
+  targetOs: PcOs;
+  installDirectory: string;
+  steps: PortInstallStep[];
+  blockers: PortInstallBlocker[];
+  ready: boolean;
 };
 type MediaCacheStats = { bytes: number; path: string };
 type VideoProgress = {

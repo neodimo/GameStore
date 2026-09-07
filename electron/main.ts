@@ -112,6 +112,15 @@ import {
 } from "./steamDeploy";
 import { verticalGridFor } from "./steamGridDb";
 import { remoteSteamTransport } from "./steamTransport";
+import {
+  pickPortExecutable,
+  planPortInstall,
+  selectReleaseAsset,
+  type PlannablePort,
+  type PortInstallPlan,
+} from "./portsPipeline";
+import { fetchLatestRelease } from "./portsRelease";
+import { downloadAsset, stageRelease } from "./portsInstall";
 
 let win: BrowserWindow | null = null;
 const createWindow = () => {
@@ -1267,6 +1276,35 @@ const steamStatusFor = async (run: RunCommand, os: PcOs) => {
   return { status, home };
 };
 
+/**
+ * Resolves the library capsule for a Steam shortcut.
+ *
+ * Steam draws a 2:3 tile, and a catalog cover is the console's own shape.
+ * Prefer art cut for the grid when a SteamGridDB key is stored, and fall back
+ * to the native cover rather than sending nothing: a letterboxed cover still
+ * identifies the game, an absent one does not. A SteamGridDB outage is
+ * reported, never allowed to fail the send.
+ */
+const resolveLibraryArtwork = async (title: string, coverUrl?: string) => {
+  const gridKey = (await readSettings()).steamGridDb?.key;
+  let artworkUrl = coverUrl;
+  let artworkShape: "steam-grid" | "native" | "none" = coverUrl ? "native" : "none";
+  let artworkNote = "";
+  if (gridKey) {
+    try {
+      const vertical = await verticalGridFor(title, gridKey);
+      if (vertical) {
+        artworkUrl = vertical;
+        artworkShape = "steam-grid";
+      } else artworkNote = "SteamGridDB has no vertical art for this title";
+    } catch (error) {
+      artworkNote = error instanceof Error ? error.message : String(error);
+    }
+  }
+  const localArtwork = artworkUrl ? (await cachedCoverPath(artworkUrl)) ?? undefined : undefined;
+  return { localArtwork, artworkShape: localArtwork ? artworkShape : ("none" as const), artworkNote };
+};
+
 ipcMain.handle("pc-target-steam-status", async () =>
   runOnPcTarget(async (run, os) => {
     const status = await findSteam(os, run);
@@ -1304,27 +1342,7 @@ ipcMain.handle(
       const account = resolveSteamAccount(status, request.accountId);
       const steamClosed = await closeSteamForDeploy(os, run);
 
-      // Steam draws a 2:3 tile, and the catalog cover is the console's own
-      // shape. Prefer art cut for the grid when a SteamGridDB key is stored,
-      // and fall back to the native cover rather than sending nothing: a
-      // letterboxed cover still identifies the game, an absent one does not.
-      // A SteamGridDB outage is reported, never allowed to fail the send.
-      const gridKey = (await readSettings()).steamGridDb?.key;
-      let artworkUrl = request.coverUrl;
-      let artworkShape: "steam-grid" | "native" | "none" = request.coverUrl ? "native" : "none";
-      let artworkNote = "";
-      if (gridKey) {
-        try {
-          const vertical = await verticalGridFor(item.title, gridKey);
-          if (vertical) {
-            artworkUrl = vertical;
-            artworkShape = "steam-grid";
-          } else artworkNote = "SteamGridDB has no vertical art for this title";
-        } catch (error) {
-          artworkNote = error instanceof Error ? error.message : String(error);
-        }
-      }
-      const localArtwork = artworkUrl ? (await cachedCoverPath(artworkUrl)) ?? undefined : undefined;
+      const { localArtwork, artworkShape, artworkNote } = await resolveLibraryArtwork(item.title, request.coverUrl);
       const result = await deployToSteam(
         {
           os,
@@ -1365,6 +1383,155 @@ ipcMain.handle("pc-target-steam-deployed", async (_event, accountId?: string) =>
     const { status } = await steamStatusFor(run, os);
     return listDeployedAppIds(os, resolveSteamAccount(status, accountId), transport);
   }),
+);
+
+/** The catalog fields the Ports IPC surface needs from the renderer. Mirrors `PlannablePort`. */
+type PortRequestEntry = {
+  id: string;
+  title: string;
+  projectUrl: string;
+  needsOriginalAssets: boolean;
+  distributionKind: "github-releases" | "user-assets-required";
+  deployTargets: string[];
+  executableHint?: string;
+  downloadUrl?: string;
+  requiredRomRevision?: string;
+  sourcePlatform: string;
+};
+
+const toPlannable = (entry: PortRequestEntry): PlannablePort => ({
+  id: entry.id,
+  title: entry.title,
+  needsOriginalAssets: entry.needsOriginalAssets,
+  distributionKind: entry.distributionKind,
+  deployTargets: entry.deployTargets,
+  executableHint: entry.executableHint,
+  downloadUrl: entry.downloadUrl,
+  requiredRomRevision: entry.requiredRomRevision,
+});
+
+/**
+ * Lets the user attach a dump of the original game they already have on disk,
+ * for a port with no curated download source.
+ */
+ipcMain.handle("ports-pick-game-data", async () => {
+  if (!win) return [];
+  const result = await dialog.showOpenDialog(win, {
+    title: "Select the original game files",
+    properties: ["openFile", "multiSelections"],
+  });
+  return result.canceled ? [] : result.filePaths;
+});
+
+/**
+ * Acquires a port's base game through DiMo's normal MiNERVA / Real-Debrid
+ * pipeline — the same `downloadResolvedLink` path catalog downloads use — so
+ * a curated link becomes a set of local files without a second download
+ * mechanism to maintain.
+ */
+ipcMain.handle("ports-acquire-game-data", async (_event, entry: PortRequestEntry) => {
+  if (!entry.downloadUrl) throw new Error(`${entry.title} has no configured download source. Add one in the Ports overrides, or attach files you already have.`);
+  const settings = await readSettings();
+  const provider: DebridProvider = settings.debrid?.realdebrid ? "realdebrid" : "torbox";
+  const token = settings.debrid?.[provider];
+  if (!token) throw new Error("Configure a Real-Debrid or TorBox token in Settings first.");
+  const result = await downloadResolvedLink({
+    provider,
+    token,
+    link: entry.downloadUrl,
+    gameTitle: entry.title,
+    platform: entry.sourcePlatform,
+    window: win,
+  });
+  win?.webContents.send("library-changed");
+  return result.files;
+});
+
+/** Computes the install plan for a port, resolving its live GitHub release first. */
+ipcMain.handle(
+  "pc-target-ports-plan",
+  async (_event, request: { entry: PortRequestEntry; gameDataFiles: string[] }): Promise<PortInstallPlan> =>
+    runOnPcTargetWithFiles(async (run, os) => {
+      const { home } = await steamStatusFor(run, os);
+      const release = await fetchLatestRelease(request.entry.projectUrl);
+      return planPortInstall({
+        entry: toPlannable(request.entry),
+        targetOs: os,
+        home,
+        gameDataFiles: request.gameDataFiles,
+        release,
+      });
+    }),
+);
+
+/**
+ * Runs a port install end to end: resolve the release, download and unpack
+ * the right archive for the target OS, stage the user's game data alongside
+ * the executable, ship the tree to the target, and register a Steam shortcut
+ * that launches it directly.
+ */
+ipcMain.handle(
+  "pc-target-ports-install",
+  async (
+    _event,
+    request: { entry: PortRequestEntry; gameDataFiles: string[]; coverUrl?: string; accountId?: string },
+  ) =>
+    runOnPcTargetWithFiles(async (run, os, transport) => {
+      const entry = request.entry;
+      const release = await fetchLatestRelease(entry.projectUrl);
+      const plannable = toPlannable(entry);
+      const { status, home } = await steamStatusFor(run, os);
+      const plan = planPortInstall({ entry: plannable, targetOs: os, home, gameDataFiles: request.gameDataFiles, release });
+      if (!plan.ready) throw new Error(plan.blockers.map((blocker) => blocker.message).join(" "));
+
+      const asset = selectReleaseAsset(release!.assets, os);
+      if (!asset) throw new Error(`No installable ${os} asset in release ${release!.tag}.`);
+
+      const stagingRoot = path.join(app.getPath("temp"), "gamestore-ports", entry.id);
+      const archivePath = path.join(stagingRoot, "download", asset.name);
+      await downloadAsset(asset, archivePath);
+      const staged = await stageRelease(asset.name, archivePath, path.join(stagingRoot, "extracted"));
+
+      if (request.gameDataFiles.length) {
+        for (const file of request.gameDataFiles) {
+          await fs.copyFile(file, path.join(staged.root, path.basename(file)));
+        }
+      }
+
+      const executable = pickPortExecutable(
+        staged.files.map((file) => path.relative(staged.root, file)),
+        entry.executableHint,
+      );
+      if (!executable) throw new Error(`Could not find a launchable executable in ${asset.name}.`);
+
+      const account = resolveSteamAccount(status, request.accountId);
+      const steamClosed = await closeSteamForDeploy(os, run);
+      const { localArtwork, artworkShape, artworkNote } = await resolveLibraryArtwork(entry.title, request.coverUrl);
+
+      const result = await deployToSteam(
+        {
+          os,
+          home,
+          account,
+          appName: entry.title,
+          localFiles: request.gameDataFiles.length
+            ? [...staged.files, ...request.gameDataFiles.map((file) => path.join(staged.root, path.basename(file)))]
+            : staged.files,
+          localArtwork,
+          beforeLibraryWrite: async () => { await closeSteamForDeploy(os, run); },
+          port: {
+            portId: entry.id,
+            installDirectory: plan.installDirectory,
+            sourceRoot: staged.root,
+            executable,
+          },
+        },
+        transport,
+      );
+      await fs.rm(stagingRoot, { recursive: true, force: true });
+
+      return { ...result, steamClosed, accountId: account.accountId, artworkIncluded: Boolean(localArtwork), artworkShape: localArtwork ? artworkShape : "none", artworkNote };
+    }),
 );
 
 type FpgaSettingsShape = NonNullable<ProviderSettings["fpga"]>;

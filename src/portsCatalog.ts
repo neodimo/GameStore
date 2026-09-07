@@ -1,212 +1,32 @@
-/**
- * Ports section — PC-native releases of retro games.
- *
- * Three flavors land here:
- *  - Decomps: source-code reconstructions (e.g. OoT, MM, SM64) that compile into
- *    native PC executables. They do NOT ship the original game data; the user
- *    must supply it from a legally-acquired copy.
- *  - Recomps: RE-style source reconstructions that also rebuild the engine and
- *    assets into a single PC release (e.g. RE_Rendering, SourceNextGen).
- *  - Standalone ports: open-source community ports that always include all data
- *    (rare, but they exist for some classics).
- *
- * Distribution in GameStore flows through the existing Minerva / Real-Debrid
- * pipeline; entries that need original assets must surface that requirement
- * before any download begins. Steam deployment is the same path as PS1/N64/Sat,
- * but the launch target is the project's native executable instead of a core.
- *
- * The priority order below is the order sections appear in the UI.
- */
+import { generatedPortsCatalog } from "./portsCatalog.generated";
+import { portOverrides } from "./portsCatalogOverrides";
+import {
+  PORT_PLATFORMS,
+  type PortEntry,
+  type PortPlatform,
+  type PortTarget,
+} from "./portsCatalogTypes";
 
-export type PortPlatform =
-  | "N64"
-  | "PS1"
-  | "Dreamcast"
-  | "GameCube"
-  | "Wii"
-  | "Wii U"
-  | "Xbox"
-  | "Xbox 360"
-  | "Switch"
-  | "Saturn"
-  | "PS2";
-
-export const PORT_PLATFORMS: PortPlatform[] = [
-  "N64",
-  "PS1",
-  "Dreamcast",
-  "GameCube",
-  "Wii",
-  "Wii U",
-  "Xbox",
-  "Xbox 360",
-  "Switch",
-  "Saturn",
-  "PS2",
-];
-
-export const PORT_PLATFORM_LABELS: Record<PortPlatform, string> = {
-  N64: "Nintendo 64",
-  PS1: "PlayStation",
-  Dreamcast: "Dreamcast",
-  GameCube: "GameCube",
-  Wii: "Wii",
-  "Wii U": "Wii U",
-  Xbox: "Xbox",
-  "Xbox 360": "Xbox 360",
-  Switch: "Switch",
-  Saturn: "Saturn",
-  PS2: "PlayStation 2",
-};
+export * from "./portsCatalogTypes";
 
 /**
- * One port entry. `downloadUrl` is intentionally optional — real distribution
- * URLs come from DiMo's curation (Minerva / Real-Debrid sources) so this file
- * never bakes in anything that could leak copyrighted game data.
+ * Ports catalog — PC-native releases of retro games.
+ *
+ * Data flows in one direction: portsdr.com is scraped into `data/sources/`,
+ * that dataset generates `portsCatalog.generated.ts`, and human curation in
+ * `portsCatalogOverrides.ts` is merged on top here. Regenerating never
+ * clobbers curation, and curation never has to be re-derived from the source.
+ *
+ * Earlier revisions of this file hand-listed ten entries chosen from memory,
+ * which is how eight priority platforms ended up wrongly reported as having no
+ * projects at all. Generating from an index is the fix for that class of error.
  */
-export type PortEntry = {
-  /** Stable slug, used as the catalog id and Steam shortcut lookup. */
-  id: string;
-  title: string;
-  /** The retro console the game originally shipped on. */
-  sourcePlatform: PortPlatform;
-  year: number;
-  /** Project name + short tag for the card subtitle. */
-  project: string;
-  description: string;
-  projectUrl: string;
-  steamAppId?: number;
-  /**
-   * True when the user must supply original game data (decomps). The UI must
-   * surface this BEFORE any download starts; downloading without the matching
-   * assets is guaranteed not to work.
-   */
-  needsOriginalAssets: boolean;
-  /**
-   * Hint for the launcher executable once installed. Used by the Send-to-Steam
-   * path to build the right launch options. Example: "soh.exe".
-   */
-  executableHint?: string;
-  /** Distribution URL — Minerva / Real-Debrid. Curated, never fabricated. */
-  downloadUrl?: string;
-  /** SteamGridDB or catalog cover URL; SteamGridDB is used as fallback. */
-  coverUrl?: string;
-};
+export const portsCatalog: PortEntry[] = generatedPortsCatalog.map((entry) => {
+  const override = portOverrides[entry.id];
+  return override ? ({ ...entry, ...override } as PortEntry) : (entry as PortEntry);
+});
 
-/**
- * Starter entries. These are well-known publicly-released projects whose
- * existence and GitHub URLs I can stand behind. Anything beyond this list is
- * DiMo's call — the schema supports it, but I won't seed guesses.
- */
-export const portsCatalog: PortEntry[] = [
-  {
-    id: "ship-of-harkinian",
-    title: "The Legend of Zelda: Ocarina of Time",
-    sourcePlatform: "N64",
-    year: 1998,
-    project: "Ship of Harkinian",
-    description:
-      "Native PC port of Ocarina of Time built from the decomp project. Requires a legally-owned ROM dump of the original N64 release; the port compiles that into a modern PC executable with widescreen, 60 fps, mod support and per-controller input mapping.",
-    projectUrl: "https://github.com/HarbourMasters/Shipwright",
-    steamAppId: 2098750,
-    needsOriginalAssets: true,
-    executableHint: "soh.exe",
-  },
-  {
-    id: "2-ship-2-harkinian",
-    title: "The Legend of Zelda: Majora's Mask",
-    sourcePlatform: "N64",
-    year: 2000,
-    project: "2 Ship 2 Harkinian",
-    description:
-      "Native PC port of Majora's Mask built on the same decomp foundations as Ship of Harkinian. Adds a built-in mod loader, model swapping, and the same widescreen / 60 fps quality-of-life features.",
-    projectUrl: "https://github.com/HarbourMasters/2ship2harkinian",
-    needsOriginalAssets: true,
-    executableHint: "2s2h.exe",
-  },
-  {
-    id: "sm64-port",
-    title: "Super Mario 64",
-    sourcePlatform: "N64",
-    year: 1996,
-    project: "sm64-port",
-    description:
-      "The original open-source native PC port of Super Mario 64. Requires the original US/JP ROM; the project compiles it into a standalone PC release that has been forked heavily (sm64ex, sm64ex-coop, Render96, etc.).",
-    projectUrl: "https://github.com/sm64-port/sm64-port",
-    needsOriginalAssets: true,
-    executableHint: "sm64.exe",
-  },
-  {
-    id: "resident-evil-re-rendering",
-    title: "Resident Evil",
-    sourcePlatform: "PS1",
-    year: 1996,
-    project: "RE_Rendering",
-    description:
-      "Source-code reconstruction of the original Resident Evil, rebuilt around modern rendering. Recomp release bundles assets and ships as a standalone PC executable.",
-    projectUrl: "https://github.com/ClassicRevival/RE_Rendering",
-    needsOriginalAssets: false,
-    executableHint: "RE_Remake.exe",
-  },
-  {
-    id: "resident-evil-2-source-nextgen",
-    title: "Resident Evil 2",
-    sourcePlatform: "PS1",
-    year: 1998,
-    project: "SourceNextGen (RE2)",
-    description:
-      "Source reconstruction of Resident Evil 2 with the SourceNextGen engine. Bundled assets, native PC executable, widescreen and modern input by default.",
-    projectUrl: "https://github.com/ClassicRevival/resident-evil-2-source-nextgen",
-    needsOriginalAssets: false,
-    executableHint: "RE2.exe",
-  },
-  {
-    id: "metroid-prime",
-    title: "Metroid Prime",
-    sourcePlatform: "GameCube",
-    year: 2002,
-    project: "PrimeDecomp",
-    description:
-      "Matching decompilation of Metroid Prime. The project's primary output is a research artifact — the bonus, in-progress native PC port (PrimeHack / experimental renderer) gives a glimpse of where the work is heading. Requires original NTSC-U / PAL GameCube or Wii disc data to assemble.",
-    projectUrl: "https://github.com/PrimeDecomp/prime",
-    needsOriginalAssets: true,
-  },
-  {
-    id: "metroid-prime-2-echoes",
-    title: "Metroid Prime 2: Echoes",
-    sourcePlatform: "GameCube",
-    year: 2004,
-    project: "PrimeDecomp Echoes",
-    description:
-      "Matching decompilation of Metroid Prime 2: Echoes. Same caveat as the first Prime — matching-source output today, native PC port is downstream of the decomp completion. Requires the original GameCube release.",
-    projectUrl: "https://github.com/PrimeDecomp/echoes",
-    needsOriginalAssets: true,
-  },
-  {
-    id: "turok-2-decomp",
-    title: "Turok 2: Seeds of Evil",
-    sourcePlatform: "N64",
-    year: 1998,
-    project: "turok2-decomp",
-    description:
-      "Active matching decompilation of Turok 2: Seeds of Evil. Listed for catalog completeness; no shipping native PC port yet. Requires original N64 ROM dump when a playable port lands.",
-    projectUrl: "https://github.com/mgrz18/turok2-decomp",
-    needsOriginalAssets: true,
-  },
-  {
-    id: "project-picori",
-    title: "The Legend of Zelda: The Minish Cap",
-    sourcePlatform: "N64",
-    year: 2004,
-    project: "Project Picori",
-    description:
-      "Native Nintendo 64 build of the GBA-era Minish Cap decomp — experimental cross-platform port that targets N64 hardware. Requires the original GBA Minish Cap ROM. Listed under N64 since that is the port's target runtime.",
-    projectUrl: "https://github.com/999sian/picori-n64",
-    needsOriginalAssets: true,
-  },
-];
-
-/** Index by id for quick lookup from the cart / Steam deploy path. */
+/** Index by id for the cart / install / Steam deploy paths. */
 export const portsById: Record<string, PortEntry> = Object.fromEntries(
   portsCatalog.map((entry) => [entry.id, entry]),
 );
@@ -219,3 +39,22 @@ export const portsByPlatform: Record<PortPlatform, PortEntry[]> = PORT_PLATFORMS
   },
   {} as Record<PortPlatform, PortEntry[]>,
 );
+
+/** Platforms with at least one entry, so the UI never renders a dead filter. */
+export const populatedPortPlatforms: PortPlatform[] = PORT_PLATFORMS.filter(
+  (platform) => portsByPlatform[platform].length > 0,
+);
+
+/**
+ * True when GameStore can install this port itself.
+ *
+ * Requires a published binary and a build for an OS we deploy to. An
+ * Android-only release is real and worth listing, but there is nothing this app
+ * can do with it, and the card should say so rather than offering a dead button.
+ */
+export const isInstallable = (entry: PortEntry): boolean =>
+  entry.distributionKind === "github-releases" && entry.deployTargets.length > 0;
+
+/** Ports that publish a build for the OS the deploy target is running. */
+export const supportsTarget = (entry: PortEntry, target: PortTarget): boolean =>
+  entry.deployTargets.includes(target);

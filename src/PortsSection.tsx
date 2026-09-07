@@ -1,10 +1,22 @@
-import { Box, ExternalLink, ShieldAlert, ShoppingCart } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Box,
+  Download,
+  ExternalLink,
+  FolderOpen,
+  HardDriveUpload,
+  RefreshCw,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   portsCatalog,
   portsByPlatform,
+  isInstallable,
   PORT_PLATFORMS,
   PORT_PLATFORM_LABELS,
+  TECHNIQUE_LABELS,
   type PortEntry,
   type PortPlatform,
 } from "./portsCatalog";
@@ -12,18 +24,51 @@ import {
 /**
  * Ports section — PC-native releases of retro games.
  *
- * v0.27.0 ships the catalog browser. Download deployment is wired through the
- * existing Minerva / Real-Debrid pipeline; entries without a curated
- * `downloadUrl` show as "Awaiting curation" rather than fabricating one. Send
- * to Steam reuses the vertical-art + collection-assignment path from v0.26.3.
+ * v0.27.x shipped the catalog browser against ten hand-picked entries. This
+ * revision generates the catalog from portsdr.com's full index (188 projects)
+ * and replaces the old "open a link and do it yourself" cards with the same
+ * acquire → deploy pipeline the rest of GameStore uses: pick or fetch the
+ * base game once, then one button downloads the release, unpacks it, ships it
+ * to the target PC, and registers a Steam shortcut that launches it directly.
  */
 export function PortsSection({ onClose }: { onClose: () => void }) {
   const [platform, setPlatform] = useState<PortPlatform | "All">("All");
+  const [target, setTarget] = useState<PcTargetSettings | null>(null);
+  const [steam, setSteam] = useState<SteamStatus | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+  const [note, setNote] = useState("");
+
+  const load = useCallback(async () => {
+    if (!window.gameStore) return;
+    const configured = await window.gameStore.getPcTarget();
+    setTarget(configured);
+    if (!configured?.os) return;
+    setState("loading"); setNote("");
+    try {
+      setSteam(await window.gameStore.getSteamStatus());
+      setState("idle");
+    } catch (error) {
+      setState("error"); setNote(error instanceof Error ? error.message : String(error));
+    }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
 
   const visible = useMemo(() => {
     if (platform === "All") return portsCatalog;
     return portsByPlatform[platform] ?? [];
   }, [platform]);
+
+  const targetOs = target?.os;
+  const where = target ? (target.kind === "local" ? "this computer" : target.name || target.host) : "";
+  const accountId = steam?.accounts.length === 1 ? steam.accounts[0].accountId : undefined;
+  const deployBlocked =
+    !target ? "Configure a PC target in Settings → PC / Steam first."
+    : !target.os ? "Detect this machine's OS in Settings first."
+    : state === "loading" ? "Checking Steam on the target…"
+    : steam?.blockedReason ? steam.blockedReason
+    : steam && !steam.installed ? "No Steam profile found on this machine."
+    : steam && steam.accounts.length > 1 ? "That machine has more than one Steam profile; choose one in Settings before installing ports."
+    : "";
 
   return (
     <section className="ports-section">
@@ -32,13 +77,24 @@ export function PortsSection({ onClose }: { onClose: () => void }) {
         <div>
           <h2>Ports</h2>
           <p>
-            PC-native releases of retro games — decomps, recomps, and
-            standalone community ports. Same download and Steam-deploy pipeline
-            as everything else in GameStore.
+            PC-native releases of retro games — decomps, recomps, and native
+            ports, sourced from portsdr.com. Download the release, supply your
+            own dump of the original game where one is needed, and GameStore
+            ships both to {where || "your PC target"} and registers a Steam
+            shortcut.
           </p>
         </div>
         <button className="ports-close" onClick={onClose}>Back to Discover</button>
       </header>
+
+      <div className="ports-target-head">
+        {deployBlocked
+          ? <p className="steam-blocked"><ShieldAlert /> {deployBlocked}</p>
+          : <p className="steam-blocked">Installing sends this port's release and your game data to {where}, closes Steam if it is running, and adds a shortcut in the Ports collection.</p>}
+        <button className="ports-recheck" disabled={state === "loading"} onClick={() => void load()}>
+          <RefreshCw className={state === "loading" ? "spin" : ""} /> Re-check target
+        </button>
+      </div>
 
       <div className="ports-platforms">
         <button
@@ -47,7 +103,7 @@ export function PortsSection({ onClose }: { onClose: () => void }) {
         >
           All
         </button>
-        {PORT_PLATFORMS.map((id) => (
+        {PORT_PLATFORMS.filter((id) => portsByPlatform[id]?.length).map((id) => (
           <button
             key={id}
             className={platform === id ? "active" : ""}
@@ -61,39 +117,106 @@ export function PortsSection({ onClose }: { onClose: () => void }) {
       <div className="ports-grid">
         {visible.length === 0 ? (
           <div className="ports-empty">
-            <p>No port entries yet for {platform === "All" ? "this filter" : PORT_PLATFORM_LABELS[platform]}.</p>
-            <p className="ports-empty-hint">
-              Entries are curated from publicly-released decomp and recomp
-              projects. New platforms get filled in as projects ship.
-            </p>
+            <p>No port entries for {platform === "All" ? "this filter" : PORT_PLATFORM_LABELS[platform]}.</p>
           </div>
         ) : (
-          visible.map((entry) => <PortCard key={entry.id} entry={entry} />)
+          visible.map((entry) => (
+            <PortCard
+              key={entry.id}
+              entry={entry}
+              targetOs={targetOs}
+              installDisabledReason={deployBlocked}
+              accountId={accountId}
+            />
+          ))
         )}
       </div>
     </section>
   );
 }
 
-function PortCard({ entry }: { entry: PortEntry }) {
-  // Lazy-resolve the cached cover. Renderer-side, so the same cache the rest
-  // of the catalog uses; falls back to remote URL if not yet cached.
+const targetLabelFor = (os?: PcOs) => (os === "windows" ? "Windows" : os === "mac" ? "macOS" : "Linux");
+
+function PortCard({
+  entry,
+  targetOs,
+  installDisabledReason,
+  accountId,
+}: {
+  entry: PortEntry;
+  targetOs?: PcOs;
+  installDisabledReason: string;
+  accountId?: string;
+}) {
   const [coverSrc, setCoverSrc] = useState<string | null>(entry.coverUrl ?? null);
+  const [gameDataFiles, setGameDataFiles] = useState<string[]>([]);
+  const [busy, setBusy] = useState<"idle" | "acquiring" | "installing" | "done" | "error">("idle");
+  const [note, setNote] = useState("");
+
   useEffect(() => {
     if (!entry.coverUrl) return;
     let cancelled = false;
     window.gameStore
       ?.cacheCover(entry.coverUrl)
-      .then((local) => {
-        if (!cancelled) setCoverSrc((local as string | null) ?? entry.coverUrl ?? null);
-      })
+      .then((local) => { if (!cancelled) setCoverSrc(local ?? entry.coverUrl ?? null); })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [entry.coverUrl]);
 
   const openExternal = (url: string) => window.gameStore?.openExternal(url);
+  const installable = isInstallable(entry);
+  const targetLabel = targetOs ? targetLabelFor(targetOs) : undefined;
+  const supportsThisTarget = !targetLabel || entry.deployTargets.includes(targetLabel);
+  const requestEntry: PortRequestEntry = {
+    id: entry.id,
+    title: entry.title,
+    projectUrl: entry.projectUrl,
+    needsOriginalAssets: entry.needsOriginalAssets,
+    distributionKind: entry.distributionKind,
+    deployTargets: entry.deployTargets,
+    executableHint: entry.executableHint,
+    downloadUrl: entry.downloadUrl,
+    requiredRomRevision: entry.requiredRomRevision,
+    sourcePlatform: entry.sourcePlatform,
+  };
+
+  const attachFiles = async () => {
+    const picked = await window.gameStore?.pickPortGameData();
+    if (picked?.length) setGameDataFiles((existing) => [...existing, ...picked]);
+  };
+
+  const acquireFromMinerva = async () => {
+    setBusy("acquiring"); setNote("Fetching the original game through the configured Minerva / Real-Debrid source…");
+    try {
+      const files = await window.gameStore!.acquirePortGameData(requestEntry);
+      setGameDataFiles((existing) => [...existing, ...files]);
+      setBusy("idle"); setNote(`Fetched ${files.length} file(s).`);
+    } catch (error) {
+      setBusy("error"); setNote(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const install = async () => {
+    setBusy("installing"); setNote(`Downloading the release, unpacking it, and sending it to ${targetLabel ?? "the target"}…`);
+    try {
+      const result = await window.gameStore!.installPort({
+        entry: requestEntry,
+        gameDataFiles,
+        coverUrl: coverSrc ?? entry.coverUrl,
+        accountId,
+      });
+      setBusy("done");
+      setNote(
+        `${result.appName} installed. ${result.replacedExisting ? "Updated the existing Steam entry" : "Added to Steam"}` +
+        `${result.artworkShape === "steam-grid" ? " with SteamGridDB vertical art" : result.artworkShape === "native" ? " with its catalog cover" : ""}` +
+        ` · Ports collection. Start Steam to see it.`,
+      );
+    } catch (error) {
+      setBusy("error"); setNote(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const needsGameData = entry.needsOriginalAssets && gameDataFiles.length === 0;
 
   return (
     <article className="port-card">
@@ -101,9 +224,7 @@ function PortCard({ entry }: { entry: PortEntry }) {
         {coverSrc ? (
           <img src={coverSrc} alt={`${entry.title} cover`} loading="lazy" />
         ) : (
-          <div className="port-card-art-placeholder">
-            <Box />
-          </div>
+          <div className="port-card-art-placeholder"><Box /></div>
         )}
       </div>
       <div className="port-card-body">
@@ -113,42 +234,74 @@ function PortCard({ entry }: { entry: PortEntry }) {
         </header>
         <p className="port-card-project">{entry.project}</p>
         <p className="port-card-description">{entry.description}</p>
+
+        <p className="port-card-badges">
+          <span className="port-card-badge">{TECHNIQUE_LABELS[entry.technique]}</span>
+          {entry.preRelease && <span className="port-card-badge port-card-badge-warn">Pre-release</span>}
+          {entry.aiAssisted && <span className="port-card-badge"><Sparkles size={12} /> AI-assisted</span>}
+        </p>
         {entry.needsOriginalAssets && (
           <p className="port-card-assets">
             <ShieldAlert />
-            Requires your own legally-acquired copy of the original game.
+            Requires your own legally-acquired copy of the original game
+            {entry.requiredRomRevision ? ` (${entry.requiredRomRevision})` : ""}.
           </p>
         )}
+
         <div className="port-card-actions">
-          <button
-            className="port-card-link"
-            onClick={() => openExternal(entry.projectUrl)}
-          >
-            <ExternalLink />
-            Project
+          <button className="port-card-link" onClick={() => openExternal(entry.projectUrl)}>
+            <ExternalLink /> Project
           </button>
           {entry.steamAppId && (
-            <button
-              className="port-card-link"
-              onClick={() => openExternal(`https://store.steampowered.com/app/${entry.steamAppId}`)}
-            >
-              <ExternalLink />
-              Steam
+            <button className="port-card-link" onClick={() => openExternal(`https://store.steampowered.com/app/${entry.steamAppId}`)}>
+              <ExternalLink /> Steam page
             </button>
-          )}
-          {entry.downloadUrl ? (
-            <button
-              className="port-card-cart"
-              onClick={() => openExternal(entry.downloadUrl!)}
-              title="Open curated download link (Minerva / Real-Debrid) in your browser. A future release will route this through the in-app download manager."
-            >
-              <ShoppingCart />
-              Open Download
-            </button>
-          ) : (
-            <span className="port-card-curation">Awaiting curation</span>
           )}
         </div>
+
+        {!installable && (
+          <p className="port-card-curation">
+            No published binary GameStore can install{entry.deployTargets.length === 0 && entry.portTargets.length ? ` (ships for ${entry.portTargets.join(", ")} only)` : ""} — use the project link to build from source.
+          </p>
+        )}
+        {installable && !supportsThisTarget && (
+          <p className="port-card-curation">
+            No {targetLabel} build published — this project ships for {entry.deployTargets.join(", ") || "no target GameStore deploys to"}.
+          </p>
+        )}
+
+        {installable && supportsThisTarget && (
+          <div className="port-card-install">
+            {needsGameData && (
+              <div className="port-card-gamedata">
+                {entry.downloadUrl && (
+                  <button className="port-card-link" disabled={busy === "acquiring"} onClick={() => void acquireFromMinerva()}>
+                    <Download /> {busy === "acquiring" ? "Fetching…" : "Get game data"}
+                  </button>
+                )}
+                <button className="port-card-link" onClick={() => void attachFiles()}>
+                  <FolderOpen /> Attach files I have
+                </button>
+              </div>
+            )}
+            {gameDataFiles.length > 0 && (
+              <p className="port-card-gamedata-note">{gameDataFiles.length} game data file(s) ready.</p>
+            )}
+            <button
+              className="port-card-cart"
+              disabled={busy === "installing" || busy === "acquiring" || needsGameData || Boolean(installDisabledReason)}
+              title={installDisabledReason || undefined}
+              onClick={() => void install()}
+            >
+              <HardDriveUpload /> {busy === "installing" ? "Installing…" : "Install to PC"}
+            </button>
+          </div>
+        )}
+        {note && (
+          <p className={`port-card-note ${busy}`}>
+            {busy === "error" && <AlertTriangle size={14} />} {note}
+          </p>
+        )}
       </div>
     </article>
   );

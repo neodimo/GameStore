@@ -44,7 +44,7 @@ const walk = async (root: string, current = root): Promise<string[]> => {
   return files;
 };
 
-const extractZip = (archive: string, destination: string) => new Promise<void>((resolve, reject) => {
+export const extractZip = (archive: string, destination: string) => new Promise<void>((resolve, reject) => {
   yauzl.open(archive, { lazyEntries: true, decodeStrings: true, validateEntrySizes: true }, (openError, zip) => {
     if (openError || !zip) return reject(openError ?? new Error("Could not open ZIP archive."));
     const fail = (error: unknown) => { zip.close(); reject(error); };

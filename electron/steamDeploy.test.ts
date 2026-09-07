@@ -8,6 +8,8 @@ import {
   listDeployedAppIds,
   parseSteamProbe,
   pickPrimaryRom,
+  PORTS_COLLECTION,
+  relativeTo,
   removeFromSteam,
   romDirectory,
   shortcutsFile,
@@ -209,6 +211,73 @@ describe("Deploying into shortcuts.vdf", () => {
   it("refuses a game with no files rather than registering an unlaunchable tile", async () => {
     const { transport } = memoryTransport();
     await expect(deployToSteam({ ...request, localFiles: [] }, transport)).rejects.toThrow(/no files/i);
+  });
+});
+
+describe("relativeTo", () => {
+  it("keeps a file's path relative to the staging root", () => {
+    expect(relativeTo("/staging/soh", "/staging/soh/assets/oot.otr")).toBe("assets/oot.otr");
+  });
+
+  it("normalizes Windows separators", () => {
+    expect(relativeTo("C:\\staging\\soh", "C:\\staging\\soh\\soh.exe")).toBe("soh.exe");
+  });
+
+  it("falls back to the bare filename for a path outside the root", () => {
+    expect(relativeTo("/staging/soh", "/elsewhere/soh.exe")).toBe("soh.exe");
+  });
+
+  it("falls back to the bare filename rather than let a path escape the root", () => {
+    expect(relativeTo("/staging/soh", "/staging/soh/../../etc/passwd")).toBe("passwd");
+  });
+});
+
+describe("Deploying a port", () => {
+  const portRequest = {
+    os: "linux" as const,
+    home: "/home/dimo",
+    account,
+    appName: "Ship of Harkinian",
+    localFiles: ["/staging/soh/soh.exe", "/staging/soh/assets/oot.otr"],
+    now: new Date("2026-09-05T12:00:00Z"),
+    port: {
+      portId: "harbourmasters-shipwright",
+      installDirectory: "/home/dimo/.local/share/GameStore/ports/harbourmasters-shipwright",
+      sourceRoot: "/staging/soh",
+      executable: "soh.exe",
+    },
+  };
+
+  it("preserves the staged directory tree instead of flattening it into one folder", async () => {
+    const { transport, uploads } = memoryTransport();
+    await deployToSteam(portRequest, transport);
+    expect(uploads.map(([, remote]) => remote)).toEqual([
+      "/home/dimo/.local/share/GameStore/ports/harbourmasters-shipwright/soh.exe",
+      "/home/dimo/.local/share/GameStore/ports/harbourmasters-shipwright/assets/oot.otr",
+    ]);
+  });
+
+  it("launches the port's own executable with the install directory as its working directory", async () => {
+    const { transport, files } = memoryTransport();
+    const result = await deployToSteam(portRequest, transport);
+    const written = decodeBinaryVdf(files.get(shortcutsFile("linux", account))!).value["0"] as Record<string, unknown>;
+    expect(written.Exe).toBe('"/home/dimo/.local/share/GameStore/ports/harbourmasters-shipwright/soh.exe"');
+    expect(written.StartDir).toBe('"/home/dimo/.local/share/GameStore/ports/harbourmasters-shipwright/"');
+    expect(result.romPath).toBe("/home/dimo/.local/share/GameStore/ports/harbourmasters-shipwright/soh.exe");
+  });
+
+  it("joins the shared Ports collection rather than a per-console one", async () => {
+    const { transport } = memoryTransport();
+    const result = await deployToSteam(portRequest, transport);
+    expect(result.collectionName).toBe(PORTS_COLLECTION);
+    expect(result.collectionName).toBe("Ports");
+  });
+
+  it("requires both a platform and a core for an emulator deploy with no port", async () => {
+    const { transport } = memoryTransport();
+    await expect(
+      deployToSteam({ ...portRequest, port: undefined, platform: undefined, coreId: undefined }, transport),
+    ).rejects.toThrow(/platform and a core/i);
   });
 });
 

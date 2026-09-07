@@ -1,0 +1,4871 @@
+{
+ "source": "https://portsdr.com/",
+ "scrapedAt": "2026-09-07T04:52:05.057Z",
+ "cardCount": 188,
+ "withReleaseBinaries": 182,
+ "withGithubDescription": 147,
+ "projects": [
+  {
+   "title": "The Legend of Zelda: Majora’s Mask",
+   "project": "2 Ship 2 Harkinian",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-25T17:54:43Z",
+   "releaseUrl": "https://github.com/HarbourMasters/2ship2harkinian/releases/tag/5.0.1",
+   "releaseVersion": "5.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarbourMasters/2ship2harkinian",
+   "website": "https://www.harbourmasters.org/",
+   "iconUrl": "https://raw.githubusercontent.com/HarbourMasters/2ship2harkinian/refs/heads/develop/mm/windows/2SHIP2HARKINIAN.ico",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "CC0-1.0",
+    "pushed": "2026-09-02T12:56:11Z",
+    "stars": 2192,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Majora's Mask",
+   "project": "2ship2harkinian-Android",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-25T21:18:37Z",
+   "releaseUrl": "https://github.com/linkzenic/2ship2harkinian-Android/releases/tag/v5.0.1-android.1",
+   "releaseVersion": "v5.0.1-android.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/linkzenic/2ship2harkinian-Android",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/ea950bbd8550e65a1e8fbf4ee210ad73.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Unofficial Android fork of 2 Ship 2 Harkinian",
+    "license": "CC0-1.0",
+    "pushed": "2026-08-25T21:18:30Z",
+    "stars": 46,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Majora's Mask",
+   "project": "2ship2harkinian (Jameriquiah)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-09-03T04:49:05Z",
+   "releaseUrl": "https://github.com/Jameriquiah/2ship2harkinian/releases/tag/android-5.0.1",
+   "releaseVersion": "android-5.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Jameriquiah/2ship2harkinian",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/2e95cf67c0bc0e02e053f0c76d6633ee.jpg",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "CC0-1.0",
+    "pushed": "2026-09-03T04:49:04Z",
+    "stars": 13,
+    "topics": []
+   }
+  },
+  {
+   "title": "Ace Combat 6: Fires of Liberation",
+   "project": "AC6_recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-17T20:00:51Z",
+   "releaseUrl": "https://github.com/sal063/AC6_recomp/releases/tag/v1.0.0-beta.2",
+   "releaseVersion": "v1.0.0-beta.2",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/sal063/AC6_recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/630b572e79b8d37e7dc70a16bd4abaea.png",
+   "github": {
+    "archived": false,
+    "desc": "static Recomp of AC6 with Rexglue",
+    "license": "BSD-3-Clause",
+    "pushed": "2026-08-22T15:52:26Z",
+    "stars": 430,
+    "topics": []
+   }
+  },
+  {
+   "title": "Ace Combat X: Skies of Deception",
+   "project": "Ace-Combat-X-Recompilation",
+   "originalPlatform": "PlayStation Portable",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-28T19:20:41Z",
+   "releaseUrl": "https://github.com/sal063/Ace-Combat-X-Recompilation/releases/tag/V1.5-release",
+   "releaseVersion": "V1.5-release",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/sal063/Ace-Combat-X-Recompilation",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/ce8b29b6bc8b2a0536b5a72f221c39f7.png",
+   "github": {
+    "archived": false,
+    "desc": "A static recompilation of ACE COMBAT X with a native renderer",
+    "license": "GPL-2.0",
+    "pushed": "2026-08-28T19:20:41Z",
+    "stars": 52,
+    "topics": []
+   }
+  },
+  {
+   "title": "Animal Crossing",
+   "project": "ACGC-PC-Port",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-02T00:56:51Z",
+   "releaseUrl": "https://github.com/flyngmt/ACGC-PC-Port/releases/tag/v0.9.3-playtest",
+   "releaseVersion": "v0.9.3-playtest",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/flyngmt/ACGC-PC-Port",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/flyngmt/ACGC-PC-Port/refs/heads/master/pc/res/icon.ico",
+   "github": {
+    "archived": false,
+    "desc": "Unofficial PC Port of Animal Crossing Gamecube",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-02T00:56:51Z",
+    "stars": 1429,
+    "topics": []
+   }
+  },
+  {
+   "title": "Alien Resurrection",
+   "project": "AlienResurrection-Recompilation",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-24T03:43:40Z",
+   "releaseUrl": "https://github.com/Heromachine/AlienResurrection-Recompilation/releases/tag/v0.2.0",
+   "releaseVersion": "v0.2.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Heromachine/AlienResurrection-Recompilation",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/4a2a0e91490091a6b26a7272ab74ffae.jpg",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-08-24T03:42:52Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Ape Escape",
+   "project": "ApeEscapeRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-03T17:12:42Z",
+   "releaseUrl": "https://github.com/mstan/ApeEscapeRecomp/releases/tag/shared-staging-20260903",
+   "releaseVersion": "shared-staging-20260903",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/ApeEscapeRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/eff9a47e08ddd4b08bdd9f273bffbcac.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Ape Escape (USA) recompiled for the Sony PlayStation using psxrecomp · Part of the R.A.I.D. community",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T18:26:24Z",
+    "stars": 71,
+    "topics": []
+   }
+  },
+  {
+   "title": "Automobili Lamborghini",
+   "project": "automobililamborghini-recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-27T13:05:29Z",
+   "releaseUrl": "https://github.com/alondero/automobililamborghini-recomp/releases/tag/v0.6.2",
+   "releaseVersion": "v0.6.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/alondero/automobililamborghini-recomp",
+   "website": "https://example.com/",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/a8308eb391711fe05ae54e2bbcc12d8a.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Static Recompilation of Automobili Lamborghini for the N64",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-06T21:44:40Z",
+    "stars": 36,
+    "topics": [
+     "n64",
+     "nintendo",
+     "recompilation"
+    ]
+   }
+  },
+  {
+   "title": "Banjo-Kazooie",
+   "project": "BanjoRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-07-31T19:43:17Z",
+   "releaseUrl": "https://github.com/BanjoRecomp/BanjoRecomp/releases/tag/v1.0.2",
+   "releaseVersion": "v1.0.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/BanjoRecomp/BanjoRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/BanjoRecomp/BanjoRecomp/refs/heads/main/icons/appb.ico",
+   "github": {
+    "archived": false,
+    "desc": "PC Port of Banjo-Kazooie made using N64: Recompiled (Windows/Linux/Mac) ",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-22T13:05:11Z",
+    "stars": 1961,
+    "topics": []
+   }
+  },
+  {
+   "title": "Banjo-Kazooie",
+   "project": "BanjoRecomp-Android",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-07-13T21:55:42Z",
+   "releaseUrl": "https://github.com/AurelioB/BanjoRecomp-Android/releases/tag/android-v0.1.2",
+   "releaseVersion": "android-v0.1.2",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/AurelioB/BanjoRecomp-Android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/AurelioB/BanjoRecomp-Android/refs/heads/android/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": "Android Port of Banjo-Kazooie made using N64: Recompiled",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-13T21:55:41Z",
+    "stars": 96,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Smash Bros",
+   "project": "BattleShip",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android"
+   ],
+   "updatedAt": "2026-08-12T03:19:33Z",
+   "releaseUrl": "https://github.com/JRickey/BattleShip/releases/tag/v1.6",
+   "releaseVersion": "v1.6",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/JRickey/BattleShip",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/JRickey/BattleShip/refs/heads/main/assets/icon.ico",
+   "github": {
+    "archived": false,
+    "desc": "A smashin' port for PC, Mac, and Linux!",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-06T12:10:37Z",
+    "stars": 418,
+    "topics": []
+   }
+  },
+  {
+   "title": "Bloody Roar 2",
+   "project": "BloodyRoar2Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-07T02:04:31Z",
+   "releaseUrl": "https://github.com/novapowers0/BloodyRoar2Recomp/releases/tag/v0.6.0",
+   "releaseVersion": "v0.6.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/novapowers0/BloodyRoar2Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/b8986b669b32e9726834cc005c9ba8e1/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": "PSX recompilation of Bloody Roar II (SLES-01722 EU / SCUS-94424 USA). Anti-copyright: bring your own disc. Dual-region builds, from-scratch widescreen + curated mods.",
+    "license": "MIT",
+    "pushed": "2026-09-07T02:04:31Z",
+    "stars": 41,
+    "topics": [
+     "bloody-roar-2",
+     "native-pc-port",
+     "playstation",
+     "ps1",
+     "psx",
+     "recomp",
+     "static-recompilation",
+     "widescreen"
+    ]
+   }
+  },
+  {
+   "title": "Bomberman 64",
+   "project": "BM64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-03-22T22:47:19Z",
+   "releaseUrl": "https://github.com/RevoSucks/BM64Recomp/releases/tag/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/RevoSucks/BM64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/RevoSucks/BM64Recomp/refs/heads/master/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2026-03-25T20:52:36Z",
+    "stars": 271,
+    "topics": []
+   }
+  },
+  {
+   "title": "Bomberman Hero",
+   "project": "BMHeroRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-05-03T20:48:20Z",
+   "releaseUrl": "https://github.com/RevoSucks/BMHeroRecomp/releases/tag/v0.7.1",
+   "releaseVersion": "v0.7.1",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/RevoSucks/BMHeroRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/RevoSucks/BMHeroRecomp/refs/heads/master/icons/appb.ico",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2026-05-12T03:54:09Z",
+    "stars": 116,
+    "topics": []
+   }
+  },
+  {
+   "title": "Bomberman Hero",
+   "project": "Bomber-Man-Hero",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-29T02:37:11Z",
+   "releaseUrl": "https://github.com/WINDROID-EMU/Bomber-Man-Hero/releases/tag/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/WINDROID-EMU/Bomber-Man-Hero",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/WINDROID-EMU/Bomber-Man-Hero/refs/heads/master/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2026-08-31T09:48:03Z",
+    "stars": 6,
+    "topics": []
+   }
+  },
+  {
+   "title": "Bomberman Fantasy Race",
+   "project": "Bomberman-Fantasy-Race-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:18:37Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Bomberman-Fantasy-Race-Recomp/releases/tag/v0.1.2",
+   "releaseVersion": "v0.1.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Bomberman-Fantasy-Race-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Bomberman-Fantasy-Race-Recomp/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-26T05:18:31Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Bomberman World",
+   "project": "Bomberman-World-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:18:55Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Bomberman-World-Recomp/releases/tag/v0.1.20",
+   "releaseVersion": "v0.1.20",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Bomberman-World-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Bomberman-World-Recomp/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-26T05:18:49Z",
+    "stars": 4,
+    "topics": []
+   }
+  },
+  {
+   "title": "Bomberman Party Edition",
+   "project": "BombermanPartyEditionRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:19:14Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/BombermanPartyEditionRecomp/releases/tag/v0.3.17",
+   "releaseVersion": "v0.3.17",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/BombermanPartyEditionRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/BombermanPartyEditionRecomp/refs/heads/main/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-31T02:07:05Z",
+    "stars": 3,
+    "topics": []
+   }
+  },
+  {
+   "title": "Castlevania (fan-game)",
+   "project": "Castlevania ReVamped",
+   "originalPlatform": "NES",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-07-09T16:37:58Z",
+   "releaseUrl": "https://github.com/eboody/Castlevania-ReVamped-Open-Source-Edition/releases/tag/v0.1.16-verified-touch-gamepad",
+   "releaseVersion": "v0.1.16-verified-touch-gamepad",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/eboody/Castlevania-ReVamped-Open-Source-Edition",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/eboody/Castlevania-ReVamped-Open-Source-Edition/refs/heads/main/options/android/icons/xxxhdpi.png",
+   "github": {
+    "archived": false,
+    "desc": "Eboody's main Castlevania ReVamped Android repo.",
+    "license": null,
+    "pushed": "2026-07-09T16:36:21Z",
+    "stars": 30,
+    "topics": []
+   }
+  },
+  {
+   "title": "Chameleon Twist",
+   "project": "ChameleonTwist1-JP-Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2024-12-14T08:14:13Z",
+   "releaseUrl": "https://github.com/Rainchus/ChameleonTwist1-JP-Recomp/releases/tag/v0.1",
+   "releaseVersion": "v0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Rainchus/ChameleonTwist1-JP-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/c1f22f4c38899f51f1ed3ce20120bbd9.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2025-03-11T04:41:16Z",
+    "stars": 49,
+    "topics": []
+   }
+  },
+  {
+   "title": "Condemned 2: Bloodshot",
+   "project": "Condemned2Recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-05T02:16:24Z",
+   "releaseUrl": "https://github.com/psxrestore/Condemned2Recomp/releases/tag/0.1.0",
+   "releaseVersion": "0.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/psxrestore/Condemned2Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/bd470ca955d9497bbcb808e59952fffc/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": "A static recompilation of Condemned 2: Bloodshot done with RexGlue.",
+    "license": "BSD-3-Clause",
+    "pushed": "2026-08-18T16:44:56Z",
+    "stars": 141,
+    "topics": [
+     "pc-port",
+     "recompilation",
+     "rexglue",
+     "static-recompilation",
+     "windows",
+     "xbox360"
+    ]
+   }
+  },
+  {
+   "title": "Crash Team Racing",
+   "project": "Crash Team Racing: High Octane",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "PS Vita"
+   ],
+   "updatedAt": "2026-09-06T22:16:40Z",
+   "releaseUrl": "https://github.com/Rinnegatamante/Crash-Team-Racing-High-Octane/releases/tag/v.1.3.1",
+   "releaseVersion": "v.1.3.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Rinnegatamante/Crash-Team-Racing-High-Octane",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/afa10814865d47b74741b44d8fcbb37b.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Advanced sourceport of Crash Team Racing for PSVita.",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-06T22:16:40Z",
+    "stars": 46,
+    "topics": []
+   }
+  },
+  {
+   "title": "Crash Bandicoot",
+   "project": "CrashBandicoot-Launcher",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "Android"
+   ],
+   "updatedAt": "2026-08-24T20:49:41Z",
+   "releaseUrl": "https://github.com/Matteo842/CrashBandicoot-Launcher/releases/tag/1.8.1",
+   "releaseVersion": "1.8.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Matteo842/CrashBandicoot-Launcher",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Matteo842/CrashBandicoot-Launcher/refs/heads/main/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "CrashBandicoot native pc port",
+    "license": "MIT",
+    "pushed": "2026-09-06T23:29:40Z",
+    "stars": 198,
+    "topics": []
+   }
+  },
+  {
+   "title": "Crash Team Racing",
+   "project": "CTR Native",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-07-07T08:11:52Z",
+   "releaseUrl": "https://github.com/CTR-tools/ctr-native/releases/tag/beta-7.1",
+   "releaseVersion": "beta-7.1",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/CTR-tools/ctr-native",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/0340a3b7dd7a146d0d9a41fa92ce05fa.jpg",
+   "github": {
+    "archived": false,
+    "desc": "A Crash Team Racing Decompilation Project",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-20T09:35:41Z",
+    "stars": 338,
+    "topics": [
+     "crash-bandicoot",
+     "crash-team-racing",
+     "decompilation",
+     "playstation",
+     "ps1",
+     "psx"
+    ]
+   }
+  },
+  {
+   "title": "Crash Team Racing",
+   "project": "ctr-native-android",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-07-26T15:23:06Z",
+   "releaseUrl": "https://github.com/Simon358/ctr-native-android/releases/tag/Android-Build4",
+   "releaseVersion": "Android-Build4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Simon358/ctr-native-android",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/afa10814865d47b74741b44d8fcbb37b.jpg",
+   "github": {
+    "archived": false,
+    "desc": "A Crash Team Racing Decompilation Project - Port on Android",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-26T15:23:06Z",
+    "stars": 31,
+    "topics": []
+   }
+  },
+  {
+   "title": "Castlevania: Legacy of Darkness",
+   "project": "cvlod_recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-07-02T14:10:34Z",
+   "releaseUrl": "https://github.com/fliperama86/cvlod_recomp/releases/tag/v0.2.26",
+   "releaseVersion": "v0.2.26",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/fliperama86/cvlod_recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/fliperama86/cvlod_recomp/refs/heads/main/src/main/lod_recomp.ico",
+   "github": {
+    "archived": false,
+    "desc": "Recompile Castlevania: Legacy of Darkness (N64) into a native executable using N64Recomp",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-02T14:10:32Z",
+    "stars": 114,
+    "topics": []
+   }
+  },
+  {
+   "title": "Castlevania: Legacy of Darkness",
+   "project": "cvlod_recomp (sergiomanzur)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-22T03:58:21Z",
+   "releaseUrl": "https://github.com/sergiomanzur/cvlod_recomp/releases/tag/v0.2.27",
+   "releaseVersion": "v0.2.27",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/sergiomanzur/cvlod_recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/98205b58f3c9541137734ab5d87daaec.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Recompile Castlevania: Legacy of Darkness (N64) into a native executable using N64Recomp",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-22T03:58:21Z",
+    "stars": 1,
+    "topics": []
+   }
+  },
+  {
+   "title": "Dragon Ball Final Bout",
+   "project": "DB-Final-Bout-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-18T09:42:35Z",
+   "releaseUrl": "https://github.com/novapowers0/DB-Final-Bout-Recomp/releases/tag/v0.1.0",
+   "releaseVersion": "v0.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/novapowers0/DB-Final-Bout-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/cbf2da3dc6c42ee8b4e539b31b0e24e1.png",
+   "github": {
+    "archived": false,
+    "desc": "PSX recompilation of Dragon Ball Final Bout (SLUS-00493). Anti-copyright: bring your own disc. WIP: widescreen + custom combat.",
+    "license": "MIT",
+    "pushed": "2026-08-23T13:49:26Z",
+    "stars": 28,
+    "topics": []
+   }
+  },
+  {
+   "title": "Dragon Ball Z: Budokai 3 HD Collection",
+   "project": "DBZ-Budokai-3-HD-Collection",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-28T15:21:43Z",
+   "releaseUrl": "https://github.com/novapowers0/DBZ-Budokai-3-HD-Collection/releases/tag/v1.1.1",
+   "releaseVersion": "v1.1.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/novapowers0/DBZ-Budokai-3-HD-Collection",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/36245df3a65dcc54d2b9828813913588.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Recompilacion estatica (ReXGlue) de Dragon Ball Z: Budokai 3 HD Collection (Xbox 360) para Windows con launcher, sistema de mods y herramientas. No incluye datos del juego.",
+    "license": "MIT",
+    "pushed": "2026-09-06T23:56:30Z",
+    "stars": 94,
+    "topics": []
+   }
+  },
+  {
+   "title": "Dark Cloud 2",
+   "project": "DC2-PS2RECOMP",
+   "originalPlatform": "PlayStation 2",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-24T10:55:34Z",
+   "releaseUrl": "https://github.com/Red-tv141/DC2-PS2RECOMP/releases/tag/0.9.3",
+   "releaseVersion": "0.9.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Red-tv141/DC2-PS2RECOMP",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Red-tv141/DC2-PS2RECOMP/refs/heads/main/dc2_Launcher/dc2_launcher_icon.ico",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "AGPL-3.0",
+    "pushed": "2026-09-02T11:33:17Z",
+    "stars": 15,
+    "topics": []
+   }
+  },
+  {
+   "title": "Digimon World",
+   "project": "Digimon World — Recompiled",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-04T20:34:29.352Z",
+   "releaseUrl": "https://gitlab.com/ethan4love/psx-recomp-port/-/releases/v0.3.5",
+   "releaseVersion": "v0.3.5",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://gitlab.com/ethan4love/psx-recomp-port",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/08931d765d99d3e849c9674cc289baf7.png",
+   "github": null
+  },
+  {
+   "title": "Dinosaur Planet",
+   "project": "dino-recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-05-31T00:23:46Z",
+   "releaseUrl": "https://github.com/DinosaurPlanetRecomp/dino-recomp/releases/tag/v0.3.0",
+   "releaseVersion": "v0.3.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/DinosaurPlanetRecomp/dino-recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/DinosaurPlanetRecomp/dino-recomp/refs/heads/main/icons/icon.ico",
+   "github": {
+    "archived": false,
+    "desc": "A static recompilation/native port of Dinosaur Planet (Dec 2000 prototype).",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-18T23:13:21Z",
+    "stars": 309,
+    "topics": []
+   }
+  },
+  {
+   "title": "Donkey Kong 64",
+   "project": "dk64-recomp-android",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-09-05T10:08:49Z",
+   "releaseUrl": "https://github.com/deivid22srk/dk64-recomp-android/releases/tag/v1.0.3-android-r7",
+   "releaseVersion": "v1.0.3-android-r7",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/deivid22srk/dk64-recomp-android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/deivid22srk/dk64-recomp-android/refs/heads/main/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": "Port Android (NDK) do Donkey Kong 64: Recompiled — RT64/Vulkan + N64ModernRuntime + SDL2. Requer ROM propria (NTSC-U 1.0).",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-05T12:39:59Z",
+    "stars": 6,
+    "topics": []
+   }
+  },
+  {
+   "title": "Donkey Kong Country 2: Diddy's Kong Quest",
+   "project": "DKC2Recomp",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-03T19:36:39Z",
+   "releaseUrl": "https://github.com/elliotttate/DKC2Recomp/releases/tag/v0.0.5-r2",
+   "releaseVersion": "v0.0.5-r2",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/elliotttate/DKC2Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/6d3e197acfa54feabf6f25624afbbb94.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "MIT",
+    "pushed": "2026-09-03T19:36:18Z",
+    "stars": 49,
+    "topics": []
+   }
+  },
+  {
+   "title": "Diddy Kong Racing",
+   "project": "DKR-R",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-03T19:55:18Z",
+   "releaseUrl": "https://github.com/ThatGuyMcd/DKR-R/releases/tag/Version1.0.4",
+   "releaseVersion": "Version1.0.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/ThatGuyMcd/DKR-R",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/ThatGuyMcd/DKR-R/refs/heads/main/assets/ui/Icons/Diddy_Kong_Racing.ico",
+   "github": {
+    "archived": false,
+    "desc": "Diddy Kong Racing - Recompiled (By ThatGuyMcd)",
+    "license": "MIT",
+    "pushed": "2026-09-03T19:55:18Z",
+    "stars": 149,
+    "topics": []
+   }
+  },
+  {
+   "title": "Duke Nukem Zero Hour",
+   "project": "DNZHRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2025-11-01T03:00:00.000Z",
+   "releaseUrl": "https://gitlab.com/sonicdcer/DNZHRecomp/-/releases/0.0.3",
+   "releaseVersion": "0.0.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://gitlab.com/sonicdcer/DNZHRecomp",
+   "website": "",
+   "iconUrl": "https://gitlab.com/sonicdcer/DNZHRecomp/-/raw/main/icons/512.ico?ref_type=heads",
+   "github": null
+  },
+  {
+   "title": "Donkey Kong 64",
+   "project": "Donkey-Kong-64-Recompiled",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-02T02:37:41Z",
+   "releaseUrl": "https://github.com/Rainchus/Donkey-Kong-64-Recompiled/releases/tag/1.0.2",
+   "releaseVersion": "1.0.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Rainchus/Donkey-Kong-64-Recompiled",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Rainchus/Donkey-Kong-64-Recompiled/refs/heads/main/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2026-09-05T03:54:44Z",
+    "stars": 397,
+    "topics": []
+   }
+  },
+  {
+   "title": "Doom II RPG",
+   "project": "DoomIIRPG-RE",
+   "originalPlatform": "Others",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2023-12-11T03:10:17Z",
+   "releaseUrl": "https://github.com/Erick194/DoomIIRPG-RE/releases/tag/v.0.1",
+   "releaseVersion": "v.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Erick194/DoomIIRPG-RE",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Erick194/DoomIIRPG-RE/refs/heads/main/src/appicon.ico",
+   "github": {
+    "archived": false,
+    "desc": "Doom II RPG Reverse Engineering By [GEC]",
+    "license": "GPL-3.0",
+    "pushed": "2025-07-09T18:54:45Z",
+    "stars": 90,
+    "topics": []
+   }
+  },
+  {
+   "title": "Doom RPG",
+   "project": "DoomRPG-RE",
+   "originalPlatform": "Others",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2024-01-24T01:36:30Z",
+   "releaseUrl": "https://github.com/Erick194/DoomRPG-RE/releases/tag/v.0.2.2",
+   "releaseVersion": "v.0.2.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Erick194/DoomRPG-RE",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/e4cab6f39f345e82e1d6b33090e727e4.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Doom RPG Reverse Engineering By [GEC]",
+    "license": "GPL-3.0",
+    "pushed": "2024-04-23T00:23:22Z",
+    "stars": 149,
+    "topics": []
+   }
+  },
+  {
+   "title": "Silent Hill: Downpour",
+   "project": "DownpourRecomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-02T22:18:50Z",
+   "releaseUrl": "https://github.com/LittleBitUA/DownpourRecomp/releases/tag/v1.1.8",
+   "releaseVersion": "v1.1.8",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/LittleBitUA/DownpourRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/LittleBitUA/DownpourRecomp/refs/heads/main/src/downpour.ico",
+   "github": {
+    "archived": false,
+    "desc": "Silent Hill: Downpour — native Windows PC port via static recompilation of the Xbox 360 binary. v1.0 stable: 60 FPS unlocked, ROV warm-cache, standalone launcher, DualSense adaptive triggers, portable saves. Tested on USA + Europe X360 dumps.",
+    "license": "BSD-3-Clause",
+    "pushed": "2026-09-02T22:18:50Z",
+    "stars": 219,
+    "topics": [
+     "d3d12",
+     "downpour",
+     "konami",
+     "native-port",
+     "pc-port",
+     "recompilation",
+     "rexglue",
+     "silent-hill",
+     "silent-hill-downpour",
+     "static-recompilation",
+     "vatra-games",
+     "windows",
+     "xbox-360"
+    ]
+   }
+  },
+  {
+   "title": "Dragon Ball Z: Buu's Fury",
+   "project": "DragonBallZBuusFuryRecomp",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-03T02:28:43Z",
+   "releaseUrl": "https://github.com/mstan/DragonBallZBuusFuryRecomp/releases/tag/v0.0.2",
+   "releaseVersion": "v0.0.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/DragonBallZBuusFuryRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/9c1aaf0c7323d741035d507cb3fbf529.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Dragon Ball Z: Buu's Fury with Adaptive Widescreen · Part of the R.A.I.D. community",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-29T18:19:23Z",
+    "stars": 17,
+    "topics": [
+     "dragon-ball-z",
+     "gba",
+     "gbarecomp",
+     "static-recompilation"
+    ]
+   }
+  },
+  {
+   "title": "Dr. Mario 64",
+   "project": "drmario64_recomp_plus",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2025-12-18T04:36:00Z",
+   "releaseUrl": "https://github.com/theboy181/drmario64_recomp_plus/releases/tag/1.0.0",
+   "releaseVersion": "1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/theboy181/drmario64_recomp_plus",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/theboy181/drmario64_recomp_plus/refs/heads/main/icons/app.ico",
+   "github": {
+    "archived": false,
+    "desc": "Recompilation of Dr. Mario 64 ",
+    "license": "GPL-3.0",
+    "pushed": "2025-12-18T04:46:41Z",
+    "stars": 143,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Twilight Princess",
+   "project": "Dusklight",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android"
+   ],
+   "updatedAt": "2026-06-16T22:33:28Z",
+   "releaseUrl": "https://github.com/TwilitRealm/dusklight/releases/tag/v1.4.1",
+   "releaseVersion": "v1.4.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/TwilitRealm/dusklight",
+   "website": "https://twilitrealm.dev/",
+   "iconUrl": "https://raw.githubusercontent.com/TwilitRealm/dusklight/refs/heads/main/res/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "Dusklight brings a classic adventure to PC and mobile platforms with a variety of fixes and improvements.",
+    "license": "CC0-1.0",
+    "pushed": "2026-09-07T01:45:35Z",
+    "stars": 5223,
+    "topics": []
+   }
+  },
+  {
+   "title": "Einhänder",
+   "project": "Einhander-Recompiled",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-29T11:47:17Z",
+   "releaseUrl": "https://github.com/strider973/Einhander-Recompiled/releases/tag/v0.1.3",
+   "releaseVersion": "v0.1.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/strider973/Einhander-Recompiled",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/25044c8f6892d2f084f72025c377023d.png",
+   "github": {
+    "archived": false,
+    "desc": "Simple Recomp of EINHANDER",
+    "license": null,
+    "pushed": "2026-08-29T11:39:36Z",
+    "stars": 80,
+    "topics": []
+   }
+  },
+  {
+   "title": "Pokémon Emerald",
+   "project": "EmeraldRecomp",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-29T19:03:48Z",
+   "releaseUrl": "https://github.com/mstan/EmeraldRecomp/releases/tag/v0.0.4",
+   "releaseVersion": "v0.0.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/EmeraldRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/19fa7de7038497527f6a88cf1629251d.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Pokémon Emerald recompiled for the Game Boy Advance using gbarecomp · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-29T19:04:05Z",
+    "stars": 15,
+    "topics": []
+   }
+  },
+  {
+   "title": "Eternal Sonata",
+   "project": "EternalSonataReprise",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-21T23:13:39Z",
+   "releaseUrl": "https://github.com/birabittoh/EternalSonataReprise/releases/tag/v1.1.3",
+   "releaseVersion": "v1.1.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/birabittoh/EternalSonataReprise",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/ff8c46249e595208862a91ed5bb6e372.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Eternal Sonata, recompiled for PC.",
+    "license": "MIT",
+    "pushed": "2026-09-06T12:10:45Z",
+    "stars": 54,
+    "topics": []
+   }
+  },
+  {
+   "title": "Extreme-G",
+   "project": "ExtremeGRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-23T02:33:50.513Z",
+   "releaseUrl": "https://gitlab.com/sonicdcer/ExtremeGRecomp/-/releases/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://gitlab.com/sonicdcer/ExtremeGRecomp",
+   "website": "",
+   "iconUrl": "https://gitlab.com/sonicdcer/ExtremeGRecomp/-/raw/main/icons/512.png?ref_type=heads",
+   "github": null
+  },
+  {
+   "title": "Fate/Unlimited Codes",
+   "project": "FateUnlimitedCodesRecomp",
+   "originalPlatform": "PlayStation Portable",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-31T17:56:19Z",
+   "releaseUrl": "https://github.com/elprogramadorloco-arch/fuc-recomp/releases/tag/v0.0.4",
+   "releaseVersion": "v0.0.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/elprogramadorloco-arch/fuc-recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/812984146bef529fcb19599b868e525c.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Hybrid native Fate/unlimited codes project: PSP static-recompilation/gameplay base with PS2 assets and controls in development. No game files included.",
+    "license": "MIT",
+    "pushed": "2026-09-02T02:15:50Z",
+    "stars": 13,
+    "topics": [
+     "allegrex",
+     "cpp",
+     "fate-unlimited-codes",
+     "mips",
+     "native-port",
+     "ps2",
+     "psp",
+     "reverse-engineering",
+     "static-recompilation"
+    ]
+   }
+  },
+  {
+   "title": "Pokémon FireRed + LeafGreen",
+   "project": "FireRedLeafGreenRecomp",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-17T07:28:06Z",
+   "releaseUrl": "https://github.com/mstan/FireRedLeafGreenRecomp/releases/tag/v0.0.3",
+   "releaseVersion": "v0.0.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/FireRedLeafGreenRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/640117fcf8c96f9c290af6bf17b0d947.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Pokémon FireRed & LeafGreen recompiled for the Game Boy Advance using gbarecomp · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-29T18:19:32Z",
+    "stars": 11,
+    "topics": []
+   }
+  },
+  {
+   "title": "Forza Motorsport 4",
+   "project": "fm4-recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-03T09:45:53Z",
+   "releaseUrl": "https://github.com/Alexbeav/fm4-recomp/releases/tag/v0.1.0-alpha.1",
+   "releaseVersion": "v0.1.0-alpha.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Alexbeav/fm4-recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/4bf9d113dc767ea4977f1126896b1f61.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Experimental static recompilation of Forza Motorsport 4 using ReXGlue. No game files included.",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-03T09:50:33Z",
+    "stars": 8,
+    "topics": [
+     "forza-motorsport-4",
+     "rexglue",
+     "static-recompilation",
+     "xbox-360"
+    ]
+   }
+  },
+  {
+   "title": "F-Zero X",
+   "project": "G-Diffuser",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-30T01:46:09Z",
+   "releaseUrl": "https://github.com/Zorkats/G-Diffuser/releases/tag/v1.1.0",
+   "releaseVersion": "v1.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Zorkats/G-Diffuser",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Zorkats/G-Diffuser/refs/heads/main/assets/branding/gdiffuser-icon.png",
+   "github": {
+    "archived": false,
+    "desc": "Unofficial PC Port of F-Zero X based on the decompilation of inspectredc.",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-30T00:55:34Z",
+    "stars": 241,
+    "topics": []
+   }
+  },
+  {
+   "title": "Pokemon Red / Blue / Yellow / Gold / Silver / Crystal",
+   "project": "Gen1Recomp",
+   "originalPlatform": "Game Boy",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android",
+    "iOS"
+   ],
+   "updatedAt": "2026-09-04T15:01:48Z",
+   "releaseUrl": "https://github.com/bryanthaboi/gen1recomp/releases/tag/v0.2.56",
+   "releaseVersion": "v0.2.56",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/bryanthaboi/gen1recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/bryanthaboi/pokemon-gen1-recomp-project/refs/heads/main/assets/logo/gen1recomp_cover.png",
+   "github": {
+    "archived": false,
+    "desc": "Gen1Recomp - A native Lua / LÖVE2D recreation of Gen 1 and 2 Poke",
+    "license": "MIT",
+    "pushed": "2026-09-05T20:33:39Z",
+    "stars": 3570,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario 64",
+   "project": "Ghostship",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-05-29T16:16:46Z",
+   "releaseUrl": "https://github.com/HarbourMasters/Ghostship/releases/tag/2.0.0",
+   "releaseVersion": "2.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarbourMasters/Ghostship",
+   "website": "https://www.harbourmasters.org/",
+   "iconUrl": "https://raw.githubusercontent.com/HarbourMasters/Ghostship/refs/heads/develop/nx-logo.jpg",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "MIT",
+    "pushed": "2026-09-07T03:48:22Z",
+    "stars": 695,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario 64",
+   "project": "Ghostship (izzy2lost)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-01-29T13:32:57Z",
+   "releaseUrl": "https://github.com/izzy2lost/Ghostship/releases/tag/1.0.1",
+   "releaseVersion": "1.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/izzy2lost/Ghostship",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/izzy2lost/Ghostship/refs/heads/develop/logo.png",
+   "github": {
+    "archived": false,
+    "desc": "Ghostship android port",
+    "license": "MIT",
+    "pushed": "2026-08-03T22:44:56Z",
+    "stars": 40,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mystical Ninja Starring Goemon",
+   "project": "Goemon64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-01-31T15:40:34Z",
+   "releaseUrl": "https://github.com/klorfmorf/Goemon64Recomp/releases/tag/v0.2.0-dev",
+   "releaseVersion": "v0.2.0-dev",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/klorfmorf/Goemon64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/klorfmorf/Goemon64Recomp/refs/heads/dev/icons/512.ico",
+   "github": {
+    "archived": false,
+    "desc": "An unofficial PC port of Mystical Ninja Starring Goemon achieved via static recompilation.",
+    "license": "GPL-3.0",
+    "pushed": "2026-04-12T22:49:19Z",
+    "stars": 300,
+    "topics": [
+     "goemon",
+     "mystical-ninja",
+     "n64",
+     "pc-port",
+     "recompilation"
+    ]
+   }
+  },
+  {
+   "title": "Mystical Ninja Starring Goemon",
+   "project": "Goemon64Recomp-Android",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-09-01T19:38:55Z",
+   "releaseUrl": "https://github.com/ogdanimal/Goemon64Recomp-Android/releases/tag/v1.0.7",
+   "releaseVersion": "v1.0.7",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/ogdanimal/Goemon64Recomp-Android",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/5c2df83eafbe505c6c735097f95d9204.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Android port of Mystical Ninja Starring Goemon via static recompilation, with RT64 Vulkan rendering. Bring your own ROM.",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-03T04:45:34Z",
+    "stars": 9,
+    "topics": []
+   }
+  },
+  {
+   "title": "Diddy Kong Racing",
+   "project": "Golden Balloon",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-02T11:10:16Z",
+   "releaseUrl": "https://github.com/akratch/goldenballoon/releases/tag/v1.6.0",
+   "releaseVersion": "v1.6.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/akratch/goldenballoon",
+   "website": "https://akratch.github.io/golden-balloon/",
+   "iconUrl": "https://raw.githubusercontent.com/akratch/goldenballoon/refs/heads/main/dist/web/assets/icon-512.png",
+   "github": {
+    "archived": false,
+    "desc": "Golden Balloon — a native + browser port of the 1997 Nintendo 64 kart racer, built from the decompilation. Bring your own ROM.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T03:44:27Z",
+    "stars": 154,
+    "topics": []
+   }
+  },
+  {
+   "title": "GoldenEye 007 (XBLA)",
+   "project": "GoldenEye-Recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-06-18T18:28:00Z",
+   "releaseUrl": "https://github.com/SunJaycy/GoldenEye-Recomp/releases/tag/Goldeneye1.2.4",
+   "releaseVersion": "Goldeneye1.2.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/SunJaycy/GoldenEye-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/SunJaycy/GoldenEye-Recomp/refs/heads/main/Icon.ico",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "Unlicense",
+    "pushed": "2026-06-18T18:28:00Z",
+    "stars": 823,
+    "topics": []
+   }
+  },
+  {
+   "title": "GoldenEye 007",
+   "project": "GoldenEye64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-20T07:49:51Z",
+   "releaseUrl": "https://github.com/cblock85/GoldenEye64Recomp/releases/tag/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/cblock85/GoldenEye64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/cblock85/GoldenEye64Recomp/refs/heads/main/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": "Native macOS and Linux port of GoldenEye 007 (N64) via static recompilation (N64Recomp + RT64). No emulator. Contains no ROM or game assets — you supply your own cartridge dump. Optional builds ship zero game code and recompile from your ROM at launch.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-20T07:49:51Z",
+    "stars": 9,
+    "topics": []
+   }
+  },
+  {
+   "title": "Gran Turismo 2",
+   "project": "GT2Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "",
+   "releaseUrl": "",
+   "releaseVersion": "",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "https://github.com/jpcarstech/GT2Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/132090a07174941bafd0500fa3f154c8.jpg",
+   "github": null
+  },
+  {
+   "title": "Mobile Suit Gundam SEED: Battle Assault",
+   "project": "Gundam-Seed-Battle-Assault-Recomp",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-28T11:31:34Z",
+   "releaseUrl": "https://github.com/omegakatana92/Gundam-Seed-Battle-Assault-Recomp/releases/tag/WIP",
+   "releaseVersion": "WIP",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/omegakatana92/Gundam-Seed-Battle-Assault-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/7657ad119f288caf9ac645adcce92eb2.jpg",
+   "github": {
+    "archived": false,
+    "desc": "A fan-made recompilation of Gundam SEED: Battle Assault for Game Boy Advance. Requires the user's own legally obtained ROM. No copyrighted ROM or game assets are included. Supports fullscreen with Alt+Enter, keyboard controls, and community contributions.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-29T02:27:44Z",
+    "stars": 4,
+    "topics": []
+   }
+  },
+  {
+   "title": "Harvest Moon 64",
+   "project": "HarvestMoon64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-07-07T00:15:42Z",
+   "releaseUrl": "https://github.com/HarvestMoon64Recomp/HarvestMoon64Recomp/releases/tag/v1.2.1",
+   "releaseVersion": "v1.2.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarvestMoon64Recomp/HarvestMoon64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/HarvestMoon64Recomp/HarvestMoon64Recomp/refs/heads/main/icons/app.ico",
+   "github": {
+    "archived": false,
+    "desc": "PC Port of Harvest Moon 64 made using N64: Recompiled (Windows/Linux/Mac) ",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-04T20:38:06Z",
+    "stars": 139,
+    "topics": []
+   }
+  },
+  {
+   "title": "Harvest Moon 64",
+   "project": "HarvestMoon64Recomp (igawa6)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-07T15:54:22Z",
+   "releaseUrl": "https://github.com/igawa6/HarvestMoon64Recomp/releases/tag/v0.2.0",
+   "releaseVersion": "v0.2.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/igawa6/HarvestMoon64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/igawa6/HarvestMoon64Recomp/refs/heads/main/icons/app.ico",
+   "github": {
+    "archived": false,
+    "desc": "Android Port of Harvest Moon 64 made using N64: Recompiled",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-07T15:51:25Z",
+    "stars": 26,
+    "topics": []
+   }
+  },
+  {
+   "title": "Dante's Inferno",
+   "project": "hells-gate-recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-04T17:47:04Z",
+   "releaseUrl": "https://github.com/florinp93/hells-gate-recomp/releases/tag/v0.4.0-alpha",
+   "releaseVersion": "v0.4.0-alpha",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/florinp93/hells-gate-recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/florinp93/hells-gate-recomp/refs/heads/main/launcher/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "Xbox 360 to PC port of Dante's Inferno using ReXGlue (static recompilation)",
+    "license": null,
+    "pushed": "2026-09-04T20:16:42Z",
+    "stars": 265,
+    "topics": []
+   }
+  },
+  {
+   "title": "Initial D: Arcade Stage Ver. 3",
+   "project": "Initial-D-Arcade-Stage-3-Native-SH-4-Recompilation",
+   "originalPlatform": "Others",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-03T10:42:56Z",
+   "releaseUrl": "https://github.com/distilledorion-sketch/Initial-D-Arcade-Stage-3-Native-SH-4-Recompilation-WIP-/releases/tag/v2489-verified-vulkan-checkpoint",
+   "releaseVersion": "v2489-verified-vulkan-checkpoint",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/distilledorion-sketch/Initial-D-Arcade-Stage-3-Native-SH-4-Recompilation-WIP-",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/72ebb8ac68204d27c7991c647ecaa34b.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Native SH-4 AOT recompilation of Initial D Arcade Stage 3 (NAOMI 2) — BIOS-free Vulkan public early demo (WIP).",
+    "license": null,
+    "pushed": "2026-09-03T10:42:56Z",
+    "stars": 115,
+    "topics": [
+     "game-preservation",
+     "naomi2",
+     "recompilation",
+     "sh4",
+     "vulkan"
+    ]
+   }
+  },
+  {
+   "title": "Jungle Strike",
+   "project": "Jungle-Strike-SNES-Static-Recomp",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-01T13:59:04Z",
+   "releaseUrl": "https://github.com/Junior-Jones/Jungle-Strike-SNES-Static-Recomp/releases/tag/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Junior-Jones/Jungle-Strike-SNES-Static-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/6990d314f4be0d9e6fbab3bff7ccbbd6.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Jungle Strike (SNES) for Windows 10 and 11. ROM not included.",
+    "license": "Zlib",
+    "pushed": "2026-09-01T14:08:32Z",
+    "stars": 3,
+    "topics": [
+     "c",
+     "cpp",
+     "game-preservation",
+     "jungle-strike",
+     "retro-gaming",
+     "reverse-engineering",
+     "sdl3",
+     "snes",
+     "static-recomp",
+     "static-recompilation",
+     "super-nintendo",
+     "windows",
+     "windows-10",
+     "windows-11"
+    ]
+   }
+  },
+  {
+   "title": "Kameo: Elements of Power",
+   "project": "KameoRePowered",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-06-23T20:53:54Z",
+   "releaseUrl": "https://github.com/birabittoh/KameoRePowered/releases/tag/v0.2.1",
+   "releaseVersion": "v0.2.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/birabittoh/KameoRePowered",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/4687b8298d476ec4582b52031c371373.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Kameo: Elements of Power (Xbox 360) for Windows and Linux, built on the ReXGlue SDK.",
+    "license": null,
+    "pushed": "2026-08-22T01:36:25Z",
+    "stars": 40,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mario Kart Wii",
+   "project": "KartPad",
+   "originalPlatform": "Wii",
+   "portTargets": [
+    "macOS",
+    "iOS"
+   ],
+   "updatedAt": "2026-09-07T00:30:20Z",
+   "releaseUrl": "https://github.com/chrissotraidis/kartpad/releases/tag/v0.4.10",
+   "releaseVersion": "v0.4.10",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/chrissotraidis/kartpad",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/3d98882e712f96f134032819b2532273.png",
+   "github": {
+    "archived": false,
+    "desc": "Mario Kart Wii and Retro Rewind, native for iOS, iPadOS, macOS, and tvOS.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-07T02:39:48Z",
+    "stars": 329,
+    "topics": []
+   }
+  },
+  {
+   "title": "Kirby's Dream Land",
+   "project": "Kirby-Dream-Land-Recomp",
+   "originalPlatform": "Game Boy",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-26T00:27:44Z",
+   "releaseUrl": "https://github.com/omegakatana92/Kirby-Dream-Land-Recomp/releases/tag/recomp",
+   "releaseVersion": "recomp",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/omegakatana92/Kirby-Dream-Land-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/10484a0b82af0167ee19b445b54b7225.jpg",
+   "github": {
+    "archived": false,
+    "desc": "A fan-made recompilation of Kirby's Dream Land for modern systems. Requires the user to provide their own legally obtained ROM. No copyrighted ROM or Nintendo assets are included. Supports fullscreen with Alt+Enter. Nintendo retains all rights. Switch 2 support may be considered where possible.",
+    "license": null,
+    "pushed": "2026-08-30T21:46:10Z",
+    "stars": 9,
+    "topics": []
+   }
+  },
+  {
+   "title": "Tetris",
+   "project": "Kirpich",
+   "originalPlatform": "Game Boy",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-27T01:23:15Z",
+   "releaseUrl": "https://github.com/etroimcasso/Kirpich/releases/tag/v0.9.5",
+   "releaseVersion": "v0.9.5",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/etroimcasso/Kirpich",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/28d7f95b770c7afa95e36882b4797c14.jpg",
+   "github": {
+    "archived": false,
+    "desc": "GB DMG Tetris C++ Port, built on the Polyrhythm engine",
+    "license": "AGPL-3.0",
+    "pushed": "2026-09-07T03:43:05Z",
+    "stars": 13,
+    "topics": []
+   }
+  },
+  {
+   "title": "Klonoa - Door to Phantomile",
+   "project": "Klonoa-Door-to-Phantomile",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-25T15:12:28Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Klonoa-Door-to-Phantomile/releases/tag/v0.1.3",
+   "releaseVersion": "v0.1.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Klonoa-Door-to-Phantomile",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Klonoa-Door-to-Phantomile/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-26T05:09:18Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Link's Awakening DX",
+   "project": "LADXHD Updated",
+   "originalPlatform": "Game Boy Color",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-03T10:23:13.829Z",
+   "releaseUrl": "https://gitlab.com/bighead.0/ladxhd_updated/-/releases/v2.0.7",
+   "releaseVersion": "v2.0.7",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://gitlab.com/bighead.0/ladxhd_updated",
+   "website": "",
+   "iconUrl": "https://gitlab.com/bighead.0/ladxhd_updated/-/raw/main/icon/Icon.svg?ref_type=heads",
+   "github": null
+  },
+  {
+   "title": "Legend of Legaia",
+   "project": "legend-of-legaia-recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-27T20:29:16Z",
+   "releaseUrl": "https://github.com/SamSteProjects/legend-of-legaia-recomp/releases/tag/v0.1.7-diagnostic-playtest",
+   "releaseVersion": "v0.1.7-diagnostic-playtest",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/SamSteProjects/legend-of-legaia-recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/f8f3b8bb4532e8324a2a1b22bcc9f0e8.jpg",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-08-27T20:29:15Z",
+    "stars": 9,
+    "topics": []
+   }
+  },
+  {
+   "title": "Banjo-Kazooie",
+   "project": "Lighthouse",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-17T02:20:38Z",
+   "releaseUrl": "https://github.com/HarbourMasters/Lighthouse/releases/tag/1.1.0",
+   "releaseVersion": "1.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarbourMasters/Lighthouse",
+   "website": "https://www.harbourmasters.org/",
+   "iconUrl": "https://raw.githubusercontent.com/HarbourMasters/Lighthouse/refs/heads/develop/logo.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "CC0-1.0",
+    "pushed": "2026-08-31T05:34:50Z",
+    "stars": 414,
+    "topics": []
+   }
+  },
+  {
+   "title": "Banjo-Kazooie",
+   "project": "Lighthouse (izzy2lost)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-07T00:31:18Z",
+   "releaseUrl": "https://github.com/izzy2lost/Lighthouse/releases/tag/1.0.2",
+   "releaseVersion": "1.0.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/izzy2lost/Lighthouse",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/izzy2lost/Lighthouse/refs/heads/develop/logo.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "CC0-1.0",
+    "pushed": "2026-08-07T00:31:18Z",
+    "stars": 20,
+    "topics": []
+   }
+  },
+  {
+   "title": "Banjo-Kazooie",
+   "project": "Lighthouse Vita",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "PS Vita"
+   ],
+   "updatedAt": "2026-08-31T22:33:40Z",
+   "releaseUrl": "https://github.com/Rinnegatamante/Lighthouse/releases/tag/v.1.0.1",
+   "releaseVersion": "v.1.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Rinnegatamante/Lighthouse",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/7c220a2091c26a7f5e9f1cfb099511e3.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "CC0-1.0",
+    "pushed": "2026-08-31T22:33:39Z",
+    "stars": 15,
+    "topics": []
+   }
+  },
+  {
+   "title": "Lost Odyssey",
+   "project": "LostOdysseyRecomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-07T03:11:10Z",
+   "releaseUrl": "https://github.com/freefrank/LostOdysseyRecomp/releases/tag/v0.2.2",
+   "releaseVersion": "v0.2.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/freefrank/LostOdysseyRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/391a27a836e9bb54e5cdea977b181fcc.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Experimental native PC port of Lost Odyssey using static recompilation. No game assets included.",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-07T03:17:43Z",
+    "stars": 72,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mario Kart 64",
+   "project": "MarioKart64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-02-13T03:00:00.000Z",
+   "releaseUrl": "https://gitlab.com/sonicdcer/MarioKart64Recomp/-/releases/v0.9.2",
+   "releaseVersion": "v0.9.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://gitlab.com/sonicdcer/MarioKart64Recomp",
+   "website": "",
+   "iconUrl": "https://gitlab.com/sonicdcer/MarioKart64Recomp/-/raw/main/icons/512.ico",
+   "github": null
+  },
+  {
+   "title": "Mario Kart: Super Circuit",
+   "project": "MarioKartSuperCircuitRecomp",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-31T17:52:40Z",
+   "releaseUrl": "https://github.com/mstan/MarioKartSuperCircuitRecomp/releases/tag/v0.0.3",
+   "releaseVersion": "v0.0.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/MarioKartSuperCircuitRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/cfd6c82a2b509c9fde692e0bb068f0c3.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Mario Kart: Super Circuit with optional 60 FPS and Adaptive Widescreen mods · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-31T17:56:05Z",
+    "stars": 39,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mario Party 4",
+   "project": "marioparty4",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "Windows",
+    "Android"
+   ],
+   "updatedAt": "2026-04-30T23:59:31Z",
+   "releaseUrl": "https://github.com/mariopartyrd/marioparty4/releases/tag/partyboard_0.2.0",
+   "releaseVersion": "partyboard_0.2.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/mariopartyrd/marioparty4",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/3e60e09c222f206c725385f53d7e567c.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-06-04T03:18:46Z",
+    "stars": 838,
+    "topics": []
+   }
+  },
+  {
+   "title": "Marvel vs. Capcom: Clash of Super Heroes",
+   "project": "Marvel-vs.-Capcom-Clash-of-Super-Heroes-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:21:50Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Marvel-vs.-Capcom-Clash-of-Super-Heroes-Recomp/releases/tag/v0.3.18",
+   "releaseVersion": "v0.3.18",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Marvel-vs.-Capcom-Clash-of-Super-Heroes-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Marvel-vs.-Capcom-Clash-of-Super-Heroes-Recomp/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-29T16:26:12Z",
+    "stars": 2,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Majora's Mask",
+   "project": "MaskPad",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "iOS"
+   ],
+   "updatedAt": "2026-08-18T17:08:21Z",
+   "releaseUrl": "https://github.com/chrissotraidis/maskpad/releases/tag/v0.1.2",
+   "releaseVersion": "v0.1.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/chrissotraidis/maskpad",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/6451343e4f4041fb19ddf7b9dc58538b.png",
+   "github": {
+    "archived": false,
+    "desc": "The Legend of Zelda: Majora's Mask via 2 Ship 2 Harkinian, rebuilt for iPhone and iPad.",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-18T17:08:06Z",
+    "stars": 47,
+    "topics": [
+     "apple-silicon",
+     "game-port",
+     "ios",
+     "ipados",
+     "majoras-mask",
+     "native-ios",
+     "touch-controls"
+    ]
+   }
+  },
+  {
+   "title": "Star Wars: Masters of Teras Kasi",
+   "project": "MastersOfTerasKasiRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:21:39Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/MastersOfTerasKasiRecomp/releases/tag/v0.3.16",
+   "releaseVersion": "v0.3.16",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/MastersOfTerasKasiRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/MastersOfTerasKasiRecomp/refs/heads/main/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-26T05:21:32Z",
+    "stars": 5,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mega Man 64",
+   "project": "MegaMan64Recompiled",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-04-30T20:35:04Z",
+   "releaseUrl": "https://github.com/MegaMan64Recomp/MegaMan64Recompiled/releases/tag/v0.9.1",
+   "releaseVersion": "v0.9.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/MegaMan64Recomp/MegaMan64Recompiled",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/MegaMan64Recomp/MegaMan64Recompiled/refs/heads/main/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": "Recompilation of Mega Man 64",
+    "license": "GPL-3.0",
+    "pushed": "2026-04-30T20:35:04Z",
+    "stars": 245,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mega Man X5",
+   "project": "MegaManX5Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-03T17:13:26Z",
+   "releaseUrl": "https://github.com/mstan/MegaManX5Recomp/releases/tag/shared-staging-20260903",
+   "releaseVersion": "shared-staging-20260903",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/MegaManX5Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/71863873e66ece1e697fa9d41b20df8a.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Mega Man X5 (USA, SLUS-01334) statically recompiled to a native Windows executable with the PSXRecomp framework.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T18:28:07Z",
+    "stars": 41,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mega Man X6",
+   "project": "MegaManX6Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-03T17:13:50Z",
+   "releaseUrl": "https://github.com/mstan/MegaManX6Recomp/releases/tag/shared-staging-20260903",
+   "releaseVersion": "shared-staging-20260903",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/MegaManX6Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/df8ca647ec048efd0cd4d6c6363513a7.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Mega Man X6 (USA) recompiled for the Sony PlayStation using psxrecomp · Part of the R.A.I.D. community",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T18:28:10Z",
+    "stars": 70,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mega Man X",
+   "project": "MegaManXSNESRecomp",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-16T07:37:35Z",
+   "releaseUrl": "https://github.com/mstan/MegaManXSNESRecomp/releases/tag/v1.4.3",
+   "releaseVersion": "v1.4.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/MegaManXSNESRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/b946c734affd9d4de72dd92957bfc9f8.png",
+   "github": {
+    "archived": false,
+    "desc": "Mega Man X recompiled for the Super Nintendo using snesrecomp · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-24T23:23:12Z",
+    "stars": 129,
+    "topics": []
+   }
+  },
+  {
+   "title": "Metal Slug X",
+   "project": "Metal-Slug-X-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:22:59Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Metal-Slug-X-Recomp/releases/tag/v0.1.20",
+   "releaseVersion": "v0.1.20",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Metal-Slug-X-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Metal-Slug-X-Recomp/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-26T05:22:53Z",
+    "stars": 5,
+    "topics": []
+   }
+  },
+  {
+   "title": "Metroid Prime Hunters",
+   "project": "MetroidPrimeHuntersRecomp",
+   "originalPlatform": "Nintendo DS",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-06T07:24:02Z",
+   "releaseUrl": "https://github.com/mstan/MetroidPrimeHuntersRecomp/releases/tag/v0.6.10-linux.1",
+   "releaseVersion": "v0.6.10-linux.1",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/MetroidPrimeHuntersRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/a4dbd8807f9a6cfe63c78e84676df2ee.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "MIT",
+    "pushed": "2026-09-06T07:22:19Z",
+    "stars": 212,
+    "topics": []
+   }
+  },
+  {
+   "title": "Fatal Frame",
+   "project": "MikuPan",
+   "originalPlatform": "PlayStation 2",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-06-04T02:54:21Z",
+   "releaseUrl": "https://github.com/Mikompilation/MikuPan/releases/tag/nightly",
+   "releaseVersion": "nightly",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/Mikompilation/MikuPan",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/b485dd9ed816f24bcfcc15f8b9cb9075.png",
+   "github": {
+    "archived": false,
+    "desc": "PC Port Of Fatal Frame 1 Based On Himuro",
+    "license": "AGPL-3.0",
+    "pushed": "2026-08-31T01:09:42Z",
+    "stars": 83,
+    "topics": []
+   }
+  },
+  {
+   "title": "Naughty Bear Gold",
+   "project": "NaughtyBear_ReStuff",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-06T06:13:47Z",
+   "releaseUrl": "https://github.com/MaxDeadBear/NaughtyBear_ReStuff/releases/tag/release_v1.4",
+   "releaseVersion": "release_v1.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/MaxDeadBear/NaughtyBear_ReStuff",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/MaxDeadBear/NaughtyBear_ReStuff/refs/heads/main/icon/DASHICON.ico",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-09-06T12:47:25Z",
+    "stars": 29,
+    "topics": []
+   }
+  },
+  {
+   "title": "Lotus Trilogy",
+   "project": "Nelumbo",
+   "originalPlatform": "Others",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "",
+   "releaseUrl": "",
+   "releaseVersion": "",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "",
+   "website": "https://almost-there-games.itch.io/nelumbo",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/15ff25fd515e3c151b797bcef1bf3fb9.jpg",
+   "github": null
+  },
+  {
+   "title": "Castlevania: Symphony of the Night (XBLA)",
+   "project": "NocturneRecomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-27T23:17:33Z",
+   "releaseUrl": "https://github.com/birabittoh/NocturneRecomp/releases/tag/v1.4.5",
+   "releaseVersion": "v1.4.5",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/birabittoh/NocturneRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/78571f3ed2cc64e2a81e964ce63615d6.png",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Castlevania: Symphony of the Night (XBLA) for Windows and Linux, built on the ReXGlue SDK.",
+    "license": "MIT",
+    "pushed": "2026-08-27T23:11:36Z",
+    "stars": 341,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Ocarina of Time",
+   "project": "oot-PSP",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "PSP"
+   ],
+   "updatedAt": "2026-08-30T19:30:23Z",
+   "releaseUrl": "https://github.com/z2442/oot-PSP/releases/tag/1.0",
+   "releaseVersion": "1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/z2442/oot-PSP",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/a896144046a1b5bd6e3e034d00b4f73a.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-09-02T20:35:58Z",
+    "stars": 56,
+    "topics": []
+   }
+  },
+  {
+   "title": "Pikmin",
+   "project": "Open Nectar",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "Linux"
+   ],
+   "updatedAt": "2026-09-06T09:54:16Z",
+   "releaseUrl": "https://github.com/SSunnKing/Open-Nectar---Pikmin-Decompilation-Linux-Port/releases/tag/0.1",
+   "releaseVersion": "0.1",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": true,
+   "repo": "https://github.com/SSunnKing/Open-Nectar---Pikmin-Decompilation-Linux-Port",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/ed02e8478720e5c7c77f780ddd471ab2.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Native Linux Pikmin Port",
+    "license": "CC0-1.0",
+    "pushed": "2026-09-06T10:36:19Z",
+    "stars": 14,
+    "topics": []
+   }
+  },
+  {
+   "title": "Jak and Daxter, Jak II. Jak 3",
+   "project": "OpenGOAL",
+   "originalPlatform": "PlayStation 2",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-05-14T19:40:01Z",
+   "releaseUrl": "https://github.com/open-goal/launcher/releases/tag/v2.10.4",
+   "releaseVersion": "v2.10.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/open-goal/launcher",
+   "website": "https://opengoal.dev/",
+   "iconUrl": "https://raw.githubusercontent.com/open-goal/launcher/refs/heads/main/src-tauri/icons/icon.ico",
+   "github": {
+    "archived": false,
+    "desc": "A launcher for the OpenGOAL Project to simplify usage and installation",
+    "license": "ISC",
+    "pushed": "2026-09-06T23:51:45Z",
+    "stars": 224,
+    "topics": []
+   }
+  },
+  {
+   "title": "Spyro the Dragon",
+   "project": "OpenPete",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "",
+   "releaseUrl": "",
+   "releaseVersion": "",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "",
+   "website": "https://openpete.com/",
+   "iconUrl": "https://openpete.com/assets/favicon.svg",
+   "github": null
+  },
+  {
+   "title": "Paper Mario",
+   "project": "Paper Mario ReCut",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-06-01T20:33:17Z",
+   "releaseUrl": "https://github.com/SMCGames/Paper-Mario-ReCut/releases/tag/v0.1.2",
+   "releaseVersion": "v0.1.2",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": true,
+   "repo": "https://github.com/SMCGames/Paper-Mario-ReCut",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/SMCGames/Paper-Mario-ReCut/refs/heads/main/assets/CutMar.ico",
+   "github": {
+    "archived": false,
+    "desc": "A PC Port of Paper Mario for N64",
+    "license": "MIT",
+    "pushed": "2026-06-01T20:31:42Z",
+    "stars": 302,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mario Party 4",
+   "project": "Party Board",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "Windows",
+    "Android"
+   ],
+   "updatedAt": "2026-05-08T17:16:57Z",
+   "releaseUrl": "https://github.com/mariopartyrd/partyboard/releases/tag/partyboard_0.2.0",
+   "releaseVersion": "partyboard_0.2.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/mariopartyrd/partyboard",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/mariopartyrd/partyboard/refs/heads/main/res/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "A WIP PC port of Mario Party 4.",
+    "license": null,
+    "pushed": "2026-06-12T22:47:09Z",
+    "stars": 36,
+    "topics": []
+   }
+  },
+  {
+   "title": "Perfect Dark",
+   "project": "perfect_dark",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Switch"
+   ],
+   "updatedAt": "2024-05-14T09:41:23Z",
+   "releaseUrl": "https://github.com/perfect-dark-pc-port/perfect_dark/releases/tag/ci-dev-build",
+   "releaseVersion": "ci-dev-build",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/perfect-dark-pc-port/perfect_dark",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/perfect-dark-pc-port/perfect_dark/refs/heads/port/dist/nswitch/icon.jpg",
+   "github": {
+    "archived": false,
+    "desc": "work in progress port of n64decomp/perfect_dark to modern platforms",
+    "license": "MIT",
+    "pushed": "2026-08-13T05:58:19Z",
+    "stars": 1986,
+    "topics": []
+   }
+  },
+  {
+   "title": "Perfect Dark",
+   "project": "Perfect Dark (izzy2lost)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-27T17:15:19Z",
+   "releaseUrl": "https://github.com/izzy2lost/perfect_dark/releases/tag/2.0.0",
+   "releaseVersion": "2.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/izzy2lost/perfect_dark",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/izzy2lost/perfect_dark/refs/heads/port/dist/nswitch/icon.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Android Port!! work in progress port of n64decomp/perfect_dark to modern platforms",
+    "license": "MIT",
+    "pushed": "2026-08-27T17:15:18Z",
+    "stars": 94,
+    "topics": []
+   }
+  },
+  {
+   "title": "Project Gotham Racing 4",
+   "project": "PGR4-Recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-22T12:03:44Z",
+   "releaseUrl": "https://github.com/beatrixzy/PGR4-Recomp/releases/tag/v1.2.1",
+   "releaseVersion": "v1.2.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/beatrixzy/PGR4-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/7c57d0b5b9fab29ba9f3e317cc71033f.jpg",
+   "github": {
+    "archived": false,
+    "desc": "A Recompilation of Project Gotham Racing 4",
+    "license": null,
+    "pushed": "2026-09-03T16:56:28Z",
+    "stars": 128,
+    "topics": [
+     "project-gotham-racing",
+     "rexglue",
+     "rexglue-recomp",
+     "xbox-360"
+    ]
+   }
+  },
+  {
+   "title": "Forza Horizon",
+   "project": "Pinyon Shift",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-28T00:09:22Z",
+   "releaseUrl": "https://github.com/arcanite24/pinyon-shift/releases/tag/v0.1.1",
+   "releaseVersion": "v0.1.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/arcanite24/pinyon-shift",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/c554942ee622a853af81e6448a2833a6.png",
+   "github": {
+    "archived": false,
+    "desc": "A playable preview of Forza Horizon static recompilation",
+    "license": "BSD-3-Clause",
+    "pushed": "2026-09-01T19:13:54Z",
+    "stars": 156,
+    "topics": [
+     "forza-horizon",
+     "rexglue",
+     "static-recompilation",
+     "windows",
+     "xbox-360"
+    ]
+   }
+  },
+  {
+   "title": "Street Fighter EX Plus Alpha",
+   "project": "plusalpha-recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-28T15:51:39Z",
+   "releaseUrl": "https://github.com/guimaraf/plusalpha-recomp/releases/tag/v0.2.3-alpha",
+   "releaseVersion": "v0.2.3-alpha",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/guimaraf/plusalpha-recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/07d78c45b9d828ca146f4b49e85ec74f.jpg",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-09-07T01:56:25Z",
+    "stars": 32,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: The Minish Cap",
+   "project": "Project Picori",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android"
+   ],
+   "updatedAt": "2026-07-19T08:15:17Z",
+   "releaseUrl": "https://github.com/999sian/tmc/releases/tag/v0.8.3",
+   "releaseVersion": "v0.8.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/999sian/tmc",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/999sian/tmc/refs/heads/master/docs/picori-logo.png",
+   "github": {
+    "archived": false,
+    "desc": "Project Picori — a native PC port of The Legend of Zelda: The Minish Cap (Linux/Windows/macOS), built on the zeldaret/tmc decompilation.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-04T10:16:09Z",
+    "stars": 393,
+    "topics": [
+     "decompilation",
+     "gba",
+     "minish-cap",
+     "pc-port",
+     "sdl3",
+     "zelda"
+    ]
+   }
+  },
+  {
+   "title": "Sonic and the Secret Rings",
+   "project": "Project Reignition",
+   "originalPlatform": "Wii",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "",
+   "releaseUrl": "",
+   "releaseVersion": "",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "",
+   "website": "https://gamejolt.com/games/project_reignition/1082591",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/5bde50e343d4f458d750b107e15f7aea.png",
+   "github": null
+  },
+  {
+   "title": "Tony Hawk's Project 8",
+   "project": "Project8Recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-24T13:53:28Z",
+   "releaseUrl": "https://github.com/theokyr/Project8Recomp/releases/tag/v0.3.0",
+   "releaseVersion": "v0.3.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/theokyr/Project8Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/5b8279fe66d88093f05795e8cf019c25.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of Tony Hawk's Project 8 (Xbox 360) by static recompilation.",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-24T13:46:17Z",
+    "stars": 18,
+    "topics": [
+     "cpp",
+     "decompilation",
+     "game-preservation",
+     "linux-gaming",
+     "native-port",
+     "pc-port",
+     "powerpc",
+     "recomp",
+     "reverse-engineering",
+     "rexglue",
+     "skateboarding",
+     "static-recompilation",
+     "steam-deck",
+     "tony-hawk",
+     "tony-hawks-project-8",
+     "vulkan",
+     "xbox360",
+     "xenia"
+    ]
+   }
+  },
+  {
+   "title": "Quest 64",
+   "project": "Quest64-Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-01-11T23:08:21Z",
+   "releaseUrl": "https://github.com/Rainchus/Quest64-Recomp/releases/tag/v0.1",
+   "releaseVersion": "v0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Rainchus/Quest64-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Rainchus/Quest64-Recomp/refs/heads/main/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-01-26T20:32:53Z",
+    "stars": 267,
+    "topics": []
+   }
+  },
+  {
+   "title": "Rage Racer",
+   "project": "rage-racer-pc",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-31T21:35:58Z",
+   "releaseUrl": "https://github.com/khasinski/rage-racer-pc/releases/tag/0.6.3-alpha",
+   "releaseVersion": "0.6.3-alpha",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/khasinski/rage-racer-pc",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/khasinski/rage-racer-pc/refs/heads/main/packaging/icon/rage-racer.png",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of Rage Racer",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-06T11:39:55Z",
+    "stars": 97,
+    "topics": []
+   }
+  },
+  {
+   "title": "Rampage - Through Time",
+   "project": "Rampage---Through-Time-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:19:16Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Rampage---Through-Time-Recomp/releases/tag/v0.1.22",
+   "releaseVersion": "v0.1.22",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Rampage---Through-Time-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Rampage---Through-Time-Recomp/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-26T05:19:11Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Guitar Hero: Warriors of Rock",
+   "project": "re-wor",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-03-03T01:53:32Z",
+   "releaseUrl": "https://github.com/ronniecloud/re-wor/releases/tag/v1.1.0",
+   "releaseVersion": "v1.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/ronniecloud/re-wor",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/63240353f8a8790dbe8f7bd93b014c1a.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Native recompilation of Guitar Hero: Warriors of Rock (Xbox 360) for PC",
+    "license": null,
+    "pushed": "2026-03-06T21:49:24Z",
+    "stars": 25,
+    "topics": []
+   }
+  },
+  {
+   "title": "Blue Dragon",
+   "project": "re:Blue",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-07T03:09:25Z",
+   "releaseUrl": "https://github.com/zolaware/reblue/releases/tag/nightly-v1.0.0-ddf68c8e9-s0c7b01a0",
+   "releaseVersion": "nightly-v1.0.0-ddf68c8e9-s0c7b01a0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/zolaware/reblue",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/zolaware/reblue/refs/heads/main/res/reblue.ico",
+   "github": {
+    "archived": false,
+    "desc": "Recompilation of Blue Dragon",
+    "license": "BSD-3-Clause",
+    "pushed": "2026-09-07T03:09:24Z",
+    "stars": 600,
+    "topics": []
+   }
+  },
+  {
+   "title": "Jackie Chan Stuntmaster",
+   "project": "ReChan",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-07-19T08:35:36Z",
+   "releaseUrl": "https://github.com/SilverwireGames/ReChan/releases/tag/v1.0.1",
+   "releaseVersion": "v1.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/SilverwireGames/ReChan",
+   "website": "https://silverwiregames.com/#rechan",
+   "iconUrl": "https://raw.githubusercontent.com/SilverwireGames/ReChan/refs/heads/main/src/pc/rechan.ico",
+   "github": {
+    "archived": false,
+    "desc": "Jackie Chan Stuntmaster reimplementation",
+    "license": "MIT",
+    "pushed": "2026-07-31T07:03:06Z",
+    "stars": 29,
+    "topics": [
+     "chan",
+     "cpp",
+     "disassemble",
+     "game",
+     "gamedev",
+     "ida",
+     "jackie",
+     "playstation",
+     "psx",
+     "rechan",
+     "recompilation",
+     "reimplementation",
+     "reverseengineering",
+     "stuntmaster",
+     "sym"
+    ]
+   }
+  },
+  {
+   "title": "Destroy all humans: Path of the Furon",
+   "project": "ReDahm",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-24T04:41:11Z",
+   "releaseUrl": "https://github.com/masterspike52/reDAHM/releases/tag/new",
+   "releaseVersion": "new",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/masterspike52/reDAHM",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/ebaba2c9861586319f00447a7f72e74e.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Destroy all humans Path of the Furon Recompiled with Rexglue-SDK",
+    "license": null,
+    "pushed": "2026-08-24T04:43:13Z",
+    "stars": 23,
+    "topics": []
+   }
+  },
+  {
+   "title": "Driver 2",
+   "project": "REDRIVER2",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-07-02T07:38:45Z",
+   "releaseUrl": "https://github.com/OpenDriver2/REDRIVER2/releases/tag/8.0",
+   "releaseVersion": "8.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/OpenDriver2/REDRIVER2",
+   "website": "https://opendriver2.github.io/",
+   "iconUrl": "https://github.com/OpenDriver2.png?size=256",
+   "github": {
+    "archived": false,
+    "desc": "Driver 2 Playstation game reverse engineering effort",
+    "license": "MIT",
+    "pushed": "2026-07-02T07:38:45Z",
+    "stars": 1344,
+    "topics": [
+     "decompilation",
+     "decompile",
+     "disassemble",
+     "driver2",
+     "game",
+     "ghidra",
+     "playstation",
+     "psx",
+     "reverse-engineering",
+     "sym"
+    ]
+   }
+  },
+  {
+   "title": "Resident Evil Gaiden",
+   "project": "regaiden-recomp",
+   "originalPlatform": "Game Boy Color",
+   "portTargets": [
+    "Windows",
+    "Android"
+   ],
+   "updatedAt": "2026-08-29T19:18:38Z",
+   "releaseUrl": "https://github.com/sergiomanzur/regaiden-recomp/releases/tag/v0.3.1",
+   "releaseVersion": "v0.3.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/sergiomanzur/regaiden-recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/sergiomanzur/regaiden-recomp/refs/heads/master/src/recompiled/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "Native static C/C++ recompilation of Resident Evil Gaiden (GBC) for PC with True Widescreen, 2D Dynamic Lighting, Retro Horror Shaders, and HD Texture Pack support",
+    "license": "MIT",
+    "pushed": "2026-08-29T19:18:38Z",
+    "stars": 37,
+    "topics": []
+   }
+  },
+  {
+   "title": "Banjo-Kazooie: Nuts and Bolts",
+   "project": "reNut",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-12T20:34:31Z",
+   "releaseUrl": "https://github.com/masterspike52/reNut/releases/tag/texturereplacements",
+   "releaseVersion": "texturereplacements",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/masterspike52/reNut",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/f280d7b29b597dea555f857ecb8262df.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Banjo-Kazooie: Nuts and Bolts Recompilation with Rexglue",
+    "license": null,
+    "pushed": "2026-08-19T01:11:29Z",
+    "stars": 127,
+    "topics": []
+   }
+  },
+  {
+   "title": "Naughty Bear Panic in Paradise",
+   "project": "restuff_inParadise",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-06-27T01:10:56Z",
+   "releaseUrl": "https://github.com/MaxDeadBear/restuff_inParadise/releases/tag/release_v1.1",
+   "releaseVersion": "release_v1.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/MaxDeadBear/restuff_inParadise",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/da91bf0cd25fa6520fe45b9217fd9162.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Recompilation Project For Naughty Bear Panic in Paradise",
+    "license": null,
+    "pushed": "2026-06-27T01:25:53Z",
+    "stars": 4,
+    "topics": []
+   }
+  },
+  {
+   "title": "Viva Pinata Trouble in Paradise",
+   "project": "ReTiP",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-21T22:34:34Z",
+   "releaseUrl": "https://github.com/SolarCookies/TiP-Recomp/releases/tag/1.12.1",
+   "releaseVersion": "1.12.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/SolarCookies/TiP-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/SolarCookies/TiP-Recomp/refs/heads/main/icon/app.ico",
+   "github": {
+    "archived": false,
+    "desc": "A Recompilation of Viva Pinata: Trouble In Paradise",
+    "license": null,
+    "pushed": "2026-08-28T23:02:08Z",
+    "stars": 162,
+    "topics": []
+   }
+  },
+  {
+   "title": "EXIT 1 & 2",
+   "project": "ReXGlue-EXIT",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-07-07T15:16:33Z",
+   "releaseUrl": "https://github.com/FluffyQuack/ReXGlue-EXIT/releases/tag/v0.9.1",
+   "releaseVersion": "v0.9.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/FluffyQuack/ReXGlue-EXIT",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/f0a864c2092c2885179523674f580428/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": "EXIT 1 & 2 Statically Recompiled using ReXGlue SDK",
+    "license": "NOASSERTION",
+    "pushed": "2026-07-07T15:16:33Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Pokémon Ruby + Sapphire",
+   "project": "RubySapphireRecomp",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-29T19:05:56Z",
+   "releaseUrl": "https://github.com/mstan/RubySapphireRecomp/releases/tag/v0.0.4",
+   "releaseVersion": "v0.0.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/RubySapphireRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/1002b558bb5093bf7b4829c35b0bb690.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Pokémon Ruby & Sapphire recompiled for the Game Boy Advance using gbarecomp · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-29T19:05:39Z",
+    "stars": 10,
+    "topics": []
+   }
+  },
+  {
+   "title": "Legend of Dragoon",
+   "project": "Severed-Chains",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2025-06-22T15:37:49Z",
+   "releaseUrl": "https://github.com/Legend-of-Dragoon-Modding/Severed-Chains/releases/tag/devbuild",
+   "releaseVersion": "devbuild",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Legend-of-Dragoon-Modding/Severed-Chains",
+   "website": "https://legendofdragoon.org/projects/severed-chains/",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/ddc2c94d27d2c6d46b33acf21b21a641.png",
+   "github": {
+    "archived": false,
+    "desc": "Legend of Dragoon decompiled, reverse engineered, and ported to PC/Mac/Linux/Steam Deck",
+    "license": null,
+    "pushed": "2026-09-06T22:22:57Z",
+    "stars": 518,
+    "topics": [
+     "java",
+     "reverse-engineering"
+    ]
+   }
+  },
+  {
+   "title": "Syphon Filter",
+   "project": "SF-pc-port",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-13T18:47:33Z",
+   "releaseUrl": "https://github.com/Madxbio97/SF-pc-port/releases/tag/0.2.0-beta.2",
+   "releaseVersion": "0.2.0-beta.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Madxbio97/SF-pc-port",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/12a84268867e9b12cec05f395cb1742f.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "MIT",
+    "pushed": "2026-08-13T18:47:33Z",
+    "stars": 81,
+    "topics": []
+   }
+  },
+  {
+   "title": "Star Fox 64",
+   "project": "sf64-psp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "PSP"
+   ],
+   "updatedAt": "",
+   "releaseUrl": "",
+   "releaseVersion": "",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "https://github.com/TheMrIron2/sf64-psp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/2b962f0b627cf45414b498eb963dde7d.png",
+   "github": {
+    "archived": false,
+    "desc": "Port of Star Fox 64 to PSP based on the decompilation.",
+    "license": "CC0-1.0",
+    "pushed": "2026-09-06T20:05:56Z",
+    "stars": 13,
+    "topics": [
+     "decompilation",
+     "psp",
+     "starfox"
+    ]
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Ocarina of Time",
+   "project": "Ship of Harkinian",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Switch",
+    "Wii U"
+   ],
+   "updatedAt": "2026-04-14T13:07:27Z",
+   "releaseUrl": "https://github.com/HarbourMasters/Shipwright/releases/tag/9.2.3",
+   "releaseVersion": "9.2.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarbourMasters/Shipwright",
+   "website": "https://www.shipofharkinian.com/",
+   "iconUrl": "https://raw.githubusercontent.com/HarbourMasters/Shipwright/refs/heads/develop/soh/SHIPOFHARKINIAN.ico",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-09-06T18:52:08Z",
+    "stars": 5320,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Ocarina of Time",
+   "project": "Ship of Harkinian Android",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-18T05:44:43Z",
+   "releaseUrl": "https://github.com/linkzenic/Shipwright-Android/releases/tag/v9.2.3-android.14",
+   "releaseVersion": "v9.2.3-android.14",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/linkzenic/Shipwright-Android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/linkzenic/Shipwright-Android/refs/heads/main/soh/SHIPOFHARKINIAN.ico",
+   "github": {
+    "archived": false,
+    "desc": "Ship of Harkinian Android fork",
+    "license": null,
+    "pushed": "2026-08-18T13:55:52Z",
+    "stars": 31,
+    "topics": []
+   }
+  },
+  {
+   "title": "Silent Hill",
+   "project": "silent-hill-decomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-04T08:39:34Z",
+   "releaseUrl": "https://github.com/SlickAmogus/silent-hill-decomp/releases/tag/crossplatform-beta",
+   "releaseVersion": "crossplatform-beta",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/SlickAmogus/silent-hill-decomp/tree/pc-port",
+   "website": "https://sh1pc.com/",
+   "iconUrl": "https://raw.githubusercontent.com/SlickAmogus/silent-hill-decomp/refs/heads/pc-port/pc_port/res/app_icon.ico",
+   "github": null
+  },
+  {
+   "title": "Skate 3",
+   "project": "skate3recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-07-24T21:21:06Z",
+   "releaseUrl": "https://github.com/mchughalex/skate3recomp/releases/tag/v2.0.2",
+   "releaseVersion": "v2.0.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/mchughalex/skate3recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/24bf0c9b9809c8d8fe259a0a1ac4d9eb.png",
+   "github": {
+    "archived": false,
+    "desc": "A native recompilation of Skate 3 for Windows, Linux, and macOS.",
+    "license": null,
+    "pushed": "2026-07-24T21:18:52Z",
+    "stars": 1297,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario 64 [Co-op DX]",
+   "project": "sm64coopdx",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-06-01T02:00:11Z",
+   "releaseUrl": "https://github.com/coop-deluxe/sm64coopdx/releases/tag/v1.5.1",
+   "releaseVersion": "v1.5.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/coop-deluxe/sm64coopdx",
+   "website": "https://sm64coopdx.com/",
+   "iconUrl": "https://raw.githubusercontent.com/coop-deluxe/sm64coopdx/refs/heads/main/res/icon.icon/Assets/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "An official continuation of https://github.com/djoslin0/sm64ex-coop on sm64coopdx for the enhancements and progress it already has.",
+    "license": null,
+    "pushed": "2026-09-06T13:28:18Z",
+    "stars": 1333,
+    "topics": [
+     "fan-project",
+     "fanproject",
+     "fork",
+     "lua",
+     "mario",
+     "sm64",
+     "sm64ex-coop"
+    ]
+   }
+  },
+  {
+   "title": "Super Mario 64 [Co-op DX]",
+   "project": "sm64coopdx (ManIsCat2)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-06-01T11:14:00Z",
+   "releaseUrl": "https://github.com/ManIsCat2/sm64coopdx/releases/tag/Av1.5.1",
+   "releaseVersion": "Av1.5.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/ManIsCat2/sm64coopdx",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/ManIsCat2/sm64coopdx/refs/heads/android/res/icon.icon/Assets/icon.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-06-01T12:19:47Z",
+    "stars": 272,
+    "topics": []
+   }
+  },
+  {
+   "title": "Pokémon Snap",
+   "project": "Snap64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-05T16:30:20Z",
+   "releaseUrl": "https://github.com/JackandBeans/Snap64Recomp/releases/tag/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/JackandBeans/Snap64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/JackandBeans/Snap64Recomp/refs/heads/main/src/snap64.ico",
+   "github": {
+    "archived": false,
+    "desc": "Native Windows port of Pokémon Snap (N64) by static recompilation. You supply your own cartridge dump; no game data is included.",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-05T18:02:18Z",
+    "stars": 38,
+    "topics": [
+     "n64",
+     "n64recomp",
+     "pokemon-snap",
+     "recompilation",
+     "rt64"
+    ]
+   }
+  },
+  {
+   "title": "Snowboard Kids 2",
+   "project": "snowboardkids2-recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-19T15:25:41Z",
+   "releaseUrl": "https://github.com/cdlewis/snowboardkids2-recomp/releases/tag/v2.0.0%2Balpha3",
+   "releaseVersion": "v2.0.0+alpha3",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/cdlewis/snowboardkids2-recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/cdlewis/snowboardkids2-recomp/refs/heads/main/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": "Snowboard Kids 2 for PC (Windows/Linux/MacOS)",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-30T03:59:44Z",
+    "stars": 89,
+    "topics": [
+     "n64",
+     "nintendo",
+     "recompilation"
+    ]
+   }
+  },
+  {
+   "title": "Sonic 3 & Knuckles",
+   "project": "Sonic 3 A.I.R.",
+   "originalPlatform": "Mega Drive",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android",
+    "iOS"
+   ],
+   "updatedAt": "2026-08-15T13:50:34Z",
+   "releaseUrl": "https://github.com/Eukaryot/sonic3air/releases/tag/v26.08.15.0-test",
+   "releaseVersion": "v26.08.15.0-test",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/Eukaryot/sonic3air",
+   "website": "https://sonic3air.org/",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/a70dab11c90d06b809d0be230731762a/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": "Source and data to build Sonic 3 A.I.R. (Angel Island Revisited) and the Oxygen Engine",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-06T15:32:26Z",
+    "stars": 633,
+    "topics": []
+   }
+  },
+  {
+   "title": "Star Wars: Shadows of the Empire",
+   "project": "SotE-Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-16T03:19:15Z",
+   "releaseUrl": "https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9beta",
+   "releaseVersion": "0.9beta",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/GTTeancum/SotE-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/91906afbe4627f854c07693c7f4264cb.png",
+   "github": {
+    "archived": false,
+    "desc": "Playable static recompilation of Star Wars: Shadows of the Empire for Nintendo 64",
+    "license": null,
+    "pushed": "2026-09-04T15:59:57Z",
+    "stars": 6,
+    "topics": []
+   }
+  },
+  {
+   "title": "SoulBlade",
+   "project": "SoulBlade_Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-27T22:08:59Z",
+   "releaseUrl": "https://github.com/fabioap-cpu/SoulBlade_Recomp/releases/tag/v1.1",
+   "releaseVersion": "v1.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/fabioap-cpu/SoulBlade_Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/5ffaa9f5182c2a36843f438bb1fdbdea/32/512x512.png",
+   "github": {
+    "archived": false,
+    "desc": "SoulBlade (USA) for the Sony PlayStation recompiled using psxrecomp",
+    "license": null,
+    "pushed": "2026-08-27T22:08:58Z",
+    "stars": 27,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mario Kart 64",
+   "project": "SpaghettiKart",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-02-25T02:26:04Z",
+   "releaseUrl": "https://github.com/HarbourMasters/SpaghettiKart/releases/tag/1.0.0",
+   "releaseVersion": "1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarbourMasters/SpaghettiKart",
+   "website": "https://harbourmasters.github.io/SpaghettiKart/",
+   "iconUrl": "https://raw.githubusercontent.com/HarbourMasters/SpaghettiKart/refs/heads/main/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "I have spaghetti, now i just need a kart",
+    "license": null,
+    "pushed": "2026-08-16T05:11:46Z",
+    "stars": 2334,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mario Kart 64",
+   "project": "SpaghettiKart (izzy2lost)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-03T01:56:41Z",
+   "releaseUrl": "https://github.com/izzy2lost/SpaghettiKart/releases/tag/2.0.0",
+   "releaseVersion": "2.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/izzy2lost/SpaghettiKart",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/izzy2lost/SpaghettiKart/refs/heads/main/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "Android",
+    "license": null,
+    "pushed": "2026-08-03T01:56:41Z",
+    "stars": 95,
+    "topics": []
+   }
+  },
+  {
+   "title": "Space Station Silicon Valley",
+   "project": "SSSV_Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-03-13T13:03:41Z",
+   "releaseUrl": "https://github.com/Cellenseres/SSSV_Recomp/releases/tag/v0.2.0",
+   "releaseVersion": "v0.2.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Cellenseres/SSSV_Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Cellenseres/SSSV_Recomp/refs/heads/main/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": "Space Station Silicon Valley Recompilation Project",
+    "license": null,
+    "pushed": "2026-04-26T09:36:28Z",
+    "stars": 96,
+    "topics": []
+   }
+  },
+  {
+   "title": "Star Fox (UltraStarFox)",
+   "project": "Star Fox Enhanced",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android",
+    "Switch"
+   ],
+   "updatedAt": "2026-09-05T03:31:20Z",
+   "releaseUrl": "https://github.com/kandowontu/starfox-enhanced/releases/tag/v0.0.4",
+   "releaseVersion": "v0.0.4",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/kandowontu/starfox-enhanced",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/a6c27d96d40d291b4a7bc3797cdf5253.png",
+   "github": {
+    "archived": false,
+    "desc": "A native 60 FPS PC source port built from the UltraStarFox codebase.",
+    "license": null,
+    "pushed": "2026-09-07T03:15:51Z",
+    "stars": 241,
+    "topics": []
+   }
+  },
+  {
+   "title": "Star wars - Episode I - Jedi Power Battles",
+   "project": "Star-wars---Episode-I---Jedi-Power-Battles-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:22:30Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Star-wars---Episode-I---Jedi-Power-Battles-Recomp/releases/tag/v0.1.2",
+   "releaseVersion": "v0.1.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Star-wars---Episode-I---Jedi-Power-Battles-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Star-wars---Episode-I---Jedi-Power-Battles-Recomp/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-08-26T05:22:24Z",
+    "stars": 2,
+    "topics": []
+   }
+  },
+  {
+   "title": "Star Fox 64",
+   "project": "Starfox64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2025-12-30T03:00:00.000Z",
+   "releaseUrl": "https://gitlab.com/sonicdcer/Starfox64Recomp/-/releases/v1.0.3",
+   "releaseVersion": "v1.0.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://gitlab.com/sonicdcer/Starfox64Recomp",
+   "website": "",
+   "iconUrl": "https://gitlab.com/sonicdcer/Starfox64Recomp/-/raw/main/icons/app.ico?ref_type=heads",
+   "github": null
+  },
+  {
+   "title": "Star Fox 64",
+   "project": "Starship",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "Switch"
+   ],
+   "updatedAt": "2025-05-25T03:43:32Z",
+   "releaseUrl": "https://github.com/HarbourMasters/Starship/releases/tag/v2.0.0",
+   "releaseVersion": "v2.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HarbourMasters/Starship",
+   "website": "https://www.harbourmasters.org/",
+   "iconUrl": "https://raw.githubusercontent.com/HarbourMasters/Starship/refs/heads/main/starship.ico",
+   "github": {
+    "archived": false,
+    "desc": "SF64 PC Port",
+    "license": "CC0-1.0",
+    "pushed": "2026-06-15T06:49:31Z",
+    "stars": 2044,
+    "topics": []
+   }
+  },
+  {
+   "title": "Star Fox 64",
+   "project": "Starship (izzy2lost)",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-04T03:48:32Z",
+   "releaseUrl": "https://github.com/izzy2lost/Starship/releases/tag/v2.0.0",
+   "releaseVersion": "v2.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/izzy2lost/Starship",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/izzy2lost/Starship/refs/heads/main/logo.png",
+   "github": {
+    "archived": false,
+    "desc": "SF64 Android Port",
+    "license": "CC0-1.0",
+    "pushed": "2026-08-04T03:22:42Z",
+    "stars": 97,
+    "topics": []
+   }
+  },
+  {
+   "title": "Street Fighter Alpha 3",
+   "project": "Street-Fighter-Alpha-3-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:23:28Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/Street-Fighter-Alpha-3-Recomp/releases/tag/v0.2.15",
+   "releaseVersion": "v0.2.15",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/Street-Fighter-Alpha-3-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/Street-Fighter-Alpha-3-Recomp/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-09-02T18:15:01Z",
+    "stars": 70,
+    "topics": []
+   }
+  },
+  {
+   "title": "Street Fighter EX2 Plus",
+   "project": "Street-Fighter-EX2-Plus-Recompiled",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-29T15:23:00Z",
+   "releaseUrl": "https://github.com/strider973/Street-Fighter-EX2-Plus-Recompiled/releases/tag/v0.1.0",
+   "releaseVersion": "v0.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/strider973/Street-Fighter-EX2-Plus-Recompiled",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/5a9802849de1129ef1e27b230cf0c5c0.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Street Fighter EX2 Plus (PS1, SLUS-01105) on psxrecomp",
+    "license": null,
+    "pushed": "2026-08-29T15:26:50Z",
+    "stars": 20,
+    "topics": []
+   }
+  },
+  {
+   "title": "Strider 2",
+   "project": "STRIDER-2-Recompiled",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-29T16:05:34Z",
+   "releaseUrl": "https://github.com/strider973/STRIDER-2-Recompiled/releases/tag/v0.1.2",
+   "releaseVersion": "v0.1.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/strider973/STRIDER-2-Recompiled",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/18c7d3e908572f255a619c09e04b461a/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": null,
+    "pushed": "2026-08-29T15:57:08Z",
+    "stars": 34,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario Sunshine",
+   "project": "SunPad",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "macOS",
+    "iOS"
+   ],
+   "updatedAt": "2026-09-04T23:10:30Z",
+   "releaseUrl": "https://github.com/chrissotraidis/sunpad/releases/tag/v0.1.0-preview.12",
+   "releaseVersion": "v0.1.0-preview.12",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/chrissotraidis/sunpad",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/6bdb72e015c53459c11ddbceb43e0525.png",
+   "github": {
+    "archived": false,
+    "desc": "Super Mario Sunshine on iPhone, iPad, Apple Silicon Mac, and tVOS through static recompilation and Metal.",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-04T23:15:39Z",
+    "stars": 154,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario Sunshine",
+   "project": "sunpad-android-editon",
+   "originalPlatform": "GameCube",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-11T17:55:10Z",
+   "releaseUrl": "https://github.com/Player124413/sunpad-android-editon/releases/tag/v0.1.0-preview.2",
+   "releaseVersion": "v0.1.0-preview.2",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "https://github.com/Player124413/sunpad-android-editon",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/c585bca0f355e8b2253bdd946dfde745.png",
+   "github": {
+    "archived": false,
+    "desc": "Super Mario Sunshine on iPhone, iPad, and Apple Silicon Mac through static recompilation and Metal.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-14T12:05:31Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario 64 DS",
+   "project": "Super Mario 64 DS PC Port",
+   "originalPlatform": "Nintendo DS",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "",
+   "releaseUrl": "",
+   "releaseVersion": "",
+   "releaseStatus": "",
+   "aiAssisted": false,
+   "repo": "",
+   "website": "https://tangos.dev/downloads",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/6afb45b1fa88e49d68d1ed2c3481a36a/32/256x256.png",
+   "github": null
+  },
+  {
+   "title": "Super Mario Bros",
+   "project": "Super Mario Bros Remastered",
+   "originalPlatform": "NES",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-04T19:56:56Z",
+   "releaseUrl": "https://github.com/JHDev2006/Super-Mario-Bros.-Remastered-Public/releases/tag/1.1-stable",
+   "releaseVersion": "1.1-stable",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/JHDev2006/Super-Mario-Bros.-Remastered-Public",
+   "website": "https://jhdev2006.github.io/",
+   "iconUrl": "https://raw.githubusercontent.com/JHDev2006/Super-Mario-Bros.-Remastered-Public/refs/heads/main/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "A Remake / Celebration of the original 'Super Mario Bros.' games. Features new levels, custom modes, new characters, alongside a full level editor / custom level system!",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-05T08:45:29Z",
+    "stars": 3098,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario Bros",
+   "project": "super mario bros. remastered android",
+   "originalPlatform": "NES",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-07-23T20:37:54Z",
+   "releaseUrl": "https://github.com/mircowuffwuff/super-mario-bros.-remastered-android/releases/tag/9",
+   "releaseVersion": "9",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/mircowuffwuff/super-mario-bros.-remastered-android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/mircowuffwuff/super-mario-bros.-remastered-android/refs/heads/main/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "an android port of the Super Mario Bros. Remaster by JoeMama and their team",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-29T16:33:18Z",
+    "stars": 169,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Metroid",
+   "project": "Super-Metroid-Launcher",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2023-03-21T20:14:30Z",
+   "releaseUrl": "https://github.com/RadzPrower/Super-Metroid-Launcher/releases/tag/v1.0",
+   "releaseVersion": "v1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/RadzPrower/Super-Metroid-Launcher",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/26e3dcb90aa10011db5b660c463f325f/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": "Conversion of Zelda 3 Launcher to Super Metroid Launcher",
+    "license": "MIT",
+    "pushed": "2023-03-23T11:56:09Z",
+    "stars": 197,
+    "topics": []
+   }
+  },
+  {
+   "title": "Super Mario World",
+   "project": "SuperMarioWorldRecomp",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-25T05:35:49Z",
+   "releaseUrl": "https://github.com/mstan/SuperMarioWorldRecomp/releases/tag/v0.11.1",
+   "releaseVersion": "v0.11.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/mstan/SuperMarioWorldRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/thumb/3a8b781906eaa647a820ba901f9dad36.jpg",
+   "github": {
+    "archived": false,
+    "desc": "Super Mario World recompiled for the Super Nintendo using snesrecomp · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-25T05:35:38Z",
+    "stars": 56,
+    "topics": []
+   }
+  },
+  {
+   "title": "WWE SmackDown vs. Raw 2007",
+   "project": "SVR07-Recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-04-24T05:37:53Z",
+   "releaseUrl": "https://github.com/HollywoodAkeem/SVR07-Recomp/releases/tag/v1.0",
+   "releaseVersion": "v1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HollywoodAkeem/SVR07-Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/7bcab4942f4f7e074eb4f7b4ecdf4f61.png",
+   "github": {
+    "archived": false,
+    "desc": "Using rexglue. Programs runs",
+    "license": "BSD-3-Clause",
+    "pushed": "2026-05-27T00:42:07Z",
+    "stars": 131,
+    "topics": []
+   }
+  },
+  {
+   "title": "Castlevania: Symphony of the Night",
+   "project": "SymphonyRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-19T01:28:39Z",
+   "releaseUrl": "https://github.com/BlackLabelHQ/SymphonyRecomp/releases/tag/v0.5.1b",
+   "releaseVersion": "v0.5.1b",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/BlackLabelHQ/SymphonyRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/BlackLabelHQ/SymphonyRecomp/refs/heads/master/assets/icon/SymphonyRecomp.ico",
+   "github": {
+    "archived": false,
+    "desc": "Recompilation project for Castlevania: Symphony of the Night",
+    "license": null,
+    "pushed": "2026-09-06T22:46:25Z",
+    "stars": 706,
+    "topics": []
+   }
+  },
+  {
+   "title": "Castlevania: Symphony of the Night",
+   "project": "SymphonyRecomp (sergiomanzur)",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-22T03:35:39Z",
+   "releaseUrl": "https://github.com/sergiomanzur/SymphonyRecomp/releases/tag/android-v0.10.1b",
+   "releaseVersion": "android-v0.10.1b",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/sergiomanzur/SymphonyRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/sergiomanzur/SymphonyRecomp/refs/heads/master/Android/Resources/mipmap/icon.png",
+   "github": {
+    "archived": false,
+    "desc": "Recompilation project for Castlevania: Symphony of the Night",
+    "license": null,
+    "pushed": "2026-08-22T03:35:39Z",
+    "stars": 20,
+    "topics": []
+   }
+  },
+  {
+   "title": "Syphon Filter 2",
+   "project": "syphon-filter-2-recompiled",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-07T15:19:24Z",
+   "releaseUrl": "https://github.com/Alexbeav/syphon-filter-2-recompiled/releases/tag/v0.1.2-alpha",
+   "releaseVersion": "v0.1.2-alpha",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/Alexbeav/syphon-filter-2-recompiled",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/25de510c6bf82a1d93bc0754caf4c9b1.png",
+   "github": {
+    "archived": false,
+    "desc": "Experimental Syphon Filter 2 static recompilation for Windows using PSXRecomp",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-13T19:46:00Z",
+    "stars": 26,
+    "topics": []
+   }
+  },
+  {
+   "title": "System Shock",
+   "project": "system-shock-android",
+   "originalPlatform": "Others",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-24T17:29:00Z",
+   "releaseUrl": "https://github.com/raposomiguel50/system-shock-android/releases/tag/v1.0.0",
+   "releaseVersion": "v1.0.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/raposomiguel50/system-shock-android",
+   "website": "https://raposomiguel50.github.io/projects/system-shock-android/",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/fd8a0deb9faa2516fc4fffc1669ac74d.png",
+   "github": {
+    "archived": false,
+    "desc": "Native Android/ARM64 port of System Shock based on Shockolate, with reproducible builds, open engineering notes and Retroid Pocket 5 validation.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-26T17:30:20Z",
+    "stars": 12,
+    "topics": [
+     "android",
+     "arm64",
+     "game-port",
+     "open-source",
+     "retro-gaming",
+     "retroid-pocket-5",
+     "sdl2",
+     "shockolate",
+     "source-port",
+     "system-shock"
+    ]
+   }
+  },
+  {
+   "title": "Tekken 3",
+   "project": "Tekken3Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-27T20:30:52Z",
+   "releaseUrl": "https://github.com/fabioap-cpu/Tekken3Recomp/releases/tag/v2.1",
+   "releaseVersion": "v2.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/fabioap-cpu/Tekken3Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/c16fcce846042d65044d795b4b7a16e3/32/256x256.png",
+   "github": {
+    "archived": false,
+    "desc": "Tekken 3 (USA) for the Sony PlayStation recompiled using psxrecomp",
+    "license": null,
+    "pushed": "2026-08-27T23:35:13Z",
+    "stars": 112,
+    "topics": []
+   }
+  },
+  {
+   "title": "Tenchu: Stealth Assassins",
+   "project": "Tenchu-SA-Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-24T03:47:50Z",
+   "releaseUrl": "https://github.com/Heromachine/Tenchu-SA-Recomp/releases/tag/v0.1.0",
+   "releaseVersion": "v0.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Heromachine/Tenchu-SA-Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Heromachine/Tenchu-SA-Recomp/refs/heads/bootstrap-boots/appimage/TenchuSARecomp.png",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Tenchu: Stealth Assassins (PS1) to C#. Ships the tool, not the game -- bring your own disc.",
+    "license": null,
+    "pushed": "2026-08-24T03:47:02Z",
+    "stars": 13,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: The Minish Cap",
+   "project": "tmc-android",
+   "originalPlatform": "Game Boy Advance",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-08-19T15:06:11Z",
+   "releaseUrl": "https://github.com/samyost1/tmc-android/releases/tag/v1.2",
+   "releaseVersion": "v1.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/samyost1/tmc-android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/samyost1/tmc-android/refs/heads/dual-screen-native/docs/picori-logo.png",
+   "github": {
+    "archived": false,
+    "desc": "Minish Cap dual-screen mod for the AYN Thor — bottom-screen map, quest status and touch inventory, all decoded from the ROM at runtime",
+    "license": "NOASSERTION",
+    "pushed": "2026-08-19T15:06:11Z",
+    "stars": 164,
+    "topics": []
+   }
+  },
+  {
+   "title": "Tomba! 2: The Evil Swine Return",
+   "project": "Tomba2Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-03T17:12:24Z",
+   "releaseUrl": "https://github.com/mstan/Tomba2Recomp/releases/tag/shared-staging-20260903",
+   "releaseVersion": "shared-staging-20260903",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/Tomba2Recomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/e9f38ccc1ba8329bfa989c468a75a6b0.png",
+   "github": {
+    "archived": false,
+    "desc": "Tomba! 2: The Evil Swine Return (USA) recompiled for the Sony PlayStation using psxrecomp · Part of the R.A.I.D. community",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T18:26:12Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Tomba!",
+   "project": "TombaRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-03T17:14:07Z",
+   "releaseUrl": "https://github.com/mstan/TombaRecomp/releases/tag/shared-staging-20260903",
+   "releaseVersion": "shared-staging-20260903",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": true,
+   "repo": "https://github.com/mstan/TombaRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon/6f64ba651f05e2714936e631ad56c5d4/32/512x512.png",
+   "github": {
+    "archived": false,
+    "desc": "Tomba! (USA) recompiled for the Sony PlayStation using psxrecomp · Part of the R.A.I.D. community",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T18:27:12Z",
+    "stars": 62,
+    "topics": []
+   }
+  },
+  {
+   "title": "Mischief Makers",
+   "project": "Trouble Makers",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-06T16:38:47Z",
+   "releaseUrl": "https://github.com/ThiagoLira/trouble-makers-pc-recomp/releases/tag/v0.8.2",
+   "releaseVersion": "v0.8.2",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/ThiagoLira/trouble-makers-pc-recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/ThiagoLira/trouble-makers-pc-recomp/refs/heads/main/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2026-09-06T16:31:17Z",
+    "stars": 81,
+    "topics": []
+   }
+  },
+  {
+   "title": "Twisted Metal 4",
+   "project": "TwistedMetal4Recomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-08-26T05:20:46Z",
+   "releaseUrl": "https://github.com/TechnicallyComputers/TwistedMetal4Recomp/releases/tag/v0.3.29",
+   "releaseVersion": "v0.3.29",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/TechnicallyComputers/TwistedMetal4Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/TechnicallyComputers/TwistedMetal4Recomp/refs/heads/master/launcher_assets/img/boxart.png",
+   "github": {
+    "archived": false,
+    "desc": "Made with PSXrecomp, a Sony PlayStation game static recompiler ecosystem · Part of the R.A.I.D. community",
+    "license": null,
+    "pushed": "2026-08-28T20:27:25Z",
+    "stars": 18,
+    "topics": []
+   }
+  },
+  {
+   "title": "UFC Undisputed 3",
+   "project": "ufc3recomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-02T15:17:07Z",
+   "releaseUrl": "https://github.com/paulogaab21/ufc3recomp/releases/tag/v1.0.2",
+   "releaseVersion": "v1.0.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/paulogaab21/ufc3recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/paulogaab21/ufc3recomp/refs/heads/main/src/ufc3.ico",
+   "github": {
+    "archived": false,
+    "desc": "A native recompilation of ufc 3 undisputed for Windows, Linux, and macOS.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-03T05:53:21Z",
+    "stars": 14,
+    "topics": []
+   }
+  },
+  {
+   "title": "Sonic Unleashed",
+   "project": "UnleashedRecomp",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2025-04-03T22:04:45Z",
+   "releaseUrl": "https://github.com/hedge-dev/UnleashedRecomp/releases/tag/v1.0.3",
+   "releaseVersion": "v1.0.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/hedge-dev/UnleashedRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/hedge-dev/UnleashedRecompResources/35322388006365a648f75f4981a496b12a7f7478/images/game_icon.png",
+   "github": {
+    "archived": false,
+    "desc": "An unofficial PC port of the Xbox 360 version of Sonic Unleashed created through the process of static recompilation.",
+    "license": "GPL-3.0",
+    "pushed": "2026-06-29T11:05:43Z",
+    "stars": 5029,
+    "topics": []
+   }
+  },
+  {
+   "title": "Sonic Unleashed",
+   "project": "UnleashedRecomp-NX",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Switch"
+   ],
+   "updatedAt": "2026-07-30T13:29:34Z",
+   "releaseUrl": "https://github.com/NaGaa95/UnleashedRecomp-NX/releases/tag/0.0.3",
+   "releaseVersion": "0.0.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/NaGaa95/UnleashedRecomp-NX",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/NaGaa95/UnleashedRecomp-NX/refs/heads/main/icon.jpg",
+   "github": {
+    "archived": false,
+    "desc": "An unofficial Switch homebrew port of the Xbox 360 version of Sonic Unleashed created through the process of static recompilation.",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-30T13:29:33Z",
+    "stars": 22,
+    "topics": []
+   }
+  },
+  {
+   "title": "Valkyrie Profile",
+   "project": "ValkyrieRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-04T22:28:14Z",
+   "releaseUrl": "https://github.com/Ed1z19/ValkyrieRecomp/releases/tag/v1.0.1",
+   "releaseVersion": "v1.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Ed1z19/ValkyrieRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Ed1z19/ValkyrieRecomp/refs/heads/main/assets/valkyrie_profile_cover.png",
+   "github": {
+    "archived": false,
+    "desc": "Native PC recompilation of Valkyrie Profile (PS1) powered by PSXRecomp.",
+    "license": null,
+    "pushed": "2026-09-06T05:10:48Z",
+    "stars": 41,
+    "topics": []
+   }
+  },
+  {
+   "title": "Vandal Hearts",
+   "project": "VandalHearts-PcPort",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-08-31T01:08:42Z",
+   "releaseUrl": "https://github.com/HalmyLyseas/VandalHearts-PcPort/releases/tag/v2.1.0",
+   "releaseVersion": "v2.1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/HalmyLyseas/VandalHearts-PcPort",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/HalmyLyseas/VandalHearts-PcPort/refs/heads/master/docs/images/cover-pc-port.webp",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of the PlayStation game Vandal Hearts, built on a byte-exact matching decompilation. Windows & Linux; bring your own disc.",
+    "license": "GPL-2.0",
+    "pushed": "2026-08-31T01:19:30Z",
+    "stars": 33,
+    "topics": [
+     "decomp",
+     "decompilation",
+     "native-port",
+     "playstation",
+     "port",
+     "preservation",
+     "ps1",
+     "psx",
+     "reverse-engineering",
+     "sdl2",
+     "srpg",
+     "tactical-rpg",
+     "vandal-hearts"
+    ]
+   }
+  },
+  {
+   "title": "Virtual Pro Wrestling 2 - Ōdō Keishō",
+   "project": "VPW2Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-18T14:50:16Z",
+   "releaseUrl": "https://github.com/jessetbh/VPW2Recomp/releases/tag/v0.1.0",
+   "releaseVersion": "v0.1.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/jessetbh/VPW2Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/jessetbh/VPW2Recomp/refs/heads/main/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": null,
+    "license": "GPL-3.0",
+    "pushed": "2026-08-15T15:04:18Z",
+    "stars": 3,
+    "topics": []
+   }
+  },
+  {
+   "title": "Virtual Pro Wrestling 64",
+   "project": "VPW64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-15T00:31:17Z",
+   "releaseUrl": "https://github.com/jessetbh/VPW64Recomp/releases/tag/v0.1.0",
+   "releaseVersion": "v0.1.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/jessetbh/VPW64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/jessetbh/VPW64Recomp/refs/heads/main/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of Virtual Pro Wrestling 64 (N64) via static recompilation. No game assets included - bring your own ROM.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-15T15:11:16Z",
+    "stars": 6,
+    "topics": [
+     "aki",
+     "game-preservation",
+     "n64",
+     "n64recomp",
+     "rt64",
+     "static-recompilation",
+     "windows",
+     "wrestling"
+    ]
+   }
+  },
+  {
+   "title": "Wave Race 64",
+   "project": "wave-race-64-recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-09-04T16:51:09Z",
+   "releaseUrl": "https://github.com/danielgomesvieira2000/wave-race-64-recomp/releases/tag/v0.4.0",
+   "releaseVersion": "v0.4.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/danielgomesvieira2000/wave-race-64-recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/danielgomesvieira2000/wave-race-64-recomp/refs/heads/main/assets/AppIcon.ico",
+   "github": {
+    "archived": false,
+    "desc": "An AI-coded PC port of the Nintendo 64 game 'Wave Race 64'. Currently in beta.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-04T16:49:43Z",
+    "stars": 26,
+    "topics": []
+   }
+  },
+  {
+   "title": "WCW/nWo Revenge",
+   "project": "WCWnWoRevengeRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-18T15:01:48Z",
+   "releaseUrl": "https://github.com/jessetbh/WCWnWoRevengeRecomp/releases/tag/v0.1.1",
+   "releaseVersion": "v0.1.1",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/jessetbh/WCWnWoRevengeRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/jessetbh/WCWnWoRevengeRecomp/refs/heads/main/icons/app.ico",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of WCW/nWo Revenge (N64) via static recompilation. No game assets included - bring your own ROM.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-15T15:11:13Z",
+    "stars": 20,
+    "topics": [
+     "game-preservation",
+     "n64",
+     "n64recomp",
+     "rt64",
+     "static-recompilation",
+     "wcw",
+     "windows",
+     "wrestling"
+    ]
+   }
+  },
+  {
+   "title": "WCW vs. nWo World Tour",
+   "project": "WCWvsNWOWorldTourRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-08T22:53:06Z",
+   "releaseUrl": "https://github.com/jessetbh/WCWvsNWOWorldTourRecomp/releases/tag/v0.1.2",
+   "releaseVersion": "v0.1.2",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/jessetbh/WCWvsNWOWorldTourRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/jessetbh/WCWvsNWOWorldTourRecomp/refs/heads/main/icons/app.ico",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of WCW vs. nWo World Tour (N64) via static recompilation. No game assets included — bring your own ROM.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-15T15:11:11Z",
+    "stars": 32,
+    "topics": [
+     "game-preservation",
+     "n64",
+     "n64recomp",
+     "port",
+     "recompilation",
+     "rt64",
+     "static-recompilation",
+     "wcw",
+     "windows",
+     "wrestling"
+    ]
+   }
+  },
+  {
+   "title": "Mario Kart Wii",
+   "project": "Wiicompiled",
+   "originalPlatform": "Wii",
+   "portTargets": [
+    "Windows",
+    "Linux"
+   ],
+   "updatedAt": "2026-09-06T13:47:54Z",
+   "releaseUrl": "https://github.com/patchzyy/Wiicompiled/releases/tag/v0.2.31",
+   "releaseVersion": "v0.2.31",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/patchzyy/Wiicompiled",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/67f1e952a0c67045719a23f1922b10c9.png",
+   "github": {
+    "archived": false,
+    "desc": "Wiicompiled",
+    "license": "GPL-3.0",
+    "pushed": "2026-09-06T13:38:22Z",
+    "stars": 656,
+    "topics": []
+   }
+  },
+  {
+   "title": "WipeOut Phantom Edition",
+   "project": "wipeout-phantom-edition",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2024-02-17T07:13:37Z",
+   "releaseUrl": "https://github.com/wipeout-phantom-edition/wipeout-phantom-edition/releases/tag/v1.2.256",
+   "releaseVersion": "v1.2.256",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/wipeout-phantom-edition/wipeout-phantom-edition",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/9fcb5252180dc29b22976c5c63b322e7.png",
+   "github": {
+    "archived": false,
+    "desc": "An enhanced PC source port of the original WipeOut.",
+    "license": null,
+    "pushed": "2024-08-21T02:53:02Z",
+    "stars": 954,
+    "topics": [
+     "source-port",
+     "windows",
+     "wipeout"
+    ]
+   }
+  },
+  {
+   "title": "Wolfenstein RPG",
+   "project": "WolfensteinRPG-RE",
+   "originalPlatform": "Others",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2025-02-23T23:33:22Z",
+   "releaseUrl": "https://github.com/Erick194/WolfensteinRPG-RE/releases/tag/WolfensteinRPG-v.0.1",
+   "releaseVersion": "WolfensteinRPG-v.0.1",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Erick194/WolfensteinRPG-RE",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Erick194/WolfensteinRPG-RE/refs/heads/main/src/appicon.ico",
+   "github": {
+    "archived": false,
+    "desc": "Wolfenstein RPG Reverse Engineering By [GEC]",
+    "license": "GPL-3.0",
+    "pushed": "2025-02-24T02:44:59Z",
+    "stars": 53,
+    "topics": []
+   }
+  },
+  {
+   "title": "WWF No Mercy",
+   "project": "WWFNoMercyRecomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-22T00:45:59Z",
+   "releaseUrl": "https://github.com/jessetbh/WWFNoMercyRecomp/releases/tag/v0.1.1",
+   "releaseVersion": "v0.1.1",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/jessetbh/WWFNoMercyRecomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/jessetbh/WWFNoMercyRecomp/refs/heads/main/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of WWF No Mercy (N64) via static recompilation. No game assets included — bring your own ROM.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-15T15:11:18Z",
+    "stars": 17,
+    "topics": [
+     "aki",
+     "game-preservation",
+     "n64",
+     "n64recomp",
+     "rt64",
+     "static-recompilation",
+     "windows",
+     "wrestling",
+     "wwf"
+    ]
+   }
+  },
+  {
+   "title": "WWF WrestleMania 2000",
+   "project": "WWFWrestleMania2000Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-07-15T01:33:06Z",
+   "releaseUrl": "https://github.com/jessetbh/WWFWrestleMania2000Recomp/releases/tag/v0.1.0",
+   "releaseVersion": "v0.1.0",
+   "releaseStatus": "Pre-release",
+   "aiAssisted": false,
+   "repo": "https://github.com/jessetbh/WWFWrestleMania2000Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/jessetbh/WWFWrestleMania2000Recomp/refs/heads/main/icons/app.png",
+   "github": {
+    "archived": false,
+    "desc": "Native PC port of WWF WrestleMania 2000 (N64) via static recompilation. No game assets included - bring your own ROM.",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-15T15:11:15Z",
+    "stars": 9,
+    "topics": [
+     "aki",
+     "game-preservation",
+     "n64",
+     "n64recomp",
+     "rt64",
+     "static-recompilation",
+     "windows",
+     "wrestling",
+     "wwf"
+    ]
+   }
+  },
+  {
+   "title": "X-Men Destiny",
+   "project": "xmd-recompiled",
+   "originalPlatform": "Xbox 360",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-31T22:56:15Z",
+   "releaseUrl": "https://github.com/florinp93/xmd-recompiled/releases/tag/v0.1.0-alpha.3",
+   "releaseVersion": "v0.1.0-alpha.3",
+   "releaseStatus": "Latest",
+   "aiAssisted": true,
+   "repo": "https://github.com/florinp93/xmd-recompiled",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/florinp93/xmd-recompiled/refs/heads/main/launcher/assets/xmd_icon.ico",
+   "github": {
+    "archived": false,
+    "desc": "XMD Recompiled (X-Men Destiny Native PC Port)",
+    "license": null,
+    "pushed": "2026-09-02T15:42:59Z",
+    "stars": 20,
+    "topics": []
+   }
+  },
+  {
+   "title": "X-Men: Mutant Academy 2",
+   "project": "xmen-mutant-academy-2-pc",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2026-08-22T18:03:38Z",
+   "releaseUrl": "https://github.com/GTTeancum/xmen-mutant-academy-2-pc/releases/tag/v1.0",
+   "releaseVersion": "v1.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/GTTeancum/xmen-mutant-academy-2-pc",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/GTTeancum/xmen-mutant-academy-2-pc/refs/heads/main/docs/splash.png",
+   "github": {
+    "archived": false,
+    "desc": "PC port of the PS1 game X-Men: Mutant Academy 2, via static recompilation with RecompOne — plus tooling for a 4x texture pack built from the disc's own art",
+    "license": null,
+    "pushed": "2026-09-05T04:54:05Z",
+    "stars": 8,
+    "topics": []
+   }
+  },
+  {
+   "title": "Yu-Gi-Oh! Forbidden Memories",
+   "project": "YuGiOhForbiddenMemoriesRecomp",
+   "originalPlatform": "PlayStation",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2026-09-06T02:24:06Z",
+   "releaseUrl": "https://github.com/Unchiga/YuGiOhForbiddenMemoriesRecomp/releases/tag/v0.5.4",
+   "releaseVersion": "v0.5.4",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Unchiga/YuGiOhForbiddenMemoriesRecomp",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/6104abd0046e4bbf15ea8f5c46a36a2d.png",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Yu-Gi-Oh! Forbidden Memories (PS1) into a native executable - with a live duel-rank meter, a fusion assistant, adjustable card drops and a cheat menu. Bring your own disc.",
+    "license": "NOASSERTION",
+    "pushed": "2026-09-07T04:11:16Z",
+    "stars": 93,
+    "topics": [
+     "decomp",
+     "forbidden-memories",
+     "mips",
+     "native-port",
+     "playstation",
+     "ps1",
+     "psx",
+     "recompiler",
+     "static-recompilation",
+     "yugioh"
+    ]
+   }
+  },
+  {
+   "title": "The Legend of Zelda: A Link to the Past",
+   "project": "Zelda-3-Launcher",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Windows"
+   ],
+   "updatedAt": "2023-09-24T17:53:46Z",
+   "releaseUrl": "https://github.com/RadzPrower/Zelda-3-Launcher/releases/tag/v1.3.6.0",
+   "releaseVersion": "v1.3.6.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/RadzPrower/Zelda-3-Launcher",
+   "website": "",
+   "iconUrl": "https://cdn2.steamgriddb.com/icon_thumb/5905cd1072376ba0654222b3c897c7e0.png",
+   "github": {
+    "archived": false,
+    "desc": "An all-purpose GUI tool to download, extract, compile, and launch Zelda 3 on PC.",
+    "license": "MIT",
+    "pushed": "2023-09-24T17:53:46Z",
+    "stars": 449,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: A Link to the Past",
+   "project": "zelda3-android",
+   "originalPlatform": "SNES",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-07-24T15:25:37Z",
+   "releaseUrl": "https://github.com/samyost1/zelda3-android/releases/tag/v2.0",
+   "releaseVersion": "v2.0",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/samyost1/zelda3-android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/samyost1/zelda3-android/refs/heads/dual-screen/app/jni/src/src/platform/win32/triforce.ico",
+   "github": {
+    "archived": false,
+    "desc": "A port of Zelda3 to Android",
+    "license": null,
+    "pushed": "2026-08-04T18:30:50Z",
+    "stars": 206,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Majora's Mask",
+   "project": "Zelda64Recomp",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Windows",
+    "Linux",
+    "macOS"
+   ],
+   "updatedAt": "2025-08-27T00:58:35Z",
+   "releaseUrl": "https://github.com/Zelda64Recomp/Zelda64Recomp/releases/tag/v1.2.2",
+   "releaseVersion": "v1.2.2",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/Zelda64Recomp/Zelda64Recomp",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/Zelda64Recomp/Zelda64Recomp/refs/heads/dev/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": "Static recompilation of Majora's Mask (and soon Ocarina of Time) for PC (Windows/Linux/Mac)",
+    "license": "GPL-3.0",
+    "pushed": "2026-08-17T21:52:25Z",
+    "stars": 7234,
+    "topics": []
+   }
+  },
+  {
+   "title": "The Legend of Zelda: Majora's Mask",
+   "project": "Zelda64Recomp-Android",
+   "originalPlatform": "Nintendo 64",
+   "portTargets": [
+    "Android"
+   ],
+   "updatedAt": "2026-07-29T16:38:13Z",
+   "releaseUrl": "https://github.com/linkzenic/Zelda64Recomp-Android/releases/tag/0.6.10",
+   "releaseVersion": "0.6.10",
+   "releaseStatus": "Latest",
+   "aiAssisted": false,
+   "repo": "https://github.com/linkzenic/Zelda64Recomp-Android",
+   "website": "",
+   "iconUrl": "https://raw.githubusercontent.com/linkzenic/Zelda64Recomp-Android/refs/heads/android-port/icons/512.png",
+   "github": {
+    "archived": false,
+    "desc": "Android port of Zelda64 Recompiled",
+    "license": "GPL-3.0",
+    "pushed": "2026-07-29T16:38:13Z",
+    "stars": 29,
+    "topics": []
+   }
+  }
+ ]
+}

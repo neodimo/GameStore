@@ -1,4 +1,5 @@
 import { platformCollection, prepareCollection } from "./steamCollections";
+import { buildPortLaunch } from "./portsPipeline";
 import type { PcOs, RunCommand } from "./pcTarget";
 import type { RetroPlatform } from "./retroArchCores";
 import { decodeBinaryVdf, encodeBinaryVdf, shortcutAppId, unsignedAppId, type VdfMap } from "./steamVdf";
@@ -193,13 +194,32 @@ export type SteamFileTransport = {
   upload(localPath: string, remote: string): Promise<void>;
 };
 
+/**
+ * Set when the thing being deployed is a Ports entry rather than a ROM.
+ *
+ * A port is a directory tree that launches its own executable, so both halves
+ * of the emulator assumption stop holding: there is no core to point at, and
+ * the upload has to preserve the archive's internal layout instead of
+ * flattening every file into one ROM folder. Its presence switches both.
+ */
+export type SteamPortDeploy = {
+  portId: string;
+  /** Destination root on the target, from `portInstallDirectory`. */
+  installDirectory: string;
+  /** Local staging root; each file's path relative to this is preserved. */
+  sourceRoot: string;
+  /** Executable to launch, relative to `installDirectory`. */
+  executable: string;
+};
+
 export type SteamDeployRequest = {
   os: PcOs;
   home: string;
   account: SteamAccount;
   appName: string;
-  platform: RetroPlatform;
-  coreId: string;
+  /** Emulator deployments only — a port launches itself and belongs to no console. */
+  platform?: RetroPlatform;
+  coreId?: string;
   /** Absolute paths on the machine GameStore itself is running on. */
   localFiles: string[];
   /** Cached cover image on the GameStore host, used as the library capsule. */
@@ -207,6 +227,8 @@ export type SteamDeployRequest = {
   flatpakBranch?: string;
   now?: Date;
   beforeLibraryWrite?: () => Promise<void>;
+  /** Present for Ports installs; absent for emulator ROM deployments. */
+  port?: SteamPortDeploy;
 };
 
 export type SteamDeployResult = {
@@ -222,6 +244,25 @@ export type SteamDeployResult = {
 };
 
 const baseName = (file: string) => file.replace(/\\/g, "/").split("/").pop() ?? file;
+
+/** Steam collection every installed port joins, alongside the per-console ones. */
+export const PORTS_COLLECTION = "Ports";
+
+/**
+ * Path of `file` relative to `root`, normalized to forward slashes.
+ *
+ * Falls back to the bare filename when the file sits outside the staging root,
+ * so an unexpected path installs flat rather than escaping the destination with
+ * a `../` that would write outside the port's directory.
+ */
+export const relativeTo = (root: string, file: string): string => {
+  const normalize = (value: string) => value.replace(/\\/g, "/").replace(/\/+$/, "");
+  const normalizedRoot = normalize(root);
+  const normalizedFile = normalize(file);
+  if (!normalizedFile.startsWith(`${normalizedRoot}/`)) return baseName(file);
+  const relative = normalizedFile.slice(normalizedRoot.length + 1);
+  return relative.includes("../") ? baseName(file) : relative;
+};
 
 const shortcutEntry = (appName: string, appId: number, launch: SteamLaunch, iconPath: string): VdfMap => ({
   appid: appId,
@@ -260,18 +301,45 @@ export const deployToSteam = async (
   if (!localFiles.length) throw new Error("This game has no files to send.");
   const now = request.now ?? new Date();
 
-  const romDir = romDirectory(os, home, platform);
-  const romPath = joinPath(os, romDir, baseName(pickPrimaryRom(localFiles)));
+  const port = request.port;
+  if (!port && (!platform || !coreId)) {
+    throw new Error("An emulator deployment needs both a platform and a core.");
+  }
+  const romDir = port ? port.installDirectory : romDirectory(os, home, platform!);
+  const romPath = port
+    ? joinPath(os, port.installDirectory, port.executable)
+    : joinPath(os, romDir, baseName(pickPrimaryRom(localFiles)));
 
-  const launch = buildLaunch(os, home, coreId, romPath, request.flatpakBranch);
+  const launch = port
+    ? buildPortLaunch(os, port.installDirectory, port.executable)
+    : buildLaunch(os, home, coreId!, romPath, request.flatpakBranch);
   const appId = shortcutAppId(launch.exe, appName);
-  const collectionName = platformCollection(platform);
+  const collectionName = port ? PORTS_COLLECTION : platformCollection(platform!);
   const collection = await prepareCollection(
     joinPath(os, steamConfigDir(os, account), "cloudstorage"), os === "windows" ? "\\" : "/",
     collectionName, appId, transport, now,
   );
   await transport.mkdirp(romDir);
-  for (const file of localFiles) await transport.upload(file, joinPath(os, romDir, baseName(file)));
+  if (port) {
+    // Directory layout is load-bearing for a port: its executable resolves
+    // assets, config and saves by relative path, so flattening the tree the way
+    // ROM uploads do would install something that starts and then cannot find
+    // itself. Parent directories are created before each file for the same
+    // reason plain `mkdirp(romDir)` is not enough here.
+    const created = new Set<string>([port.installDirectory]);
+    for (const file of localFiles) {
+      const relative = relativeTo(port.sourceRoot, file);
+      const destination = joinPath(os, port.installDirectory, relative);
+      const parent = destination.slice(0, Math.max(destination.lastIndexOf(os === "windows" ? "\\" : "/"), 0));
+      if (parent && !created.has(parent)) {
+        await transport.mkdirp(parent);
+        created.add(parent);
+      }
+      await transport.upload(file, destination);
+    }
+  } else {
+    for (const file of localFiles) await transport.upload(file, joinPath(os, romDir, baseName(file)));
+  }
 
   let artworkPath: string | null = null;
   if (request.localArtwork) {

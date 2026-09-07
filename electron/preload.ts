@@ -1,4 +1,19 @@
 import { contextBridge, ipcRenderer } from "electron";
+
+/** The catalog fields the Ports IPC surface needs. Mirrors `electron/main.ts`'s `PortRequestEntry`. */
+type PortRequestEntry = {
+  id: string;
+  title: string;
+  projectUrl: string;
+  needsOriginalAssets: boolean;
+  distributionKind: "github-releases" | "user-assets-required";
+  deployTargets: string[];
+  executableHint?: string;
+  downloadUrl?: string;
+  requiredRomRevision?: string;
+  sourcePlatform: string;
+};
+
 contextBridge.exposeInMainWorld("gameStore", {
   openExternal: (url: string) => ipcRenderer.invoke("open-external", url),
   saveExport: (data: string) => ipcRenderer.invoke("save-export", data),
@@ -60,6 +75,12 @@ contextBridge.exposeInMainWorld("gameStore", {
   removeFromSteam: (appId: number, accountId?: string) =>
     ipcRenderer.invoke("pc-target-steam-remove", appId, accountId),
   getSteamDeployed: (accountId?: string) => ipcRenderer.invoke("pc-target-steam-deployed", accountId),
+  pickPortGameData: () => ipcRenderer.invoke("ports-pick-game-data") as Promise<string[]>,
+  acquirePortGameData: (entry: PortRequestEntry) => ipcRenderer.invoke("ports-acquire-game-data", entry) as Promise<string[]>,
+  planPortInstall: (entry: PortRequestEntry, gameDataFiles: string[]) =>
+    ipcRenderer.invoke("pc-target-ports-plan", { entry, gameDataFiles }),
+  installPort: (request: { entry: PortRequestEntry; gameDataFiles: string[]; coverUrl?: string; accountId?: string }) =>
+    ipcRenderer.invoke("pc-target-ports-install", request),
   onPcTargetDiscoveryProgress: (listener: (progress: { done: number; total: number }) => void) => {
     const wrapped = (_e: Electron.IpcRendererEvent, progress: { done: number; total: number }) => listener(progress);
     ipcRenderer.on("pc-target-discovery-progress", wrapped);

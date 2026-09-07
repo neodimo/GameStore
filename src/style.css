@@ -2385,6 +2385,33 @@ footer {
   border-color: rgba(255, 255, 255, 0.35);
 }
 
+.ports-target-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.ports-target-head .steam-blocked {
+  margin: 0;
+  flex: 1;
+}
+.ports-recheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.ports-recheck:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 .ports-platforms {
   display: flex;
   flex-wrap: wrap;
@@ -2515,6 +2542,28 @@ footer {
   color: rgba(255, 200, 80, 0.9);
 }
 
+.port-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+}
+.port-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+.port-card-badge-warn {
+  background: rgba(255, 200, 80, 0.1);
+  border-color: rgba(255, 200, 80, 0.3);
+}
+
 .port-card-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2549,4 +2598,41 @@ footer {
   opacity: 0.55;
   font-style: italic;
   align-self: center;
+}
+
+.port-card-install {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+.port-card-gamedata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.port-card-gamedata-note {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+.port-card-install > .port-card-cart {
+  align-self: flex-start;
+}
+.port-card-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0.8;
+}
+.port-card-note.error {
+  color: rgb(255, 150, 150);
+  opacity: 1;
+}
+.port-card-note.done {
+  color: rgb(150, 220, 170);
 }
