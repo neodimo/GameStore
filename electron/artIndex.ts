@@ -25,8 +25,10 @@ const HREF = /href="([^"]+\.png)"/gi;
  */
 const SYSTEMS = new Set([
   "Sony%20-%20PlayStation",
+  "Sony%20-%20PlayStation%202",
   "Nintendo%20-%20Nintendo%2064",
   "Sega%20-%20Saturn",
+  "Microsoft%20-%20Xbox%20360",
   "FBNeo%20-%20Arcade%20Games",
 ]);
 
@@ -57,7 +59,10 @@ const readCache = async (
     const cached = JSON.parse(
       await fs.readFile(cacheFile(system, folder), "utf8"),
     ) as ArtIndex;
-    return Array.isArray(cached.files) && cached.files.length ? cached : null;
+    // A known console may publish no files for an optional media folder. Keep
+    // that empty result for the TTL too; otherwise every gallery mount retries
+    // the same 404 and turns "no provider media" into a renderer error.
+    return Array.isArray(cached.files) ? cached : null;
   } catch {
     return null;
   }
@@ -83,10 +88,14 @@ const download = async (
     `https://thumbnails.libretro.com/${system}/${folder}/`,
     { headers: { "User-Agent": `GameStore/${app.getVersion()}` } },
   );
+  // Xbox 360, for example, has a tiny Boxarts pack but no Libretro Snaps or
+  // Titles folders. Those are optional gallery sources, so represent a missing
+  // directory as an empty index and let EmuMovies/longplay take over.
+  if (response.status === 404)
+    return { system, folder, files: [], fetchedAt: Date.now() };
   if (!response.ok)
     throw new Error(`Libretro thumbnails returned ${response.status}`);
   const files = parseListing(await response.text());
-  if (!files.length) throw new Error("Libretro thumbnail listing was empty.");
   return { system, folder, files, fetchedAt: Date.now() };
 };
 

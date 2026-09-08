@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-07 — PS2/Xbox 360 Libretro media index correction (v0.36.1)
+
+- **What was done:** Fixed the screenshot-proven `Unsupported thumbnail system: Microsoft - Xbox 360` crash by adding PS2 and Xbox 360 to the main-process thumbnail index allowlist. Verified live Libretro endpoint behavior: PS2 publishes Boxarts, Snaps, and Titles; Xbox 360 publishes Boxarts but its Snaps/Titles endpoints return 404. The index now treats a known console's missing optional folder as a cached empty index, allowing gallery media to fall through to EmuMovies/longplay instead of failing the whole media-resolution promise.
+- **Evidence:** Live `curl` checks returned HTTP 200 for all PS2 folders and Xbox 360 Boxarts; HTTP 404 for Xbox 360 Snaps/Titles. The user screenshot reproduced the main-process allowlist error exactly.
+- **Artifacts:** `electron/artIndex.ts`, version files. Existing `mockups/` and Python cache remain excluded.
+- **State:** Ready to validate/release as v0.36.1. Unverified: DiMo's live EmuMovies entitlement/index coverage and actual Xbox 360 longplay availability.
+- **Next owner + concrete artifact:** Gonzo runs gates/releases. DiMo retries Xbox 360 ArtPicker and opens a title after a fresh EmuMovies index; expected result is no unsupported-system error, Xbox-specific TheGamesDB candidates, and an empty Libretro screenshot strip only when no EmuMovies/longplay asset exists.
+- **Failure mode:** Console registration in the renderer/platform registry was added without extending the privileged main-process thumbnail allowlist. This made the UI advertise sources that its IPC bridge refused.
+
 ## 2026-09-07 — Xbox 360 artwork cross-platform correction (v0.36.0)
 
 - **What was done:** Fixed TheGamesDB artwork searches being hard-coded to provider platform `10` (Sony PlayStation). Every automatic fallback and manual ArtPicker search now forwards the selected GameStore platform, mapping PS1 → 10, PS2 → 11, and Xbox 360 → 14 before calling TheGamesDB.
