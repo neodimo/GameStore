@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-07 — v0.38.0 release verification
+
+- **What was done:** Published IGDB platform-aware media fallback and the per-game retry-video diagnostic control.
+- **Evidence:** GitHub release run `34190639281` completed success on Linux and Windows. Release <https://github.com/neodimo/GameStore/releases/tag/v0.38.0> contains six assets: Windows installer/blockmap/`latest.yml`, Linux AppImage/deb/`latest-linux.yml`.
+- **Artifacts:** Release commit `491201f`, tag `v0.38.0`, published assets above. `mockups/` and the Python cache rewrite remain outside the release.
+- **State:** Released. IGDB runtime lookup remains unverified until the Twitch client pair is entered in Settings → General; this turn stored the pair in the protected OpenClaw store for a coverage check, but the desktop app intentionally uses its own local encrypted Settings record.
+- **Next owner + concrete artifact:** DiMo enters the IGDB client ID/secret in v0.38.0 Settings, opens an unmatched Xbox 360 title, and reports the IGDB source label or Retry video diagnostic. Gonzo uses that exact game result to tune the next resolver pass.
+- **Failure mode:** Prior media reports came from sparse/no platform-specific media source, while providers returned opaque empty/error states. v0.38.0 makes source identity and retry failure visible instead of silently substituting unrelated art.
+
 ## 2026-09-07 — IGDB platform-aware media fallback + manual video retry (v0.38.0)
 
 - **What was done:** Added IGDB as the primary platform-filtered fallback for missing PS2/Xbox 360 covers and screenshots, with mappings for all current consoles (PS1, PS2, N64, Saturn, Xbox 360). Automatic card fallback accepts only normalized exact-title IGDB results; the ArtPicker now has an explicit IGDB tab for manual selection. IGDB screenshots are requested only after the console-native screenshot index has no release match, then cached locally. Added a lower-right **Retry video** action to every game preview state. It reruns EmuMovies then the platform-specific Archive longplay resolver and displays the precise failure/no-safe-match reason.
