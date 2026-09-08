@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-09-07 — v0.35.1 secondary-art provider guard
+
+- **What was done:** Prevented one TheGamesDB request/error per visible unmatched PS2/Xbox 360 card when that optional provider has no configured key. Artwork provider now reads only the existing key-presence state first, then enables its visible-card fallback queue when configured.
+- **Artifacts:** `src/artwork.tsx`, package version files. Pre-existing `mockups/` and Python cache remain excluded.
+- **State:** Ready to release as v0.35.1; lint/build/focused matching tests/bundle budget pass.
+- **Next owner + concrete artifact:** Gonzo publishes v0.35.1; DiMo checks PS2/X360 card art with a configured TheGamesDB provider.
+- **Failure mode:** The first v0.35.0 fallback correctly swallowed missing-key errors in renderer state but still generated noisy main-process handler errors. Provider availability needs checking before dispatch.
+
 ## 2026-09-07 — PS2/Xbox 360 media regression correction (v0.35.0)
 
 - **What was done:** Corrected the actual post-v0.34 failure path. The PS2 EmuMovies alias had been added, but every `PlayStation 2` folder was still rejected by the original-PlayStation `LATER_SONY` exclusion. That guard now applies only to `PS1`; PS2 and X360 have manufacturer traversal aliases and are accepted in direct and nested provider paths. The EmuMovies settings/forget paths now include every `CATALOG_PLATFORM`, so PS2/X360 manifests are displayed and removed along with the MiSTer consoles. Sparse PS2/X360 Libretro matches now request a TheGamesDB cover only when an unmatched card becomes visible, preferring exact normalized titles (including `.hack`) before a fallback candidate. Video panes use `IntersectionObserver` and only attach a source near the viewport; `preload` is now `none`.

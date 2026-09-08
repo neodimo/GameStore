@@ -132,6 +132,16 @@ export function ArtworkProvider({
   );
   const [fallback, setFallback] = useState<Record<string, string | null>>({});
   const fallbackRequested = useRef(new Set<string>());
+  const [theGamesDbEnabled, setTheGamesDbEnabled] = useState(false);
+
+  useEffect(() => {
+    // The existing Settings screen already reads this value to populate its
+    // field. Here we retain only whether it is present, so an unconfigured
+    // provider cannot produce one IPC error per visible unmatched card.
+    void window.gameStore?.getTheGamesDbKey()
+      .then((key) => setTheGamesDbEnabled(Boolean(key.trim())))
+      .catch(() => setTheGamesDbEnabled(false));
+  }, []);
 
   /**
    * Only consoles the catalog actually carries are fetched, so a platform with
@@ -265,7 +275,7 @@ export function ArtworkProvider({
     // Libretro's PS2/Xbox 360 packs are incomplete. Ask TheGamesDB only for
     // cards that actually enter the viewport, rather than firing a catalog-
     // sized burst of provider searches during startup.
-    if (!window.gameStore || !["PS2", "X360"].includes(game.platform)) return;
+    if (!window.gameStore || !theGamesDbEnabled || !["PS2", "X360"].includes(game.platform)) return;
     if (overrides[game.id] || auto[game.id] || fallbackRequested.current.has(game.id)) return;
     fallbackRequested.current.add(game.id);
     void window.gameStore.findTheGamesDbArt(game.title)
@@ -281,7 +291,7 @@ export function ArtworkProvider({
       // A missing API key is a settings state, not a render failure. Keep the
       // card's normal no-match affordance and do not retry it on every paint.
       .catch(() => setFallback((current) => ({ ...current, [game.id]: null })));
-  }, [auto, overrides]);
+  }, [auto, overrides, theGamesDbEnabled]);
 
   // Memoized so a card only re-renders when artwork state actually changes,
   // rather than on every render of the provider.
