@@ -234,7 +234,9 @@ function PreviewPane({
   needsFrames: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const paneRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const [near, setNear] = useState(false);
   const [saving, setSaving] = useState(false);
   const [progress, setProgress] = useState(0);
   const source = video?.localUrl ?? video?.streamUrl;
@@ -244,6 +246,26 @@ function PreviewPane({
     setFailed(false);
     setProgress(0);
   }, [video?.identifier]);
+
+  // A detail panel can be mounted below the fold while a user is still reading
+  // its text. Do not open a video stream until its pane is actually near the
+  // viewport; `preload="metadata"` alone still opens every mounted source.
+  useEffect(() => {
+    const node = paneRef.current;
+    if (!node || !source) return;
+    setNear(false);
+    if (!("IntersectionObserver" in window)) {
+      setNear(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setNear(true);
+      observer.disconnect();
+    }, { rootMargin: "240px" });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [source]);
 
   /**
    * Samples the playing preview at a fixed spacing, using
@@ -328,19 +350,15 @@ function PreviewPane({
 
   if (source && !failed)
     return (
-      <div className="preview-pane">
+      <div className="preview-pane" ref={paneRef}>
         <video
           ref={ref}
-          src={source}
-          autoPlay
+          src={near ? source : undefined}
+          autoPlay={near}
           muted
           loop
           playsInline
-          // `metadata` loads the header so the loop start seek works without
-          // pulling the whole video up front. A future patch can swap this for
-          // an IntersectionObserver that sets `src` only when the card is in
-          // the viewport; right now the card mount itself is the gate.
-          preload="metadata"
+          preload="none"
           poster={video?.gifUrl}
           onLoadedMetadata={(event) => {
             if (start) event.currentTarget.currentTime = start;

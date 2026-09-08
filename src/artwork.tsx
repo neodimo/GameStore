@@ -4,12 +4,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Game } from "./catalog";
 import {
   exactArtMatch,
+  normalizeTitle,
   resolveArt,
   type ArtFolder,
   type ArtMatch,
@@ -94,6 +96,8 @@ type ArtworkApi = {
   setOverride(game: Game, choice: Override): void;
   clearOverride(game: Game): void;
   hasOverride(game: Game): boolean;
+  /** Ask the secondary provider for a currently visible PS2/Xbox 360 miss. */
+  requestFallback(game: Game): void;
   refreshIndex(): Promise<void>;
   /** Catalog games with neither an automatic match nor a manual override. */
   unmatched: number;
@@ -126,6 +130,8 @@ export function ArtworkProvider({
   const [overrides, setOverrides] = useState<Record<string, Override>>(
     readOverrides,
   );
+  const [fallback, setFallback] = useState<Record<string, string | null>>({});
+  const fallbackRequested = useRef(new Set<string>());
 
   /**
    * Only consoles the catalog actually carries are fetched, so a platform with
@@ -255,6 +261,28 @@ export function ArtworkProvider({
     setOverrides(next);
   }, []);
 
+  const requestFallback = useCallback((game: Game) => {
+    // Libretro's PS2/Xbox 360 packs are incomplete. Ask TheGamesDB only for
+    // cards that actually enter the viewport, rather than firing a catalog-
+    // sized burst of provider searches during startup.
+    if (!window.gameStore || !["PS2", "X360"].includes(game.platform)) return;
+    if (overrides[game.id] || auto[game.id] || fallbackRequested.current.has(game.id)) return;
+    fallbackRequested.current.add(game.id);
+    void window.gameStore.findTheGamesDbArt(game.title)
+      .then((choices) => {
+        const exact = choices.find((choice) =>
+          normalizeTitle(choice.title) === normalizeTitle(game.title),
+        );
+        setFallback((current) => ({
+          ...current,
+          [game.id]: (exact ?? choices[0])?.url ?? null,
+        }));
+      })
+      // A missing API key is a settings state, not a render failure. Keep the
+      // card's normal no-match affordance and do not retry it on every paint.
+      .catch(() => setFallback((current) => ({ ...current, [game.id]: null })));
+  }, [auto, overrides]);
+
   // Memoized so a card only re-renders when artwork state actually changes,
   // rather than on every render of the provider.
   const api: ArtworkApi = useMemo(() => ({
@@ -280,6 +308,9 @@ export function ArtworkProvider({
           variant: match.tags.join(" · ") || match.label,
           manual: false,
         };
+      const secondary = fallback[game.id];
+      if (secondary)
+        return { url: secondary, source: "TheGamesDB", manual: false };
       // Catalog seeds stay as the offline fallback until the index arrives.
       return game.cover
         ? { url: game.cover, source: "Catalog seed", manual: false }
@@ -294,13 +325,14 @@ export function ArtworkProvider({
       persist(next);
     },
     hasOverride: (game) => !!overrides[game.id],
+    requestFallback,
     refreshIndex: () => load(true),
     // Coverage is reported across every console the catalog carries, because
     // "1,371/1,379 PS1 covers matched" stopped describing the library the
     // moment a second platform existed.
     unmatched: games.filter((g) => !overrides[g.id] && !auto[g.id]).length,
     resolvable: games.length,
-  }), [indexes, resolving, auto, overrides, games, persist, load]);
+  }), [indexes, resolving, auto, overrides, fallback, games, persist, load, requestFallback]);
   return (
     <ArtworkContext.Provider value={api}>{children}</ArtworkContext.Provider>
   );

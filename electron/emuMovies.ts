@@ -150,9 +150,17 @@ const SYSTEM_ALIASES: Record<string, RegExp> = {
  */
 const SYSTEM_GROUP_ALIASES: Record<string, RegExp> = {
   PS1: /\bsony\b/i,
+  PS2: /\bsony\b/i,
   N64: /\bnintendo\b/i,
   SAT: /\bsega\b/i,
+  X360: /\bmicrosoft\b|\bxbox\b/i,
 };
+
+// The broad `PlayStation` alias is only ambiguous for the original system.
+// Applying this exclusion to PS2 was self-defeating: every real provider
+// folder says "PlayStation 2", so the resolver discarded the exact target.
+const excludesLaterSony = (system: string, value: string) =>
+  system === "PS1" && LATER_SONY.test(value);
 
 /**
  * The member FTP's current published layout. These are deliberately concrete
@@ -260,8 +268,13 @@ export type SnapScan = { folders: SnapFolder[]; truncated: boolean };
  * carrying both the requested console and video language are nearly terminal,
  * followed by video/quality branches and system-first branches.
  */
-const discoveryScore = (remote: string, alias: RegExp, groupAlias: RegExp) => {
-  const system = alias.test(remote) && !LATER_SONY.test(remote);
+const discoveryScore = (
+  remote: string,
+  alias: RegExp,
+  groupAlias: RegExp,
+  systemId: string,
+) => {
+  const system = alias.test(remote) && !excludesLaterSony(systemId, remote);
   const group = groupAlias.test(remote);
   const snaps = SNAP_FOLDER.test(remote);
   const video = VIDEO_FOLDER.test(remote);
@@ -280,6 +293,7 @@ const discoveryScore = (remote: string, alias: RegExp, groupAlias: RegExp) => {
  */
 const findOfficialSnapFolders = async (
   client: Pick<Client, "list">,
+  system: string,
   alias: RegExp,
   deadline: ProbeDeadline,
   onProgress?: ProbeProgress,
@@ -299,7 +313,7 @@ const findOfficialSnapFolders = async (
       continue;
     }
     const systemFolders = directories(systems).filter((name) =>
-      alias.test(name) && !LATER_SONY.test(name),
+      alias.test(name) && !excludesLaterSony(system, name),
     );
     for (const name of systemFolders) {
       const candidate = joinRemote(root, name);
@@ -328,7 +342,7 @@ export const findSnapFolders = async (
 ): Promise<SnapScan> => {
   const alias = SYSTEM_ALIASES[system] ?? new RegExp(system, "i");
   const groupAlias = SYSTEM_GROUP_ALIASES[system] ?? alias;
-  const direct = await findOfficialSnapFolders(client, alias, deadline, onProgress);
+  const direct = await findOfficialSnapFolders(client, system, alias, deadline, onProgress);
   if (direct.folders.length) {
     return {
       folders: direct.folders,
@@ -371,10 +385,10 @@ export const findSnapFolders = async (
       if (failureStreak >= DEAD_SESSION_STREAK) throw new SnapSessionLost();
       continue;
     }
-    const pathHasSystem = alias.test(current.path) && !LATER_SONY.test(current.path);
+    const pathHasSystem = alias.test(current.path) && !excludesLaterSony(system, current.path);
     // `Sony` also houses later PlayStations.  A manufacturer context must not
     // turn a rejected PS2/PS3 branch back into a broad traversal candidate.
-    const pathHasGroup = groupAlias.test(current.path) && !LATER_SONY.test(current.path);
+    const pathHasGroup = groupAlias.test(current.path) && !excludesLaterSony(system, current.path);
     /*
      * A console branch is the trustworthy boundary, not a spelling convention
      * for its last directory.  The live provider has used folders such as
@@ -392,7 +406,7 @@ export const findSnapFolders = async (
 
     for (const name of directories(entries)) {
       const child = joinRemote(current.path, name);
-      const childHasSystem = alias.test(name) && !LATER_SONY.test(name);
+      const childHasSystem = alias.test(name) && !excludesLaterSony(system, name);
       const childHasGroup = groupAlias.test(name);
       const childHasVideo = VIDEO_FOLDER.test(name);
       /*
@@ -413,7 +427,7 @@ export const findSnapFolders = async (
       if (relevant) queue.push({
         path: child,
         depth: current.depth + 1,
-        score: discoveryScore(child, alias, groupAlias),
+        score: discoveryScore(child, alias, groupAlias, system),
       });
     }
     if (found.length && (found.some((item) => item.quality === "HD1080") &&

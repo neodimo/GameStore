@@ -965,7 +965,11 @@ function GameCard({
   onOpen: () => void;
   onContextMenu: (x: number, y: number) => void;
 }) {
-  const art = useArtwork().artFor(game);
+  const artwork = useArtwork();
+  const art = artwork.artFor(game);
+  useEffect(() => {
+    if (!art.url) artwork.requestFallback(game);
+  }, [art.url, artwork, game]);
   return (
     <article
       className={`card ${selected ? "selected" : ""}`}

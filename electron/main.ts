@@ -41,6 +41,7 @@ import {
   type InventoryCatalogGame,
 } from "./fpgaInventory";
 import {
+  CATALOG_PLATFORMS,
   DEVICE_PLATFORMS,
   deviceEntryTitle,
   deviceFolderForCatalog,
@@ -554,7 +555,7 @@ const emuCredentials = async (): Promise<EmuMoviesCredentials | null> => {
 };
 ipcMain.handle("emumovies-settings-get", async () => {
   const stored = (await readSettings()).emumovies;
-  const manifests = (await Promise.all(DEVICE_PLATFORMS.map(async (platform) => {
+  const manifests = (await Promise.all(CATALOG_PLATFORMS.map(async (platform) => {
     const manifest = await readSnapManifest(snapDir(), platform.catalogId);
     return manifest && {
       platform: platform.catalogId,
@@ -635,7 +636,7 @@ ipcMain.handle("emumovies-forget", async () => {
   );
   delete raw.emumovies;
   await writeSettings(raw);
-  await Promise.all(DEVICE_PLATFORMS.map((platform) =>
+  await Promise.all(CATALOG_PLATFORMS.map((platform) =>
     removeSnapManifest(snapDir(), platform.catalogId),
   ));
   return true;

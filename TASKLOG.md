@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-07 — PS2/Xbox 360 media regression correction (v0.35.0)
+
+- **What was done:** Corrected the actual post-v0.34 failure path. The PS2 EmuMovies alias had been added, but every `PlayStation 2` folder was still rejected by the original-PlayStation `LATER_SONY` exclusion. That guard now applies only to `PS1`; PS2 and X360 have manufacturer traversal aliases and are accepted in direct and nested provider paths. The EmuMovies settings/forget paths now include every `CATALOG_PLATFORM`, so PS2/X360 manifests are displayed and removed along with the MiSTer consoles. Sparse PS2/X360 Libretro matches now request a TheGamesDB cover only when an unmatched card becomes visible, preferring exact normalized titles (including `.hack`) before a fallback candidate. Video panes use `IntersectionObserver` and only attach a source near the viewport; `preload` is now `none`.
+- **Evidence:** New FTP discovery tests cover direct PS2/X360 published folder names and nested PS2 `Sony/PlayStation 2/MP4/USA` paths. `npm run lint` ✓; focused EmuMovies/art-match tests 49/49 ✓; full suite 420/420 ✓; `npm run build` ✓; bundle budget ✓ (dist 2.90/3.00 MiB, dist-electron 0.35/0.50 MiB).
+- **Artifacts:** Modified `electron/emuMovies.ts(.test.ts)`, `electron/main.ts`, `src/artwork.tsx`, `src/App.tsx`, `src/MediaGallery.tsx`, `package.json`, `package-lock.json`. Pre-existing `mockups/` and tracked `scripts/__pycache__/import-ps1-catalog.cpython-314.pyc` remain outside the release.
+- **State:** Ready to commit/tag v0.35.0. **Unverified:** live EmuMovies FTP account indexing and TheGamesDB account responses require DiMo's configured desktop app; unit tests prove the previously impossible PS2 path and resolver behavior, not provider entitlement/content.
+- **Next owner + concrete artifact:** Gonzo commits/tags/publishes v0.35.0. DiMo re-indexes PS2 and Xbox 360 in Settings → Media/EmuMovies, opens a previously missing title, and reports the resulting index coverage plus any missing exact title.
+- **Failure mode:** v0.34 added system aliases but failed to trace every existing PS1-specific filter that consumed them. An alias is not a route if a downstream predicate still rejects its exact folder.
+
 ## 2026-09-07 — Visual + technical audit batch (v0.33.0)
 
 - **What was done:** Walked every GameStore sidebar view + Settings tabs + cart → art picker flow with a puppeteer build against `dist/` (audit scratch in `/tmp/gamestore-audit/`, screenshots in `mockups/audit-2026-09-07/`, deliberately untracked per media-light policy). Three real bugs plus four polish findings; shipped all of them as v0.33.0.

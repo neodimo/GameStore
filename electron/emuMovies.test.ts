@@ -121,6 +121,34 @@ describe("EmuMovies sign-in is bounded and honest about why it stopped", () => {
 
 describe("EmuMovies FTP layout discovery", () => {
   it.each([
+    ["PS2", "Sony - PlayStation 2"],
+    ["X360", "Microsoft - Xbox 360"],
+  ])("accepts the exact %s published system directory", async (system, folderName) => {
+    const root = `/Official/Video Snaps (HQ)/${folderName}`;
+    const tree: Record<string, FileInfo[]> = {
+      "/Official/Video Snaps (HQ)": [directory(folderName)],
+      [root]: [video("Example Game (USA).mp4")],
+    };
+    expect((await findSnapFolders(fakeClient(tree), system)).folders).toEqual([
+      { path: root, quality: "HQ480" },
+    ]);
+  });
+
+  it("finds PS2 clips below a neutral folder instead of rejecting PlayStation 2", async () => {
+    const root = "/Sony/PlayStation 2/MP4/USA";
+    const tree: Record<string, FileInfo[]> = {
+      "/": [directory("Sony")],
+      "/Sony": [directory("PlayStation 2")],
+      "/Sony/PlayStation 2": [directory("MP4")],
+      "/Sony/PlayStation 2/MP4": [directory("USA")],
+      [root]: [video(".hack--Infection (USA).mp4")],
+    };
+    expect((await findSnapFolders(fakeClient(tree), "PS2")).folders).toEqual([
+      { path: root, quality: "Unknown" },
+    ]);
+  });
+
+  it.each([
     ["N64", "Nintendo 64"],
     ["SAT", "Sega Saturn"],
   ])("finds %s video folders through its console alias", async (system, folderName) => {
