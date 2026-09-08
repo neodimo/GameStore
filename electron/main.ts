@@ -733,11 +733,18 @@ ipcMain.handle(
 ipcMain.handle("media-frames-get", (_e, gameId: string) => getCachedFrames(gameId));
 ipcMain.handle("media-cache-stats", cacheStats);
 ipcMain.handle("media-cache-clear", clearMediaCache);
-const queryTheGamesDb = async (key: string, name: string) => {
+/** TheGamesDB's stable v1 platform identifiers for GameStore consoles. */
+const THE_GAMES_DB_PLATFORM: Record<string, string> = {
+  PS1: "10",
+  PS2: "11",
+  X360: "14",
+};
+const queryTheGamesDb = async (key: string, name: string, platform?: string) => {
   const url = new URL("https://api.thegamesdb.net/v1/Games/ByGameName");
   url.searchParams.set("apikey", key);
   url.searchParams.set("name", name);
-  url.searchParams.set("filter[platform]", "10");
+  const platformId = platform && THE_GAMES_DB_PLATFORM[platform];
+  if (platformId) url.searchParams.set("filter[platform]", platformId);
   url.searchParams.set("include", "boxart");
   const response = await fetch(url);
   if (!response.ok) throw new Error(`TheGamesDB returned ${response.status}`);
@@ -763,7 +770,7 @@ const queryTheGamesDb = async (key: string, name: string) => {
  * subtitle or trailing punctuation often returns nothing. Progressively
  * shortened queries recover those titles; the renderer ranks the union.
  */
-ipcMain.handle("thegamesdb-art", async (_e, title: string) => {
+ipcMain.handle("thegamesdb-art", async (_e, title: string, platform?: string) => {
   const key = (await readSettings()).theGamesDbKey;
   if (!key) throw new Error("Add your TheGamesDB API key in Settings first.");
   const queries = [
@@ -776,7 +783,7 @@ ipcMain.handle("thegamesdb-art", async (_e, title: string) => {
   const seen = new Set<string>();
   const candidates: any[] = [];
   for (const query of queries) {
-    for (const candidate of await queryTheGamesDb(key, query)) {
+    for (const candidate of await queryTheGamesDb(key, query, platform)) {
       if (seen.has(candidate.url)) continue;
       seen.add(candidate.url);
       candidates.push(candidate);

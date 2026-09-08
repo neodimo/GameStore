@@ -278,7 +278,7 @@ export function ArtworkProvider({
     if (!window.gameStore || !theGamesDbEnabled || !["PS2", "X360"].includes(game.platform)) return;
     if (overrides[game.id] || auto[game.id] || fallbackRequested.current.has(game.id)) return;
     fallbackRequested.current.add(game.id);
-    void window.gameStore.findTheGamesDbArt(game.title)
+    void window.gameStore.findTheGamesDbArt(game.title, game.platform)
       .then((choices) => {
         const exact = choices.find((choice) =>
           normalizeTitle(choice.title) === normalizeTitle(game.title),

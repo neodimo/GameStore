@@ -10,6 +10,7 @@ interface Window {
     setSteamGridDbKey(key: string): Promise<{ configured: boolean }>;
     findTheGamesDbArt(
       title: string,
+      platform?: CatalogPlatformId,
     ): Promise<
       { url: string; gameId: number; title: string; source: string }[]
     >;

@@ -23,8 +23,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   getSteamGridDbKey: () => ipcRenderer.invoke("steamgriddb-key-get"),
   setSteamGridDbKey: (key: string) =>
     ipcRenderer.invoke("steamgriddb-key-set", key),
-  findTheGamesDbArt: (title: string) =>
-    ipcRenderer.invoke("thegamesdb-art", title),
+  findTheGamesDbArt: (title: string, platform?: string) =>
+    ipcRenderer.invoke("thegamesdb-art", title, platform),
   getArtIndex: (system: string, folder: string, force?: boolean) =>
     ipcRenderer.invoke("art-index-get", system, folder, force),
   cacheCover: (url: string) => ipcRenderer.invoke("art-cover-cache", url),

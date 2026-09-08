@@ -96,7 +96,7 @@ export function ArtPicker({
     try {
       if (!window.gameStore)
         throw new Error("Provider lookup runs in the desktop app.");
-      const found = await window.gameStore.findTheGamesDbArt(query);
+      const found = await window.gameStore.findTheGamesDbArt(query, game.platform);
       setRemote(
         found
           .map((c) => ({

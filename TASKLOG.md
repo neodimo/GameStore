@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-07 — Xbox 360 artwork cross-platform correction (v0.36.0)
+
+- **What was done:** Fixed TheGamesDB artwork searches being hard-coded to provider platform `10` (Sony PlayStation). Every automatic fallback and manual ArtPicker search now forwards the selected GameStore platform, mapping PS1 → 10, PS2 → 11, and Xbox 360 → 14 before calling TheGamesDB.
+- **Evidence:** The faulty `url.searchParams.set("filter[platform]", "10")` was in `electron/main.ts` and was used by both automatic sparse-art fallback and ArtPicker. Lint ✓; full suite 420/420 ✓; build ✓; bundle budget ✓ (dist 2.90/3.00 MiB, dist-electron 0.35/0.50 MiB).
+- **Artifacts:** `electron/main.ts`, `electron/preload.ts`, `src/vite-env.d.ts`, `src/artwork.tsx`, `src/ArtPicker.tsx`, version files. Pre-existing Python cache rewrite and `mockups/` remain excluded.
+- **State:** Ready to release as v0.36.0. The real TheGamesDB account response remains the targeted acceptance check, but the prior cross-console request was deterministic and is removed.
+- **Next owner + concrete artifact:** Gonzo publishes v0.36.0. DiMo opens an Xbox 360 card and its ArtPicker TheGamesDB tab, confirming returned art identifies an Xbox 360 release rather than PlayStation.
+- **Failure mode:** v0.35.1 improved fallback invocation without auditing the underlying provider query. A UI fallback cannot be cross-platform if its server request pins one console.
+
 ## 2026-09-07 — v0.35.1 release verification
 
 - **What was done:** Published the PS2/Xbox 360 media correction.
