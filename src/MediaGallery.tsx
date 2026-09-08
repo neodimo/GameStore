@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   Maximize2,
   Play,
+  RefreshCw,
   X,
 } from "lucide-react";
 import type { Game } from "./catalog";
@@ -18,6 +19,7 @@ import {
   frameQuality,
   frameTarget,
   loadCachedFrames,
+  retryGameVideo,
   setCachedVideo,
   useGameMedia,
 } from "./mediaLibrary";
@@ -136,12 +138,14 @@ export function MediaGallery({ game }: { game: Game }) {
         game={game}
         video={video}
         videoState={videoState}
+        videoError={record?.videoError}
         stills={stills}
         needsFrames={
           video?.source === "emumovies" &&
           frameState !== "ready" &&
           frames.length < frameTarget
         }
+        onRetry={() => void retryGameVideo(game)}
       />
       <div className="screenshot-browser">
         <div className="media-heading">
@@ -224,14 +228,18 @@ function PreviewPane({
   game,
   video,
   videoState,
+  videoError,
   stills,
   needsFrames,
+  onRetry,
 }: {
   game: Game;
   video: VideoPreview | null;
   videoState: string;
+  videoError?: string;
   stills: string[];
   needsFrames: boolean;
+  onRetry(): void;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const paneRef = useRef<HTMLDivElement>(null);
@@ -385,6 +393,9 @@ function PreviewPane({
                 }`}
           </small>
           <div className="preview-actions">
+            <button onClick={onRetry} title="Check EmuMovies and Internet Archive again">
+              <RefreshCw /> Retry video
+            </button>
             {video?.source !== "emumovies" && !video?.cached && (
               <button disabled={saving} onClick={save}>
                 <Download />
@@ -422,6 +433,7 @@ function PreviewPane({
               ? "The recording would not stream; looping this release's frames instead."
               : "No verified recording for this release yet."}
           </small>
+          <div className="preview-actions"><button onClick={onRetry}><RefreshCw /> Retry video</button></div>
         </div>
       </div>
     );
@@ -439,6 +451,10 @@ function PreviewPane({
         }
         detail="GameStore will not attach a recording of a different game."
       />
+      <button className="preview-retry" onClick={onRetry}>
+        <RefreshCw /> Retry video
+      </button>
+      {videoState !== "loading" && <small className="preview-retry-error">{videoError ?? "No matching provider result."}</small>}
     </div>
   );
 }

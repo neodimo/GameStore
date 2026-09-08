@@ -20,15 +20,16 @@ type Candidate = {
   source: string;
   score?: number;
 };
-type Tab = ArtFolder | "TheGamesDB";
+type Tab = ArtFolder | "TheGamesDB" | "IGDB";
 const TABS: Tab[] = [
   "Named_Boxarts",
   "Named_Titles",
   "Named_Snaps",
   "TheGamesDB",
+  "IGDB",
 ];
 const tabLabel = (tab: Tab) =>
-  tab === "TheGamesDB" ? "TheGamesDB" : artFolders[tab];
+  tab === "TheGamesDB" || tab === "IGDB" ? tab : artFolders[tab];
 
 /**
  * Deep artwork search for one game. Every Libretro thumbnail folder is ranked
@@ -73,7 +74,7 @@ export function ArtPicker({
   }, [onClose]);
 
   useEffect(() => {
-    if (tab === "TheGamesDB" || indexes[tab]?.length) return;
+    if (tab === "TheGamesDB" || tab === "IGDB" || indexes[tab]?.length) return;
     let cancelled = false;
     setBusy(true);
     setError("");
@@ -117,9 +118,23 @@ export function ArtPicker({
       setBusy(false);
     }
   };
+  const searchIgdb = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      if (!window.gameStore) throw new Error("Provider lookup runs in the desktop app.");
+      const found = await window.gameStore.findIgdbMedia(query, game.platform);
+      setRemote(found.filter((c) => c.cover).map((c) => ({
+        url: c.cover!, label: c.title, detail: "Platform-filtered cover", source: "IGDB", score: titleSimilarity(query, c.title),
+      })).sort((a, b) => (b.score ?? 0) - (a.score ?? 0)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setRemote([]);
+    } finally { setBusy(false); }
+  };
 
   const candidates = useMemo<Candidate[]>(() => {
-    if (tab === "TheGamesDB") return remote;
+    if (tab === "TheGamesDB" || tab === "IGDB") return remote;
     const files = indexes[tab] ?? [];
     const matches = rankArtCandidates(
       query,
@@ -145,7 +160,7 @@ export function ArtPicker({
     artwork.setOverride(game, {
       url: candidate.url,
       label: candidate.detail,
-      source: candidate.source === "TheGamesDB" ? "TheGamesDB" : tabLabel(tab),
+      source: candidate.source === "TheGamesDB" || candidate.source === "IGDB" ? candidate.source : tabLabel(tab),
     });
     onClose();
   };
@@ -181,13 +196,13 @@ export function ArtPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && tab === "TheGamesDB")
-                void searchTheGamesDb();
+              if (e.key === "Enter" && (tab === "TheGamesDB" || tab === "IGDB"))
+                void (tab === "IGDB" ? searchIgdb() : searchTheGamesDb());
             }}
             placeholder="Search any release title"
           />
-          {tab === "TheGamesDB" ? (
-            <button onClick={() => void searchTheGamesDb()}>Search</button>
+          {tab === "TheGamesDB" || tab === "IGDB" ? (
+            <button onClick={() => void (tab === "IGDB" ? searchIgdb() : searchTheGamesDb())}>Search</button>
           ) : (
             <button onClick={() => void artwork.refreshIndex()}>
               <RefreshCw /> Refresh index
@@ -225,8 +240,8 @@ export function ArtPicker({
         {error && <p className="error">{error}</p>}
         {!busy && !error && !candidates.length && (
           <p className="art-status">
-            {tab === "TheGamesDB"
-              ? "Press Search to query TheGamesDB with the title above."
+            {tab === "TheGamesDB" || tab === "IGDB"
+              ? `Press Search to query ${tab} with the title above.`
               : "No release matched that title. Try a shorter or romanized query."}
           </p>
         )}

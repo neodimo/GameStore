@@ -1678,6 +1678,8 @@ function ProviderSettings({
 }) {
   const [activeTab, setActiveTab] = useState<"general" | "downloads" | "media" | "device" | "pc">("general");
   const [key, setKey] = useState("");
+  const [igdb, setIgdb] = useState({ clientId: "", clientSecret: "" });
+  const [igdbSaved, setIgdbSaved] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exported, setExported] = useState(false);
   const [test, setTest] = useState("");
@@ -1743,6 +1745,7 @@ function ProviderSettings({
   useEffect(() => {
     window.gameStore?.getSteamGridDbKey().then(({ configured }) => setGridSaved(configured));
     window.gameStore?.getTheGamesDbKey().then(setKey);
+    window.gameStore?.getIgdbSettings().then(({ configured }) => setIgdbSaved(configured));
     window.gameStore
       ?.getFpgaSettings()
       .then((f) => f && setDevice((d) => ({ ...d, ...f, password: "" })));
@@ -1793,6 +1796,11 @@ function ProviderSettings({
   /** Saving persists settings only. Collection indexing is an explicit per-console action. */
   const save = async () => {
     await window.gameStore?.setTheGamesDbKey(key);
+    if (igdb.clientId || igdb.clientSecret) {
+      const result = await window.gameStore?.setIgdbSettings(igdb);
+      setIgdbSaved(Boolean(result?.configured));
+      setIgdb({ clientId: "", clientSecret: "" });
+    }
     await window.gameStore?.setFpgaSettings(device);
     await window.gameStore?.setPcTarget(pcTarget);
     const collections = configuredCollections();
@@ -2084,6 +2092,22 @@ function ProviderSettings({
           The key is encrypted with the operating system keychain when available
           and never enters exports or GitHub.
         </small>
+        <hr />
+        <h2>IGDB fallback media</h2>
+        <p>
+          IGDB fills missing platform-specific covers and screenshots, especially
+          for Xbox 360. Create a free confidential app in the Twitch developer
+          console, then enter its client ID and secret here.
+        </p>
+        <label>
+          IGDB client ID {igdbSaved && <small>· saved</small>}
+          <input type="password" value={igdb.clientId} onChange={(e) => setIgdb({ ...igdb, clientId: e.target.value })} placeholder="Blank keeps the saved ID" />
+        </label>
+        <label>
+          IGDB client secret
+          <input type="password" value={igdb.clientSecret} onChange={(e) => setIgdb({ ...igdb, clientSecret: e.target.value })} placeholder="Blank keeps the saved secret" />
+        </label>
+        <small>Stored only on this machine with the operating-system keychain when available.</small>
         <hr />
         <h2><Library /> Library export</h2>
         <p>

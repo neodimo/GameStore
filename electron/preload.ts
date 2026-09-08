@@ -20,6 +20,11 @@ contextBridge.exposeInMainWorld("gameStore", {
   getTheGamesDbKey: () => ipcRenderer.invoke("provider-key-get"),
   setTheGamesDbKey: (key: string) =>
     ipcRenderer.invoke("provider-key-set", key),
+  getIgdbSettings: () => ipcRenderer.invoke("igdb-settings-get"),
+  setIgdbSettings: (settings: { clientId: string; clientSecret: string }) =>
+    ipcRenderer.invoke("igdb-settings-set", settings),
+  findIgdbMedia: (title: string, platform?: string) =>
+    ipcRenderer.invoke("igdb-media", title, platform),
   getSteamGridDbKey: () => ipcRenderer.invoke("steamgriddb-key-get"),
   setSteamGridDbKey: (key: string) =>
     ipcRenderer.invoke("steamgriddb-key-set", key),

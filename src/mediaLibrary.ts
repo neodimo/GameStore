@@ -6,6 +6,7 @@ import {
   resolveScreenshots,
   type Screenshot,
 } from "./mediaMatch";
+import { normalizeTitle } from "./artMatch";
 
 export type CachedShot = Screenshot & { localUrl: string };
 export type GameMediaRecord = {
@@ -148,18 +149,32 @@ export const ensureGameMedia = (game: Game) => {
       // Start still caching immediately. It is independent of the video
       // provider and used to sit behind an FTP probe, so a slow/unconfigured
       // EmuMovies account made both the preview and screenshots look stalled.
-      const shotsJob = !resolved.length
-        ? Promise.resolve(patchRecord(game.id, { shots: [], shotState: "empty" }))
+      const igdbShots = !resolved.length
+        ? window.gameStore!.findIgdbMedia(game.title, game.platform)
+            .then((results) => {
+              const exact = results.find((item) => normalizeTitle(item.title) === normalizeTitle(game.title));
+              return (exact?.screenshots ?? []).slice(0, 12).map((url, index) => ({
+                url,
+                kind: "Screenshot" as const,
+                label: "IGDB · platform-filtered",
+                tags: [],
+                score: 1 - index / 100,
+              }));
+            })
+            .catch(() => [] as Screenshot[])
+        : Promise.resolve(resolved);
+      const shotsJob = igdbShots.then((shotsToCache) => !shotsToCache.length
+        ? patchRecord(game.id, { shots: [], shotState: "empty" })
         : window
             .gameStore!.cacheScreenshots(
               game.id,
-              resolved.map((shot) => shot.url),
+              shotsToCache.map((shot) => shot.url),
             )
             .then((cached) => {
               const paths = new Map(
                 cached.map((item) => [item.sourceUrl, item.localUrl]),
               );
-              const shots = resolved
+              const shots = shotsToCache
                 .filter((shot) => paths.has(shot.url))
                 .map((shot) => ({ ...shot, localUrl: paths.get(shot.url)! }));
               patchRecord(game.id, {
@@ -167,7 +182,7 @@ export const ensureGameMedia = (game: Game) => {
                 shotState: shots.length ? "ready" : "error",
               });
             })
-            .catch(() => patchRecord(game.id, { shots: [], shotState: "error" }));
+            .catch(() => patchRecord(game.id, { shots: [], shotState: "error" })));
       /**
        * EmuMovies first, when the member has signed in.
        *
@@ -216,6 +231,37 @@ export const ensureGameMedia = (game: Game) => {
     .finally(() => inflight.delete(game.id));
   inflight.set(game.id, job);
   return job;
+};
+
+/** Re-run only preview resolution when the user asks; screenshots stay cached. */
+export const retryGameVideo = async (game: Game) => {
+  if (!window.gameStore) return;
+  patchRecord(game.id, { videoId: null, video: null, videoState: "loading", videoError: undefined, frameState: "idle" });
+  const platform = platformOf(game.platform);
+  try {
+    const data = await loadResources(platform.thumbnailSystem, platform.id);
+    try {
+      const snap = await window.gameStore.getEmuMoviesSnap(game.title, game.region, game.coverName, game.platform);
+      if (snap) {
+        patchRecord(game.id, { video: { identifier: snap.name, name: snap.name, size: snap.bytes, format: snap.quality, duration: 0, streamUrl: snap.localUrl, localUrl: snap.localUrl, cached: true, source: "emumovies" }, videoState: "ready", videoError: undefined });
+        return;
+      }
+    } catch (error) {
+      const detail = errorText(error);
+      patchRecord(game.id, { video: null, videoState: "error", videoError: `EmuMovies retry failed: ${detail}` });
+      return;
+    }
+    const match = resolveLongplay(game.title, data.longplays);
+    if (!match) {
+      patchRecord(game.id, { video: null, videoState: "empty", frameState: "unavailable", videoError: "No exact EmuMovies snap and no Internet Archive longplay passed the title-match safety check." });
+      return;
+    }
+    patchRecord(game.id, { videoId: match.identifier });
+    const video = await window.gameStore.getVideoPreview(match.identifier);
+    patchRecord(game.id, { video, videoState: "ready", videoError: undefined });
+  } catch (error) {
+    patchRecord(game.id, { video: null, videoState: "error", videoError: `Video retry failed: ${errorText(error)}` });
+  }
 };
 
 /**

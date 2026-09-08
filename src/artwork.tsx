@@ -130,9 +130,10 @@ export function ArtworkProvider({
   const [overrides, setOverrides] = useState<Record<string, Override>>(
     readOverrides,
   );
-  const [fallback, setFallback] = useState<Record<string, string | null>>({});
+  const [fallback, setFallback] = useState<Record<string, { url: string; source: string } | null>>({});
   const fallbackRequested = useRef(new Set<string>());
   const [theGamesDbEnabled, setTheGamesDbEnabled] = useState(false);
+  const [igdbEnabled, setIgdbEnabled] = useState(false);
 
   useEffect(() => {
     // The existing Settings screen already reads this value to populate its
@@ -141,6 +142,9 @@ export function ArtworkProvider({
     void window.gameStore?.getTheGamesDbKey()
       .then((key) => setTheGamesDbEnabled(Boolean(key.trim())))
       .catch(() => setTheGamesDbEnabled(false));
+    void window.gameStore?.getIgdbSettings()
+      .then(({ configured }) => setIgdbEnabled(configured))
+      .catch(() => setIgdbEnabled(false));
   }, []);
 
   /**
@@ -279,23 +283,30 @@ export function ArtworkProvider({
     // Libretro's PS2/Xbox 360 packs are incomplete. Ask TheGamesDB only for
     // cards that actually enter the viewport, rather than firing a catalog-
     // sized burst of provider searches during startup.
-    if (!window.gameStore || !theGamesDbEnabled || !["PS2", "X360"].includes(game.platform)) return;
+    if (!window.gameStore || (!theGamesDbEnabled && !igdbEnabled) || !["PS2", "X360"].includes(game.platform)) return;
     if (overrides[game.id] || auto[game.id] || fallbackRequested.current.has(game.id)) return;
     fallbackRequested.current.add(game.id);
-    void window.gameStore.findTheGamesDbArt(game.title, game.platform)
-      .then((choices) => {
+    const igdb = igdbEnabled
+      ? window.gameStore.findIgdbMedia(game.title, game.platform).then((choices) => {
+          const exact = choices.find((choice) => normalizeTitle(choice.title) === normalizeTitle(game.title));
+          return exact?.cover ? { url: exact.cover, source: "IGDB" } : null;
+        }).catch(() => null)
+      : Promise.resolve(null);
+    void igdb.then((igdbCover) => {
+      if (igdbCover) return igdbCover;
+      if (!theGamesDbEnabled) return null;
+      return window.gameStore!.findTheGamesDbArt(game.title, game.platform).then((choices) => {
         const exact = choices.find((choice) =>
           normalizeTitle(choice.title) === normalizeTitle(game.title),
         );
-        setFallback((current) => ({
-          ...current,
-          [game.id]: (exact ?? choices[0])?.url ?? null,
-        }));
-      })
+        const url = (exact ?? choices[0])?.url;
+        return url ? { url, source: "TheGamesDB" } : null;
+      });
+    }).then((choice) => setFallback((current) => ({ ...current, [game.id]: choice ?? null })))
       // A missing API key is a settings state, not a render failure. Keep the
       // card's normal no-match affordance and do not retry it on every paint.
       .catch(() => setFallback((current) => ({ ...current, [game.id]: null })));
-  }, [auto, overrides, theGamesDbEnabled]);
+  }, [auto, overrides, theGamesDbEnabled, igdbEnabled]);
 
   // Memoized so a card only re-renders when artwork state actually changes,
   // rather than on every render of the provider.
@@ -324,7 +335,7 @@ export function ArtworkProvider({
         };
       const secondary = fallback[game.id];
       if (secondary)
-        return { url: secondary, source: "TheGamesDB", manual: false };
+        return { url: secondary.url, source: secondary.source, manual: false };
       // Catalog seeds stay as the offline fallback until the index arrives.
       return game.cover
         ? { url: game.cover, source: "Catalog seed", manual: false }

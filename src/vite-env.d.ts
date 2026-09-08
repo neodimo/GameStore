@@ -5,6 +5,12 @@ interface Window {
     saveExport(data: string): Promise<string>;
     getTheGamesDbKey(): Promise<string>;
     setTheGamesDbKey(key: string): Promise<boolean>;
+    getIgdbSettings(): Promise<{ configured: boolean }>;
+    setIgdbSettings(settings: { clientId: string; clientSecret: string }): Promise<{ configured: boolean }>;
+    findIgdbMedia(
+      title: string,
+      platform?: CatalogPlatformId,
+    ): Promise<{ title: string; cover?: string; screenshots: string[] }[]>;
     /** Only whether a key is stored; the value never leaves the main process. */
     getSteamGridDbKey(): Promise<{ configured: boolean }>;
     setSteamGridDbKey(key: string): Promise<{ configured: boolean }>;

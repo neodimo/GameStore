@@ -1167,6 +1167,31 @@ main {
   display: grid;
   place-items: center;
 }
+.preview-retry {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #3b4043;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: #191c1e;
+  color: #c9cccd;
+  font-size: 11px;
+  cursor: pointer;
+}
+.preview-retry:hover { border-color: var(--cyan); color: var(--cyan); }
+.preview-retry svg { width: 13px; }
+.preview-retry-error {
+  position: absolute;
+  left: 12px;
+  right: 116px;
+  bottom: 14px;
+  color: #cc7b67;
+  font-size: 10px;
+}
 .still-loop {
   position: relative;
 }

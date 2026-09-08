@@ -122,6 +122,7 @@ import {
   type SteamStatus,
 } from "./steamDeploy";
 import { verticalGridFor } from "./steamGridDb";
+import { findIgdbMedia } from "./igdb";
 import { remoteSteamTransport } from "./steamTransport";
 import {
   pickPortExecutable,
@@ -287,6 +288,11 @@ const settingsFile = () =>
   path.join(app.getPath("userData"), "provider-settings.json");
 type ProviderSettings = {
   theGamesDbKey?: string;
+  igdb?: {
+    clientId?: string;
+    clientSecret?: string;
+    encrypted?: boolean;
+  };
   debrid?: {
     realdebrid?: string;
     torbox?: string;
@@ -367,6 +373,16 @@ const readSettings = async (): Promise<ProviderSettings> => {
       result.theGamesDbKey = safeStorage.isEncryptionAvailable()
         ? safeStorage.decryptString(Buffer.from(stored.theGamesDbKey, "base64"))
         : undefined;
+    if (stored.igdb?.encrypted && safeStorage.isEncryptionAvailable())
+      result.igdb = {
+        encrypted: true,
+        clientId: stored.igdb.clientId
+          ? safeStorage.decryptString(Buffer.from(stored.igdb.clientId, "base64"))
+          : undefined,
+        clientSecret: stored.igdb.clientSecret
+          ? safeStorage.decryptString(Buffer.from(stored.igdb.clientSecret, "base64"))
+          : undefined,
+      };
     if (stored.fpga?.password && stored.fpga.encrypted)
       result.fpga = {
         ...stored.fpga,
@@ -442,6 +458,29 @@ ipcMain.handle("provider-key-set", async (_e, key: string) => {
     encrypted: !!encrypted,
   });
   return true;
+});
+ipcMain.handle("igdb-settings-get", async () => ({
+  configured: Boolean((await readSettings()).igdb?.clientId && (await readSettings()).igdb?.clientSecret),
+}));
+ipcMain.handle("igdb-settings-set", async (_e, input: { clientId?: string; clientSecret?: string }) => {
+  const clientId = String(input?.clientId ?? "").trim();
+  const clientSecret = String(input?.clientSecret ?? "").trim();
+  const raw = JSON.parse(await fs.readFile(settingsFile(), "utf8").catch(() => "{}"));
+  if (!clientId || !clientSecret) {
+    delete raw.igdb;
+    await writeSettings(raw);
+    return { configured: false };
+  }
+  const encrypted = safeStorage.isEncryptionAvailable();
+  await writeSettings({
+    ...raw,
+    igdb: {
+      encrypted,
+      clientId: encrypted ? safeStorage.encryptString(clientId).toString("base64") : clientId,
+      clientSecret: encrypted ? safeStorage.encryptString(clientSecret).toString("base64") : clientSecret,
+    },
+  });
+  return { configured: true };
 });
 /**
  * The key itself never travels back to the renderer. Settings only needs to
@@ -811,6 +850,12 @@ ipcMain.handle("thegamesdb-art", async (_e, title: string, platform?: string) =>
     if (candidates.length) break;
   }
   return candidates.slice(0, 24);
+});
+ipcMain.handle("igdb-media", async (_e, title: string, platform?: string) => {
+  const credentials = (await readSettings()).igdb;
+  if (!credentials?.clientId || !credentials?.clientSecret)
+    throw new Error("Add your IGDB client ID and client secret in Settings → General first.");
+  return findIgdbMedia({ clientId: credentials.clientId, clientSecret: credentials.clientSecret }, title, platform ?? "");
 });
 
 const publicFpga = async () => {
