@@ -1,5 +1,13 @@
 # GameStore task log
 
+## 2026-09-07 — v0.35.1 release verification
+
+- **What was done:** Published the PS2/Xbox 360 media correction.
+- **Evidence:** GitHub run `34176753453` completed success for Windows and Linux. Release <https://github.com/neodimo/GameStore/releases/tag/v0.35.1> has all six assets: Windows installer, blockmap, `latest.yml`, Linux AppImage, deb, and `latest-linux.yml`.
+- **Artifacts:** Release commit `adba632`, tag `v0.35.1`, published assets above. Workspace still has only the pre-existing Python cache rewrite and `mockups/` scratch outside git.
+- **State:** Released. Live provider indexing/rendering remains the acceptance test; automated checks cannot exercise DiMo's EmuMovies and TheGamesDB account content.
+- **Next owner + concrete artifact:** DiMo updates to v0.35.1, re-indexes PS2 and Xbox 360 under Settings → EmuMovies, then opens one Xbox 360 title and one `.hack` PS2 title. The index coverage/status and visible cover/preview result are the concrete acceptance artifact.
+
 ## 2026-09-07 — v0.35.1 secondary-art provider guard
 
 - **What was done:** Prevented one TheGamesDB request/error per visible unmatched PS2/Xbox 360 card when that optional provider has no configured key. Artwork provider now reads only the existing key-presence state first, then enables its visible-card fallback queue when configured.
