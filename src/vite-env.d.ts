@@ -30,6 +30,7 @@ interface Window {
      */
     cacheCover(url: string): Promise<string | null>;
     getLongplays(
+      platform?: CatalogPlatformId,
       force?: boolean,
     ): Promise<{ identifier: string; title: string }[]>;
     cacheScreenshots(

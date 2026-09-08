@@ -28,8 +28,8 @@ contextBridge.exposeInMainWorld("gameStore", {
   getArtIndex: (system: string, folder: string, force?: boolean) =>
     ipcRenderer.invoke("art-index-get", system, folder, force),
   cacheCover: (url: string) => ipcRenderer.invoke("art-cover-cache", url),
-  getLongplays: (force?: boolean) =>
-    ipcRenderer.invoke("media-longplays-get", force),
+  getLongplays: (platform = "PS1", force?: boolean) =>
+    ipcRenderer.invoke("media-longplays-get", platform, force),
   cacheScreenshots: (gameId: string, urls: string[]) =>
     ipcRenderer.invoke("media-screens-cache", gameId, urls),
   getVideoPreview: (identifier: string) =>

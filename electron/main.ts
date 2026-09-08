@@ -713,8 +713,8 @@ ipcMain.handle("art-index-get", async (_e, system: string, folder: string, force
   getArtIndex(system, folder, !!force),
 );
 ipcMain.handle("art-cover-cache", (_e, url: string) => getCachedCover(url));
-ipcMain.handle("media-longplays-get", (_e, force?: boolean) =>
-  getLongplayIndex(!!force),
+ipcMain.handle("media-longplays-get", (_e, platform = "PS1", force?: boolean) =>
+  getLongplayIndex(String(platform), !!force),
 );
 ipcMain.handle("media-screens-cache", (_e, gameId: string, urls: string[]) =>
   cacheScreenshots(gameId, urls),
@@ -739,6 +739,9 @@ const THE_GAMES_DB_PLATFORM: Record<string, string> = {
   PS2: "11",
   X360: "14",
 };
+let nextTheGamesDbRequestAt = 0;
+let theGamesDbQueue: Promise<void> = Promise.resolve();
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const queryTheGamesDb = async (key: string, name: string, platform?: string) => {
   const url = new URL("https://api.thegamesdb.net/v1/Games/ByGameName");
   url.searchParams.set("apikey", key);
@@ -746,7 +749,21 @@ const queryTheGamesDb = async (key: string, name: string, platform?: string) => 
   const platformId = platform && THE_GAMES_DB_PLATFORM[platform];
   if (platformId) url.searchParams.set("filter[platform]", platformId);
   url.searchParams.set("include", "boxart");
-  const response = await fetch(url);
+  // The provider rate-limits account-wide, not per renderer request. Covers
+  // appear while scrolling, so serialize requests rather than firing a burst
+  // of 429s. Renderer-side visibility gating limits how many reach this queue.
+  const scheduled = theGamesDbQueue.then(async () => {
+    const delay = Math.max(0, nextTheGamesDbRequestAt - Date.now());
+    if (delay) await wait(delay);
+    nextTheGamesDbRequestAt = Date.now() + 1_100;
+    return fetch(url);
+  });
+  // Keep the chain alive after a provider failure, otherwise one 429 would
+  // permanently reject every later manual lookup in this process.
+  theGamesDbQueue = scheduled.then(() => undefined, () => undefined);
+  return parseTheGamesDbResponse(await scheduled);
+};
+const parseTheGamesDbResponse = async (response: Response) => {
   if (!response.ok) throw new Error(`TheGamesDB returned ${response.status}`);
   const payload = (await response.json()) as any;
   const base = payload?.include?.boxart?.base_url?.original ?? "";
@@ -788,7 +805,10 @@ ipcMain.handle("thegamesdb-art", async (_e, title: string, platform?: string) =>
       seen.add(candidate.url);
       candidates.push(candidate);
     }
-    if (candidates.length >= 12) break;
+    // First query is the full catalog title. Only broaden when it produced no
+    // plausible provider result; three requests per cover was what exhausted
+    // the account limit during a scroll.
+    if (candidates.length) break;
   }
   return candidates.slice(0, 24);
 });

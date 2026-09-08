@@ -693,8 +693,12 @@ function useCachedCover(url: string | undefined, full: boolean, active: boolean)
 function CoverImage({ game, full = false }: { game: Game; full?: boolean }) {
   const [bad, setBad] = useState(false);
   const [ratio, setRatio] = useState("1 / 1");
-  const { url } = useArtwork().artFor(game);
+  const artwork = useArtwork();
+  const { url } = artwork.artFor(game);
   const [frameRef, near] = useNearViewport<HTMLDivElement>();
+  useEffect(() => {
+    if (near && !url) artwork.requestFallback(game);
+  }, [near, url, artwork, game]);
   const src = useCachedCover(url, full, full || near);
   useEffect(() => setBad(false), [src]);
   // A cover still being resolved shows an empty frame rather than the
@@ -965,11 +969,7 @@ function GameCard({
   onOpen: () => void;
   onContextMenu: (x: number, y: number) => void;
 }) {
-  const artwork = useArtwork();
-  const art = artwork.artFor(game);
-  useEffect(() => {
-    if (!art.url) artwork.requestFallback(game);
-  }, [art.url, artwork, game]);
+  const art = useArtwork().artFor(game);
   return (
     <article
       className={`card ${selected ? "selected" : ""}`}

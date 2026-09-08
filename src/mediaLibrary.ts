@@ -96,19 +96,20 @@ const snapPreview = async (game: Game): Promise<VideoPreview | null> => {
   }
 };
 
-const loadResources = (system: string) => {
-  const cached = resources.get(system);
+const loadResources = (system: string, platform: string) => {
+  const key = `${platform}:${system}`;
+  const cached = resources.get(key);
   if (cached) return cached;
   const job = Promise.all([
     window.gameStore!.getArtIndex(system, "Named_Snaps"),
     window.gameStore!.getArtIndex(system, "Named_Titles"),
-    window.gameStore!.getLongplays(),
+    window.gameStore!.getLongplays(platform as CatalogPlatformId),
   ]).then(([snaps, titles, longplays]) => ({
     snaps: snaps.files,
     titles: titles.files,
     longplays,
   }));
-  resources.set(system, job);
+  resources.set(key, job);
   return job;
 };
 
@@ -131,8 +132,9 @@ export const ensureGameMedia = (game: Game) => {
     ...blank(),
     videoError: undefined,
   });
-  const system = platformOf(game.platform).thumbnailSystem;
-  const job = loadResources(system)
+  const platform = platformOf(game.platform);
+  const system = platform.thumbnailSystem;
+  const job = loadResources(system, platform.id)
     .then(async (data) => {
       const resolved = resolveScreenshots(
         game.title,
@@ -235,10 +237,15 @@ export const startMediaAudit = (games: Game[]) => {
   emit();
   // Warm only the consoles the catalog actually carries, so a platform with
   // no games costs no request.
-  const systems = new Set(
-    games.map((game) => platformOf(game.platform).thumbnailSystem),
+  const platforms = new Map(
+    games.map((game) => {
+      const platform = platformOf(game.platform);
+      return [platform.id, platform] as const;
+    }),
   );
-  Promise.all([...systems].map((system) => loadResources(system)))
+  Promise.all([...platforms.values()].map((platform) =>
+    loadResources(platform.thumbnailSystem, platform.id),
+  ))
     .then(() => {
       audit = {
         state: "complete",

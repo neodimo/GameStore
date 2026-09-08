@@ -14,7 +14,8 @@ type ArchiveFile = {
 };
 const TTL = 7 * 24 * 60 * 60 * 1000;
 const root = () => path.join(app.getPath("userData"), "media-cache");
-const indexFile = () => path.join(root(), "longplays.json");
+const indexFile = (platform: string) =>
+  path.join(root(), `longplays-${platform.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`);
 const safeId = (value: string) => {
   if (!/^[\w.-]+$/.test(value)) throw new Error("Invalid media identifier.");
   return value;
@@ -29,33 +30,45 @@ export const mediaAssetUrl = (file: string) =>
  * catalog games; accepting `PS1` and `PlayStation` too finds 998 and matches
  * 67, because whole runs of the collection are filed under the other names.
  */
-const LONGPLAY_QUERY =
-  "title:(Longplay) AND (title:(PSX) OR title:(PS1) OR title:(PlayStation)) AND mediatype:movies";
+const LONGPLAY_SOURCES: Record<string, { query: string; excluded: RegExp }> = {
+  PS1: {
+    query: "title:(Longplay) AND (title:(PSX) OR title:(PS1) OR title:(PlayStation)) AND mediatype:movies",
+    excluded: /\bplay\s*station\s*[2345]\b|\bps[2345]\b/i,
+  },
+  PS2: {
+    query: "title:(Longplay) AND (title:(PS2) OR title:(\"PlayStation 2\")) AND mediatype:movies",
+    excluded: /\bplay\s*station\s*[1345]\b|\bps[1345]\b/i,
+  },
+  X360: {
+    query: "title:(Longplay) AND (title:(X360) OR title:(\"Xbox 360\")) AND mediatype:movies",
+    excluded: /\bxbox\s*(?:one|series)\b/i,
+  },
+};
 /**
  * `PlayStation` also matches every later console, and those are near enough to
  * be dangerous rather than merely useless: `Playstation 4 Longplay [055] Final
  * Fantasy XV` scored 0.70 against the catalog's `Final Fantasy Tactics`,
  * against a 0.72 floor. Later generations are dropped before scoring ever runs.
  */
-const OTHER_GENERATION = /\bplay\s*station\s*[2345]\b|\bps[2345]\b/i;
-
 export const getLongplayIndex = async (
+  platform = "PS1",
   force = false,
 ): Promise<LongplayItem[]> => {
+  const source = LONGPLAY_SOURCES[platform] ?? LONGPLAY_SOURCES.PS1;
   try {
-    const cached = JSON.parse(await fs.readFile(indexFile(), "utf8"));
+    const cached = JSON.parse(await fs.readFile(indexFile(platform), "utf8"));
     if (
       !force &&
       Date.now() - cached.fetchedAt < TTL &&
       cached.items?.length &&
-      cached.query === LONGPLAY_QUERY
+      cached.query === source.query
     )
       return cached.items;
   } catch {
     /* fetch below */
   }
   const url = new URL("https://archive.org/advancedsearch.php");
-  url.searchParams.set("q", LONGPLAY_QUERY);
+  url.searchParams.set("q", source.query);
   url.searchParams.append("fl[]", "identifier");
   url.searchParams.append("fl[]", "title");
   url.searchParams.set("rows", "1200");
@@ -70,12 +83,12 @@ export const getLongplayIndex = async (
   if (!found?.length)
     throw new Error("Internet Archive longplay index was empty.");
   const items = found.filter(
-    (item) => !OTHER_GENERATION.test(item.title || item.identifier),
+    (item) => !source.excluded.test(item.title || item.identifier),
   );
   await fs.mkdir(root(), { recursive: true });
   await fs.writeFile(
-    indexFile(),
-    JSON.stringify({ fetchedAt: Date.now(), query: LONGPLAY_QUERY, items }),
+    indexFile(platform),
+    JSON.stringify({ fetchedAt: Date.now(), query: source.query, items }),
     "utf8",
   );
   return items;

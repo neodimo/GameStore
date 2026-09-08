@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-07 — Xbox sparse-art and PS2/Xbox video-source repair (v0.37.0)
+
+- **What was done:** Repaired the remaining failures shown in DiMo's post-update screenshots. Xbox 360's 12-file Libretro box-art set now permits only exact filename matches; fuzzy similarity can no longer assign Dead Rising, Dead or Alive, Portal, or Final Fantasy art to an unrelated title. Its ArtPicker uses the same exact-only rule for Libretro candidates. Moved TheGamesDB automatic fallback from every mounted card to covers near the viewport and serialized provider requests at 1.1 seconds; full-title queries now stop after the first result set, preventing prior scroll-driven 429 floods. Added PS2- and Xbox-360-specific Internet Archive longplay indexes rather than routing every console through the PSX-only index; media resource caches are platform-specific.
+- **Evidence:** Screenshot evidence: Xbox 360 card grid showed wrong 12-pack fuzzy picks and TheGamesDB manual lookup returned HTTP 429. Live Archive queries return 265 PS2 and 187 Xbox 360 longplay documents. Lint passed after the changes. Remaining gates/release pending.
+- **Artifacts:** `src/artwork.tsx`, `src/App.tsx`, `src/ArtPicker.tsx`, `electron/main.ts`, `electron/mediaCache.ts`, `electron/preload.ts`, `src/vite-env.d.ts`, `src/mediaLibrary.ts`, `src/mediaMatch.ts`, version files. `mockups/` and Python cache remain excluded.
+- **State:** In progress. **Known external limit:** Libretro genuinely has no Xbox 360 Snaps/Titles directories, so screenshots must be captured from a resolved EmuMovies/longplay preview; a title with neither correctly shows no screenshots rather than fabricated media.
+- **Next owner + concrete artifact:** Gonzo runs tests/build/release. DiMo updates, confirms no wrong Xbox fuzzy art in the grid, and opens one PS2/X360 title to exercise the new platform-specific longplay result.
+- **Failure mode:** Treating an intentionally sparse provider index as a complete corpus produced plausible but false covers. Treating its external fallback as unlimited then compounded it into a 429 state.
+
 ## 2026-09-07 — PS2/Xbox 360 Libretro media index correction (v0.36.1)
 
 - **What was done:** Fixed the screenshot-proven `Unsupported thumbnail system: Microsoft - Xbox 360` crash by adding PS2 and Xbox 360 to the main-process thumbnail index allowlist. Verified live Libretro endpoint behavior: PS2 publishes Boxarts, Snaps, and Titles; Xbox 360 publishes Boxarts but its Snaps/Titles endpoints return 404. The index now treats a known console's missing optional folder as a cached empty index, allowing gallery media to fall through to EmuMovies/longplay instead of failing the whole media-resolution promise.

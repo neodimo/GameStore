@@ -217,7 +217,7 @@ export const resolveScreenshots = (
  */
 export const cleanLongplayTitle = (value: string) =>
   value
-    .replace(/\b(psx|ps1|playstation)\b/gi, " ")
+    .replace(/\b(psx|ps1|ps2|x360|playstation|xbox\s*360)\b/gi, " ")
     .replace(/\blongplay\b/gi, " ")
     .replace(/\[\s*\d+\s*\]/g, " ")
     .replace(/\((?:us|usa|eu|europe|jp|japan|pal|ntsc)\)/gi, " ")

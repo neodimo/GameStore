@@ -233,6 +233,10 @@ export function ArtworkProvider({
       const source = { system: platform.thumbnailSystem, folder };
       const hit = exactArtMatch(game.coverName, files, source);
       if (hit) seeded[game.id] = hit;
+      // Xbox 360 has only a dozen Libretro boxarts. Fuzzy matching that tiny
+      // unrelated set created confident-looking false covers (Dead Rising for
+      // Dead Space 2). Only an exact release filename is evidence here.
+      else if (platform.id === "X360") seeded[game.id] = null;
       else pending.push({ game, files, system: platform.thumbnailSystem });
     }
     setAuto(seeded);

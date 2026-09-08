@@ -4,6 +4,8 @@ import type { Game } from "./catalog";
 import {
   artFolders,
   BROWSE_FLOOR,
+  normalizeTitle,
+  parseArtFilename,
   rankArtCandidates,
   titleSimilarity,
   type ArtFolder,
@@ -119,21 +121,25 @@ export function ArtPicker({
   const candidates = useMemo<Candidate[]>(() => {
     if (tab === "TheGamesDB") return remote;
     const files = indexes[tab] ?? [];
-    return rankArtCandidates(
+    const matches = rankArtCandidates(
       query,
       game.region,
       files,
       { system: platform.thumbnailSystem, folder: tab },
       36,
       BROWSE_FLOOR,
-    ).map((m) => ({
+    );
+    const scoped = platform.id === "X360"
+      ? matches.filter((m) => normalizeTitle(parseArtFilename(m.file).core) === normalizeTitle(query))
+      : matches;
+    return scoped.map((m) => ({
       url: m.url,
       label: m.label,
       detail: m.tags.join(" · ") || "No release tags",
       source: m.confidence,
       score: m.score,
     }));
-  }, [tab, remote, indexes, query, game.region, platform.thumbnailSystem]);
+  }, [tab, remote, indexes, query, game.region, platform.id, platform.thumbnailSystem]);
 
   const apply = (candidate: Candidate) => {
     artwork.setOverride(game, {
