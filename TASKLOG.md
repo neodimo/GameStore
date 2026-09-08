@@ -1,5 +1,14 @@
 # GameStore task log
 
+## 2026-09-07 — TheGamesDB rate-limit handoff (v0.38.1)
+
+- **What was done:** Replaced the raw TheGamesDB `429` IPC exception in the ArtPicker with a clear message that the provider rate-limited the account and that artwork was not changed. Added a one-click **Search IGDB instead** handoff which opens the IGDB tab and performs the same platform-filtered lookup.
+- **Evidence:** DiMo's Fable II screenshot showed `TheGamesDB returned 429` while the current cover provenance was already IGDB. `npm run lint` ✓; full suite **422/422** ✓; build ✓; bundle policy ✓ (dist 2.91/3.00 MiB, electron 0.36/0.50 MiB).
+- **Artifacts:** `src/ArtPicker.tsx`, `src/style.css`, package versions. `mockups/` and the pre-existing Python cache rewrite remain excluded.
+- **State:** Ready to release as v0.38.1. TheGamesDB remains available when its provider quota permits; its quota is external and cannot be raised by a client-side retry delay.
+- **Next owner + concrete artifact:** DiMo uses the new IGDB handoff for manual artwork. Gonzo watches real IGDB results before considering removal of TheGamesDB from the Xbox 360 manual path.
+- **Failure mode:** A raw provider quota exception looked like a GameStore search failure even though the correct alternative provider was already configured and visible beside it.
+
 ## 2026-09-07 — v0.38.0 release verification
 
 - **What was done:** Published IGDB platform-aware media fallback and the per-game retry-video diagnostic control.

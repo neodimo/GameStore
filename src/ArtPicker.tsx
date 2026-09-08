@@ -59,6 +59,7 @@ export function ArtPicker({
   const [remote, setRemote] = useState<Candidate[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [theGamesDbRateLimited, setTheGamesDbRateLimited] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -96,6 +97,7 @@ export function ArtPicker({
   const searchTheGamesDb = async () => {
     setBusy(true);
     setError("");
+    setTheGamesDbRateLimited(false);
     try {
       if (!window.gameStore)
         throw new Error("Provider lookup runs in the desktop app.");
@@ -112,7 +114,11 @@ export function ArtPicker({
           .sort((a, b) => (b.score ?? 0) - (a.score ?? 0)),
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const message = e instanceof Error ? e.message : String(e);
+      if (/TheGamesDB returned 429/.test(message)) {
+        setTheGamesDbRateLimited(true);
+        setError("TheGamesDB has rate-limited this API key. Your artwork was not changed.");
+      } else setError(message);
       setRemote([]);
     } finally {
       setBusy(false);
@@ -237,7 +243,10 @@ export function ArtPicker({
             <LoaderCircle className="spin" /> Loading candidates…
           </p>
         )}
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error">
+          {error}
+          {theGamesDbRateLimited && <button className="art-provider-route" onClick={() => { setTab("IGDB"); setError(""); void searchIgdb(); }}>Search IGDB instead</button>}
+        </p>}
         {!busy && !error && !candidates.length && (
           <p className="art-status">
             {tab === "TheGamesDB" || tab === "IGDB"

@@ -1192,6 +1192,16 @@ main {
   color: #cc7b67;
   font-size: 10px;
 }
+.art-provider-route {
+  margin-left: 10px;
+  border: 1px solid var(--amber);
+  border-radius: 5px;
+  padding: 3px 7px;
+  background: transparent;
+  color: var(--amber);
+  font-size: 11px;
+  cursor: pointer;
+}
 .still-loop {
   position: relative;
 }
